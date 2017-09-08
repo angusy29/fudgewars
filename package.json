@@ -20,7 +20,7 @@
     "checkDepsVersions": "npm-check --skip-unused -u",
     "start:server": "nodemon ./src/server/server.js",
     "start": "node ./src/server/server.js",
-    "postinstall": "echo-cli 'Building DIST ...' && npm run webpack:dist && echo-cli 'Build Complete ✔'"
+    "postinstall": "webpack --config webpack.dev.config.js"
   },
   "devDependencies": {
     "@types/node": "8.0.17",
