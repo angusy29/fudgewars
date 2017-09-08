@@ -1,7 +1,7 @@
 {
   "name": "fudge-wars",
   "productName": "fudge-wars",
-  "version": "0.1",
+  "version": "0.0.1",
   "main": "electron-main.js",
   "scripts": {
     "webpack:dev": "webpack --config webpack.dev.config.js --progress --colors",
@@ -13,13 +13,14 @@
     "setupGameSize": "node ./scripts/setupGameSize.js",
     "assets:dev": "node ./scripts/generateAssetsClass.js --dev",
     "assets": "node ./scripts/generateAssetsClass.js",
-    "postinstall": "npm run setupGameSize",
     "electron:dev": "npm run build:dev && electron .",
     "electron:dist": "npm run build:dist && electron .",
     "electron:pack:dev": "npm run build:dev && node ./scripts/packageElectronApp.js",
     "electron:pack:dist": "npm run build:dist && node ./scripts/packageElectronApp.js",
     "checkDepsVersions": "npm-check --skip-unused -u",
-    "start:server": "nodemon ./src/server/server.js"
+    "start:server": "nodemon ./src/server/server.js",
+    "start": "node ./src/server/server.js",
+    "postinstall": "echo-cli 'Building DIST ...' && npm run webpack:dist && echo-cli 'Build Complete ✔'"
   },
   "devDependencies": {
     "@types/node": "8.0.17",
