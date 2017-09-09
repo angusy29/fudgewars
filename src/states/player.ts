@@ -9,15 +9,15 @@ export default class Player extends Phaser.Sprite {
         super(game, x, y, key, frame);
         this.id = id;
         this.socket = socket;
-        this.init_movement();
+        //this.init_movement();
     }
 
-    private init_movement(): void {
-        this.socket.on('move', (player: any) => {
-            this.x = player.x;
-            this.y = player.y;
-            // this.animations.sprite.x = player.x;
-            // this.animations.sprite.y = player.y;
-        });
-    }
+    // private init_movement(): void {
+    //     this.socket.on('move', (player: any) => {
+    //         this.x = player.x;
+    //         this.y = player.y;
+    //         this.animations.sprite.x = player.x;
+    //         this.animations.sprite.y = player.y;
+    //     });
+    // }
 }

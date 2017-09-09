@@ -31,6 +31,15 @@ export default class Game extends Phaser.State {
                 delete this.playerMap[id];
             });
         });
+
+        this.socket.on('move', (player: any) => {
+            console.log('move');
+            console.log(this.playerMap);
+            this.playerMap[player.id].x = player.x;
+            this.playerMap[player.id].y = player.y;
+            this.playerMap[player.id].animations.sprite.x = player.x;
+            this.playerMap[player.id].animations.sprite.y = player.y;
+        });
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
