@@ -19,6 +19,7 @@ server.listen(process.env.PORT || 8081,function(){
     console.log('Listening on ' + server.address().port);
 });
 
+const MOVE_CONSTANT = 32;
 let nextPlayerId = 0;
 
 let board = {
@@ -42,10 +43,10 @@ function randomInt (low, high) {
 }
 
 io.on('connection',function(socket){
-    console.log("connecting with player")
+    console.log("connecting with player");
     socket.on('join_game',function(){
         // Add player to board
-        console.log("join game player")
+        console.log("join game player");
         socket.player = {
             id: nextPlayerId++,
             x: randomInt(0, board.width - board.tilewidth),
@@ -55,7 +56,9 @@ io.on('connection',function(socket){
         }
         playerMap[socket.player.id] = socket.player;
 
-        socket.emit('all_players', Object.values(playerMap));
+        // server sends the entire playerMap to the client
+        // the client needs to use the nextPlayerID to get their own ID...
+        socket.emit('all_players', Object.values(playerMap), nextPlayerId);
         socket.broadcast.emit('player_joined',socket.player);
 
         socket.on('keydown', function(data) {
@@ -73,9 +76,34 @@ io.on('connection',function(socket){
             io.emit('player_left', socket.player.id);
             delete playerMap[socket.player.id]
         });
+        
+        // sets up movement listeners
+        init_movement();
     });
-
-
 });
 
+// init_movement
+// Sets up movement listeners
+// Eventually will want to put attack and stuff here too?
+function init_movement() {
+    socket.on('left', function(id) {
+        playerMap[id].x -= MOVE_CONSTANT;
+        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    });
+
+    socket.on('down', function(id) {
+        playerMap[id].y += MOVE_CONSTANT;
+        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    });
+    
+    socket.on('right', function(id) {
+        playerMap[id].x += MOVE_CONSTANT;
+        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    });
+
+    socket.on('up', function(id) {
+        playerMap[id].y -= MOVE_CONSTANT;
+        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    })
+}
 
