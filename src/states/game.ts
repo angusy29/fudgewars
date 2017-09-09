@@ -1,12 +1,16 @@
 import * as Assets from '../assets';
 import * as io from 'socket.io-client';
+import Player from './player';
 
-export default class Title extends Phaser.State {
+/*
+ * The actual game client
+ */
+export default class Game extends Phaser.State {
     private googleFontText: Phaser.Text = null;
-    private playerMap: any = {};
+    private playerMap: any = {};        // a dictionary of all players in the game
     private testKey: Phaser.Key;
-    private map: Phaser.Tilemap;
-    private characterFrames: number[] = [151, 152, 168, 169, 185];
+    private map: Phaser.Tilemap;        // the tilemap
+    private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
 
     public init(): void {
@@ -23,16 +27,15 @@ export default class Title extends Phaser.State {
 
             this.socket.on('player_left', (id: number) => {
                 this.characterFrames.push(this.playerMap[id].frame);
-                this.playerMap[id].destroy();
+                this.playerMap[id].destroy;
                 delete this.playerMap[id];
             });
         });
 
-        // the server will calculate the new position of the player
-        // we need to set it to render it
         this.socket.on('move', (player: any) => {
-            this.playerMap[player.id].x = player.x;
-            this.playerMap[player.id].y = player.y;
+            // finding where to access this to make it move took me so long
+            this.playerMap[player.id].animations.sprite.x = player.x;
+            this.playerMap[player.id].animations.sprite.y = player.y;
         });
     }
 
@@ -40,14 +43,21 @@ export default class Title extends Phaser.State {
         console.log(layer, pointer);
     }
 
+    // addNewPlayer
+    // id: id of the player to add
+    // x: x coordinate of the player
+    // y: y coordinate of the player
     private addNewPlayer(id: number, x: number, y: number): void {
         if (this.characterFrames.length > 0) {
-            this.playerMap[id] = this.game.add.sprite(x, y, 'world.[64,64]');
-            this.playerMap[id].frame = this.characterFrames.pop();
+            let frame: number = this.characterFrames.pop();
+            let key: string = 'world.[64,64]';
+            let newplayer: Player = new Player(id, this.game, x, y, key, frame, this.socket);
+            newplayer.animations.sprite = this.game.add.sprite(newplayer.x, newplayer.y, 'world.[64,64]', frame);
+            this.playerMap[id] = newplayer;
+            // this.game.add.sprite(newplayer.x, newplayer.y, 'world.[64,64]', frame);
         }
         // this.playerMap[id].anchor.setTo(0.5, 0.5);
     }
-
 
     private onDown(a: KeyboardEvent): void {
         console.log('down', a);
@@ -80,8 +90,10 @@ export default class Title extends Phaser.State {
             console.log('enter key pressed');
         });
 
+        // this is the tilesheet
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+
         let layer: Phaser.TilemapLayer;
 
         for (let i = 0; i < this.map.layers.length; i++) {
@@ -94,6 +106,8 @@ export default class Title extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
+
+        // render the title
         this.googleFontText = this.game.add.text(
             this.game.world.centerX,
             this.game.world.centerY - 100, 'Fudge Wars', {
@@ -104,12 +118,11 @@ export default class Title extends Phaser.State {
     }
 
     public preload(): void {
+        // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
     }
 
     public update(): void {
     }
-
-
 }
 

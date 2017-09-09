@@ -19,7 +19,7 @@ server.listen(process.env.PORT || 8081,function(){
     console.log('Listening on ' + server.address().port);
 });
 
-const MOVE_CONSTANT = 32;
+const MOVE_CONSTANT = 16;
 let nextPlayerId = 0;
 
 let board = {

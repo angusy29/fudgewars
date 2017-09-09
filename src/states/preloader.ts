@@ -1,6 +1,9 @@
 import * as Assets from '../assets';
 import * as AssetUtils from '../utils/assetUtils';
 
+/*
+ * After loading assets, this will start game.ts
+ */
 export default class Preloader extends Phaser.State {
 
     public preload(): void {
@@ -18,6 +21,6 @@ export default class Preloader extends Phaser.State {
     }
 
     private loadTitle(): void {
-        this.game.state.start('title');
+        this.game.state.start('game');
     }
 }
