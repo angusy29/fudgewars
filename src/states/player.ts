@@ -16,8 +16,8 @@ export default class Player extends Phaser.Sprite {
         this.socket.on('move', (player: any) => {
             this.x = player.x;
             this.y = player.y;
-            this.animations.sprite.x = player.x;
-            this.animations.sprite.y = player.y;
+            // this.animations.sprite.x = player.x;
+            // this.animations.sprite.y = player.y;
         });
     }
 }
