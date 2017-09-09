@@ -27,15 +27,9 @@ export default class Game extends Phaser.State {
 
             this.socket.on('player_left', (id: number) => {
                 this.characterFrames.push(this.playerMap[id].frame);
-                this.playerMap[id].destroy;
+                this.playerMap[id].destroy();
                 delete this.playerMap[id];
             });
-        });
-
-        this.socket.on('move', (player: any) => {
-            // finding where to access this to make it move took me so long
-            this.playerMap[player.id].animations.sprite.x = player.x;
-            this.playerMap[player.id].animations.sprite.y = player.y;
         });
     }
 
