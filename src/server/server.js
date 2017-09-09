@@ -5,7 +5,7 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 8081);
 
 try {
     app.use('/', express.static(dist + '/'));
@@ -18,6 +18,8 @@ try {
 }
 
 let nextPlayerId = 0;
+
+let playerMap = {}
 
 let board = {
     width: 768,
@@ -33,7 +35,13 @@ let physics = {
     velocityLimit: 20,
 }
 
-let playerMap = {}
+function getAllPlayers() {
+    let players = [];
+    for (let id in playerMap) {
+        players.push(playerMap[id]);
+    }
+    return players;
+}
 
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
@@ -53,7 +61,7 @@ io.on('connection',function(socket){
         }
         playerMap[socket.player.id] = socket.player;
 
-        socket.emit('all_players', Object.values(playerMap));
+        socket.emit('all_players', getAllPlayers());
         socket.broadcast.emit('player_joined',socket.player);
 
         socket.on('keydown', function(data) {
