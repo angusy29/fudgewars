@@ -86,24 +86,24 @@ io.on('connection',function(socket){
 // Sets up movement listeners
 // Eventually will want to put attack and stuff here too?
 function init_movement(socket) {
-    socket.on('left', function(id) {
-        playerMap[id].x -= MOVE_CONSTANT;
-        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    socket.on('left', function() {
+        playerMap[socket.player.id].x -= MOVE_CONSTANT;
+        io.sockets.emit('move', socket.player);
     });
 
-    socket.on('down', function(id) {
-        playerMap[id].y += MOVE_CONSTANT;
-        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+    socket.on('down', function() {
+        playerMap[socket.player.id].y += MOVE_CONSTANT;
+        io.sockets.emit('move', socket.player);
     });
     
     socket.on('right', function(id) {
-        playerMap[id].x += MOVE_CONSTANT;
-        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+        playerMap[socket.player.id].x += MOVE_CONSTANT;
+        io.sockets.emit('move', socket.player);
     });
 
     socket.on('up', function(id) {
-        playerMap[id].y -= MOVE_CONSTANT;
-        socket.emit('move', id, playerMap[id].x, playerMap[id].y);
+        playerMap[socket.player.id].y -= MOVE_CONSTANT;
+        io.sockets.emit('move', socket.player);
     })
 }
 

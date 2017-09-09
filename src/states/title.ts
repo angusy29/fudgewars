@@ -8,14 +8,12 @@ export default class Title extends Phaser.State {
     private map: Phaser.Tilemap;
     private characterFrames: number[] = [151, 152, 168, 169, 185];
     private socket: any;
-    private playerID: number;
 
     public init(): void {
         this.game.stage.disableVisibilityChange = true;
         this.socket = io.connect();
 
-        this.socket.on('all_players', (data: any, playerID: number) => {
-            this.playerID = playerID - 1;
+        this.socket.on('all_players', (data: any) => {
             for (let i = 0; i < data.length; i++) {
                 this.addNewPlayer(data[i].id, data[i].x, data[i].y);
             }
@@ -32,9 +30,9 @@ export default class Title extends Phaser.State {
 
         // the server will calculate the new position of the player
         // we need to set it to render it
-        this.socket.on('move', (playerID: number, x: number, y: number) => {
-            this.playerMap[playerID].x = x;
-            this.playerMap[playerID].y = y;
+        this.socket.on('move', (player: any) => {
+            this.playerMap[player.id].x = player.x;
+            this.playerMap[player.id].y = player.y;
         });
     }
 
@@ -55,16 +53,16 @@ export default class Title extends Phaser.State {
         console.log('down', a);
         switch (a.keyCode) {
             case 37:    // left
-                this.socket.emit('left', this.playerID);
+                this.socket.emit('left');
                 break;
             case 38:    // up
-                this.socket.emit('up', this.playerID);
+                this.socket.emit('up');
                 break;
             case 39:    // right
-                this.socket.emit('right', this.playerID);
+                this.socket.emit('right');
                 break;
             case 40:    // down
-                this.socket.emit('down', this.playerID);
+                this.socket.emit('down');
                 break;
             default:
                 break;
