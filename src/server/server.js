@@ -5,6 +5,8 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
+server.listen(process.env.PORT || 3000);
+
 try {
     app.use('/', express.static(dist + '/'));
 
@@ -14,10 +16,6 @@ try {
 } catch (err) {
 
 }
-
-server.listen(process.env.PORT || 8081,function(){
-    console.log('Listening on ' + server.address().port);
-});
 
 let nextPlayerId = 0;
 
