@@ -8,12 +8,14 @@ export default class Title extends Phaser.State {
     private map: Phaser.Tilemap;
     private characterFrames: number[] = [151, 152, 168, 169, 185];
     private socket: any;
+    private playerID: number;
 
     public init(): void {
         this.game.stage.disableVisibilityChange = true;
         this.socket = io.connect();
 
-        this.socket.on('all_players', (data: any) => {
+        this.socket.on('all_players', (data: any, playerID: number) => {
+            this.playerID = playerID - 1;
             for (let i = 0; i < data.length; i++) {
                 this.addNewPlayer(data[i].id, data[i].x, data[i].y);
             }
@@ -26,6 +28,13 @@ export default class Title extends Phaser.State {
                 this.playerMap[id].destroy();
                 delete this.playerMap[id];
             });
+        });
+
+        // the server will calculate the new position of the player
+        // we need to set it to render it
+        this.socket.on('move', (playerID: number, x: number, y: number) => {
+            this.playerMap[playerID].x = x;
+            this.playerMap[playerID].y = y;
         });
     }
 
@@ -41,8 +50,25 @@ export default class Title extends Phaser.State {
         // this.playerMap[id].anchor.setTo(0.5, 0.5);
     }
 
+
     private onDown(a: KeyboardEvent): void {
         console.log('down', a);
+        switch (a.keyCode) {
+            case 37:    // left
+                this.socket.emit('left', this.playerID);
+                break;
+            case 38:    // up
+                this.socket.emit('up', this.playerID);
+                break;
+            case 39:    // right
+                this.socket.emit('right', this.playerID);
+                break;
+            case 40:    // down
+                this.socket.emit('down', this.playerID);
+                break;
+            default:
+                break;
+        }
     }
     private onUp(a: KeyboardEvent): void {
         console.log('up', a);
@@ -50,10 +76,12 @@ export default class Title extends Phaser.State {
     }
 
     public create(): void {
+        // add enter key listener
         this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         this.testKey.onDown.add(() => {
             console.log('enter key pressed');
         });
+
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
         let layer: Phaser.TilemapLayer;
@@ -65,6 +93,8 @@ export default class Title extends Phaser.State {
 
         layer.events.onInputUp.add(this.getCoordinates);
 
+        // on down keypress, call onDown function
+        // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
         this.googleFontText = this.game.add.text(
             this.game.world.centerX,
@@ -72,15 +102,16 @@ export default class Title extends Phaser.State {
             font: '50px ' + Assets.GoogleWebFonts.Roboto
         });
         this.googleFontText.anchor.setTo(0.5);
-
-        //
         this.socket.emit('join_game');
-
     }
 
     public preload(): void {
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
     }
 
+    public update(): void {
+    }
+
 
 }
+
