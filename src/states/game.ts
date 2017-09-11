@@ -7,83 +7,94 @@ import Player from './player';
  */
 export default class Game extends Phaser.State {
     private googleFontText: Phaser.Text = null;
-    private playerMap: any = {};        // a dictionary of all players in the game
     private testKey: Phaser.Key;
-    private map: Phaser.Tilemap;        // the tilemap
+    private map: Phaser.Tilemap;
     private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
+    private players: any = {};
+    private isDown: any = {};
 
     public init(): void {
+
         this.game.stage.disableVisibilityChange = true;
         this.socket = io.connect();
 
-        this.socket.on('all_players', (data: any) => {
-            for (let i = 0; i < data.length; i++) {
-                this.addNewPlayer(data[i].id, data[i].x, data[i].y);
+        this.socket.on('update', (data: any) => {
+            for (let player of data) {
+                if (!this.players[player.id]) {
+
+                    this.addNewPlayer(player);
+                }
+                this.players[player.id].sprite.x = player.x;
+                this.players[player.id].sprite.y = player.y;
             }
-            this.socket.on('player_joined', (data: any) => {
-                this.addNewPlayer(data.id, data.x, data.y);
-            });
-
-            this.socket.on('player_left', (id: number) => {
-                this.characterFrames.push(this.playerMap[id].frame);
-                this.playerMap[id].destroy();
-                delete this.playerMap[id];
-            });
         });
 
-        this.socket.on('move', (player: any) => {
-            console.log('move');
-            console.log(this.playerMap);
-            this.playerMap[player.id].x = player.x;
-            this.playerMap[player.id].y = player.y;
-            this.playerMap[player.id].animations.sprite.x = player.x;
-            this.playerMap[player.id].animations.sprite.y = player.y;
+        this.socket.on('player_left', (id: number) => {
+            console.log('player left');
+            this.characterFrames.push(this.players[id].frame);
+            this.players[id].sprite.destroy();
+            delete this.players[id];
         });
+
+
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
 
-    // addNewPlayer
-    // id: id of the player to add
-    // x: x coordinate of the player
-    // y: y coordinate of the player
-    private addNewPlayer(id: number, x: number, y: number): void {
+    private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
             let frame: number = this.characterFrames.pop();
             let key: string = 'world.[64,64]';
-            let newplayer: Player = new Player(id, this.game, x, y, key, frame, this.socket);
-            newplayer.animations.sprite = this.game.add.sprite(newplayer.x, newplayer.y, 'world.[64,64]', frame);
-            this.playerMap[id] = newplayer;
-            // this.game.add.sprite(newplayer.x, newplayer.y, 'world.[64,64]', frame);
+            let sprite = this.game.add.sprite(player.x, player.y, 'world.[64,64]', frame);
+            this.players[player.id] = new Player(player.id, sprite);
         }
         // this.playerMap[id].anchor.setTo(0.5, 0.5);
     }
 
-    private onDown(a: KeyboardEvent): void {
-        console.log('down', a);
-        switch (a.keyCode) {
-            case 37:    // left
-                this.socket.emit('left');
+    private onDown(e: KeyboardEvent): void {
+        if (this.isDown[e.keyCode]) {
+            return;
+        }
+        this.isDown[e.keyCode] = true;
+        switch (e.keyCode) {
+            case 37:
+                this.socket.emit('keydown', 'left');
                 break;
-            case 38:    // up
-                this.socket.emit('up');
+            case 38:
+                this.socket.emit('keydown', 'up');
                 break;
-            case 39:    // right
-                this.socket.emit('right');
+            case 39:
+                this.socket.emit('keydown', 'right');
                 break;
-            case 40:    // down
-                this.socket.emit('down');
+            case 40:
+                this.socket.emit('keydown', 'down');
                 break;
             default:
                 break;
         }
     }
-    private onUp(a: KeyboardEvent): void {
-        console.log('up', a);
 
+    private onUp(e: KeyboardEvent): void {
+        this.isDown[e.keyCode] = false;
+        switch (e.keyCode) {
+            case 37:
+                this.socket.emit('keyup', 'left');
+                break;
+            case 38:
+                this.socket.emit('keyup', 'up');
+                break;
+            case 39:
+                this.socket.emit('keyup', 'right');
+                break;
+            case 40:
+                this.socket.emit('keyup', 'down');
+                break;
+            default:
+                break;
+        }
     }
 
     public create(): void {

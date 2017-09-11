@@ -5,6 +5,10 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
+server.listen(process.env.PORT || 8081, function(){
+    console.log('Listening on ' + server.address().port);
+});
+
 try {
     app.use('/', express.static(dist + '/'));
 
@@ -15,95 +19,172 @@ try {
 
 }
 
-server.listen(process.env.PORT || 8081,function(){
-    console.log('Listening on ' + server.address().port);
-});
-
-const MOVE_CONSTANT = 16;
-let nextPlayerId = 0;
-
-let board = {
-    width: 768,
-    height: 640,
-    tilewidth: 64,
-    tileheight: 64
-}
-
-let physics = {
-    // TODO: replace with p2 physics engine
-    acceleration: 1,
-    decceleration: 3,
-    velocityLimit: 20,
-}
-
-let playerMap = {}
-
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
 }
 
-io.on('connection',function(socket){
-    console.log("connecting with player");
-    socket.on('join_game',function(){
-        // Add player to board
-        console.log("join game player");
-        socket.player = {
-            id: nextPlayerId++,
-            x: randomInt(0, board.width - board.tilewidth),
-            y: randomInt(0, board.height - board.tileheight),
-            xv: 0,     // velocity in x plane
-            yv: 0,     // velocity in y plane
-        }
-        playerMap[socket.player.id] = socket.player;
-
-        // server sends the entire playerMap to the client
-        // the client needs to use the nextPlayerID to get their own ID...
-        socket.emit('all_players', Object.values(playerMap), nextPlayerId);
-        socket.broadcast.emit('player_joined',socket.player);
-
-        socket.on('keydown', function(data) {
-            console.log(data);
-            // TODO: update player last move
-            socket.player.x = data.x;
-            socket.player.y = data.y;
-        });
-
-        socket.on('keyup',function(data) {
-            console.log(data)
-        });
-
-        socket.on('disconnect', function() {
-            io.emit('player_left', socket.player.id);
-            delete playerMap[socket.player.id]
-        });
-        
-        // sets up movement listeners
-        init_movement(socket);
-    });
-});
-
-// init_movement
-// Sets up movement listeners
-// Eventually will want to put attack and stuff here too?
-function init_movement(socket) {
-    socket.on('left', function() {
-        playerMap[socket.player.id].x -= MOVE_CONSTANT;
-        io.sockets.emit('move', socket.player);
-    });
-
-    socket.on('down', function() {
-        playerMap[socket.player.id].y += MOVE_CONSTANT;
-        io.sockets.emit('move', socket.player);
-    });
-    
-    socket.on('right', function(id) {
-        playerMap[socket.player.id].x += MOVE_CONSTANT;
-        io.sockets.emit('move', socket.player);
-    });
-
-    socket.on('up', function(id) {
-        playerMap[socket.player.id].y -= MOVE_CONSTANT;
-        io.sockets.emit('move', socket.player);
-    })
+function clamp(low, high, value) {
+    if (value > high) {
+        value = high;
+    } else if (value < low) {
+        value = low;
+    }
+    return value;
 }
 
+class Player {
+    constructor(id, x, y) {
+        this.id = id;
+        this.x = x;     // position
+        this.y = y;
+        this.vx = 0;    // velocity
+        this.vy = 0;
+        this.ix = 0;    // input, -1, 0, 1
+        this.iy = 0;
+    }
+
+    keydown(direction) {
+        if (direction === 'up') {
+            this.iy = -1;
+        } else if (direction === 'down') {
+            this.iy = 1;
+        } else if (direction === 'left') {
+            this.ix = -1
+        } else if (direction === 'right') {
+            this.ix = 1;
+        }
+    }
+
+    keyup(direction) {
+        if (direction === 'up') {
+            this.iy = 0;
+        } else if (direction === 'down') {
+            this.iy = 0;
+        } else if (direction === 'left') {
+            this.ix = 0;
+        } else if (direction === 'right') {
+            this.ix = 0;
+        }
+    }
+
+    getRep() {
+        return {
+            id: this.id,
+            x: this.x,
+            y: this.y
+        }
+    }
+}
+
+class World {
+
+    constructor(width, height, tilesize) {
+        this.width = width;
+        this.height = height;
+        this.top = 0;
+        this.bottom = height - tilesize;
+        this.left = 0;
+        this.right = width - tilesize;
+        this.players = {};
+        this.playerCount = 0;
+        this.max_velocity = 600     // px/s
+        this.acceleration = 600     // px/s/s
+        this.decceleration = 1000   // px/s/s
+        this.timeout = null
+    }
+
+    addPlayer(socket) {
+        let id = socket.id;
+        let x = randomInt(this.left, this.right);
+        let y = randomInt(this.top, this.bottom);
+        let player = new Player(id, x, y);
+        this.players[id] = player;
+        this.playerCount++;
+        socket.broadcast.emit('player_joined', player.getRep());
+
+        socket.on('keydown', function(direction) {
+            player.keydown(direction)
+        });
+
+        socket.on('keyup',function(direction) {
+            player.keyup(direction)
+        });
+
+        socket.on('disconnect', () => {
+            this.removePlayer(id)
+            io.emit('player_left', id);
+        });
+
+        // Start updates
+        if (this.timeout == null) {
+            this.timeout = setInterval(()=>{this.update()}, 30)
+        }
+    }
+
+    removePlayer(id) {
+        delete this.players[id];
+        this.playerCount--;
+
+        // Stop updates if no more players
+        if (this.playerCount === 0) {
+            clearInterval(this.timeout)
+            this.timeout = null
+        }
+    }
+
+    update() {
+        let all = [];
+        for (let id in this.players) {
+            let player = this.players[id]
+            let seconds = 30/1000
+            // Update velocity
+            let accel = seconds * this.acceleration
+            let deccel = seconds * this.decceleration
+            if (player.vx !== 0 && Math.sign(player.ix) !== Math.sign(player.vx)) {
+                if (player.vx > deccel || player.vx < -deccel) {
+                    player.vx -= deccel * Math.sign(player.vx);
+                } else {
+                    player.vx = 0;
+                }
+            } else {
+                player.vx += accel * player.ix;
+            }
+            if (player.vy !== 0 && Math.sign(player.iy) !== Math.sign(player.vy)) {
+                if (player.vy > deccel || player.vy < -deccel) {
+                    player.vy -= deccel * Math.sign(player.vy);
+                } else {
+                    player.vy = 0;
+                }
+            } else {
+                player.vy += accel * player.iy;
+            }
+            // Clamp velocity
+            player.vx = clamp(-this.max_velocity, this.max_velocity, player.vx);
+            player.vy = clamp(-this.max_velocity, this.max_velocity, player.vy);
+
+            // Update position
+            player.x += player.vx * seconds;
+            player.y += player.vy * seconds;
+
+            player.x = clamp(this.left, this.right, player.x);
+            player.y = clamp(this.top, this.bottom, player.y);
+
+            all.push(player.getRep());
+
+        }
+        io.emit('update', all)
+    }
+
+}
+
+world = new World(768, 640, 64);
+
+io.on('connection',function(socket){
+
+    socket.on('join_game',function(){
+        if (world.playerCount < 5) {
+            world.addPlayer(socket)
+        }
+    });
+
+});
