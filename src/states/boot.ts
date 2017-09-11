@@ -1,6 +1,11 @@
 import * as Utils from '../utils/utils';
 import * as Assets from '../assets';
 
+/*
+ *  When the game boots, this script is executed
+ *  First script which is executed
+ *  This starts the preloader - to load any assets
+ */
 export default class Boot extends Phaser.State {
     public preload(): void {
         // Load any assets you need for your preloader state here.
