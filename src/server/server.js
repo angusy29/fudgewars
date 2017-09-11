@@ -5,13 +5,9 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
-<<<<<<< HEAD
-server.listen(process.env.PORT || 8081);
-=======
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
 });
->>>>>>> angus_branch
 
 try {
     app.use('/', express.static(dist + '/'));
@@ -23,35 +19,6 @@ try {
 
 }
 
-<<<<<<< HEAD
-let nextPlayerId = 0;
-
-let playerMap = {}
-
-let board = {
-    width: 768,
-    height: 640,
-    tilewidth: 64,
-    tileheight: 64
-}
-
-let physics = {
-    // TODO: replace with p2 physics engine
-    acceleration: 1,
-    decceleration: 3,
-    velocityLimit: 20,
-}
-
-function getAllPlayers() {
-    let players = [];
-    for (let id in playerMap) {
-        players.push(playerMap[id]);
-    }
-    return players;
-}
-
-=======
->>>>>>> angus_branch
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
 }
@@ -100,10 +67,6 @@ class Player {
         }
     }
 
-<<<<<<< HEAD
-        socket.emit('all_players', getAllPlayers());
-        socket.broadcast.emit('player_joined',socket.player);
-=======
     getRep() {
         return {
             id: this.id,
@@ -112,7 +75,6 @@ class Player {
         }
     }
 }
->>>>>>> angus_branch
 
 class World {
 
