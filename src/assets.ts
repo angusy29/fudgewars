@@ -19,13 +19,24 @@ export namespace Spritesheets {
 
 export namespace Atlases {
     enum AtlasesP2WalkFrames {
+        Symbol2CopyInstance10000 = <any>'Symbol 2 copy instance 10000',
+        Symbol2CopyInstance10001 = <any>'Symbol 2 copy instance 10001',
+        Symbol2CopyInstance10002 = <any>'Symbol 2 copy instance 10002',
+        Symbol2CopyInstance10003 = <any>'Symbol 2 copy instance 10003',
+        Symbol2CopyInstance10004 = <any>'Symbol 2 copy instance 10004',
+        Symbol2CopyInstance10005 = <any>'Symbol 2 copy instance 10005',
+        Symbol2CopyInstance10006 = <any>'Symbol 2 copy instance 10006',
+        Symbol2CopyInstance10007 = <any>'Symbol 2 copy instance 10007',
+        Symbol2CopyInstance10008 = <any>'Symbol 2 copy instance 10008',
+        Symbol2CopyInstance10009 = <any>'Symbol 2 copy instance 10009',
+        Symbol2CopyInstance10010 = <any>'Symbol 2 copy instance 10010',
     }
     export class AtlasesP2Walk {
         static getName(): string { return 'p2_walk'; }
 
-        static getJSON(): string { return require('assets/atlases/p2_walk.json'); }
+        static getJSONHash(): string { return require('assets/atlases/p2_walk.json'); }
 
-        static getPNGundefined(): string { return require('assets/atlases/p2_walk.png'); }
+        static getPNG(): string { return require('assets/atlases/p2_walk.png'); }
 
         static Frames = AtlasesP2WalkFrames;
     }
