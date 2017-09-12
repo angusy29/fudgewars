@@ -13,6 +13,7 @@ export default class Game extends Phaser.State {
     private socket: any;
     private players: any = {};
     private isDown: any = {};
+    private nextFrame = 0;
 
     public init(): void {
 
@@ -32,12 +33,17 @@ export default class Game extends Phaser.State {
 
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
-            this.characterFrames.push(this.players[id].frame);
+            // this.characterFrames.push(this.players[id].frame);
             this.players[id].sprite.destroy();
             delete this.players[id];
         });
 
 
+    }
+
+    private getNextFrame() {
+        this.nextFrame = (this.nextFrame + 1) % 5
+        return this.nextFrame;
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
@@ -46,7 +52,7 @@ export default class Game extends Phaser.State {
 
     private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
-            let frame: number = this.characterFrames.pop();
+            let frame: number = this.getNextFrame();
             let key: string = 'world.[64,64]';
             let sprite = this.game.add.sprite(player.x, player.y, 'world.[64,64]', frame);
             this.players[player.id] = new Player(player.id, sprite);

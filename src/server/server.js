@@ -182,9 +182,9 @@ world = new World(768, 640, 64);
 io.on('connection',function(socket){
 
     socket.on('join_game',function(){
-        if (world.playerCount < 5) {
+        // if (world.playerCount < 5) {
             world.addPlayer(socket)
-        }
+        // }
     });
 
 });
