@@ -5,6 +5,8 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
+let Player = require('./player');
+
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
 });
@@ -32,52 +34,7 @@ function clamp(low, high, value) {
     return value;
 }
 
-class Player {
-    constructor(id, x, y) {
-        this.id = id;
-        this.x = x;     // position
-        this.y = y;
-        this.vx = 0;    // velocity
-        this.vy = 0;
-        this.ix = 0;    // input, -1, 0, 1
-        this.iy = 0;
-    }
-
-    keydown(direction) {
-        if (direction === 'up') {
-            this.iy = -1;
-        } else if (direction === 'down') {
-            this.iy = 1;
-        } else if (direction === 'left') {
-            this.ix = -1
-        } else if (direction === 'right') {
-            this.ix = 1;
-        }
-    }
-
-    keyup(direction) {
-        if (direction === 'up') {
-            this.iy = 0;
-        } else if (direction === 'down') {
-            this.iy = 0;
-        } else if (direction === 'left') {
-            this.ix = 0;
-        } else if (direction === 'right') {
-            this.ix = 0;
-        }
-    }
-
-    getRep() {
-        return {
-            id: this.id,
-            x: this.x,
-            y: this.y
-        }
-    }
-}
-
 class World {
-
     constructor(width, height, tilesize) {
         this.width = width;
         this.height = height;
@@ -179,12 +136,8 @@ class World {
 
 world = new World(768, 640, 64);
 
-io.on('connection',function(socket){
-
-    socket.on('join_game',function(){
-        // if (world.playerCount < 5) {
-            world.addPlayer(socket)
-        // }
+io.on('connection', function(socket) {
+    socket.on('join_game', function() {
+        world.addPlayer(socket)
     });
-
 });

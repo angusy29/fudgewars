@@ -1,19 +1,26 @@
 import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
+import Flag from './flag';
 
 /*
  * The actual game client
  */
 export default class Game extends Phaser.State {
-    private googleFontText: Phaser.Text = null;
-    private testKey: Phaser.Key;
+    private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
     private characterFrames: any[] = [151, 152, 168, 169, 185];
+    private flagFrame: number = 151;
     private socket: any;
     private players: any = {};
     private isDown: any = {};
     private nextFrame = 0;
+
+    private redSheet: Phaser.Tilemap;      // red team spritesheet
+    private blueSheet: Phaser.Tilemap;     // blue team spritesheet
+
+    // unneeded shit
+    private testKey: Phaser.Key;
 
     public init(): void {
 
@@ -23,7 +30,6 @@ export default class Game extends Phaser.State {
         this.socket.on('update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
-
                     this.addNewPlayer(player);
                 }
                 this.players[player.id].sprite.x = player.x;
@@ -41,8 +47,12 @@ export default class Game extends Phaser.State {
 
     }
 
+    /*
+     *  getNextFrame()
+     *  Returns: A random character avatar
+     */
     private getNextFrame() {
-        this.nextFrame = (this.nextFrame + 1) % 5
+        this.nextFrame = (this.nextFrame + 1) % 5;
         return this.characterFrames[this.nextFrame];
     }
 
@@ -53,8 +63,9 @@ export default class Game extends Phaser.State {
     private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
-            let key: string = 'world.[64,64]';
-            let sprite = this.game.add.sprite(player.x, player.y, 'world.[64,64]', frame);
+            let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+            sprite.animations.add('walk');
+            sprite.animations.play('walk', 10, true);
             this.players[player.id] = new Player(player.id, sprite);
         }
         // this.playerMap[id].anchor.setTo(0.5, 0.5);
@@ -126,23 +137,25 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
+        this.game.add.sprite(0, 0, 'world.[64,64]', this.flagFrame);        // add flag for lulz
 
-        // render the title
-        this.googleFontText = this.game.add.text(
+        this.title = this.game.add.text(
             this.game.world.centerX,
             this.game.world.centerY - 100, 'Fudge Wars', {
             font: '50px ' + Assets.GoogleWebFonts.Roboto
         });
-        this.googleFontText.anchor.setTo(0.5);
+        this.title.anchor.setTo(0.5);
         this.socket.emit('join_game');
     }
 
     public preload(): void {
         // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
+        // this.game.load.spritesheet('bluesheet', 'assets/spritesheets/p2_walk.png', 70, 94, 11);
+        // this.game.load.spritesheet('redsheet', 'assets/spritesheets/p3_walk.png', 70, 94, 11);
     }
 
+    /* Gets called every frame */
     public update(): void {
     }
 }
-

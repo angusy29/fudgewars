@@ -202,7 +202,6 @@ if (!Object.keys(loaderTypes.atlas).length) {
 
             if (jsonExtensions.indexOf(loaderTypes.atlas[i][t]) !== -1) {
                 shell.ShellString('\n    enum ' + toPascalCase(i) + 'Frames {').toEnd(assetsClassFile);
-
                 try {
                     fileData = fs.readFileSync(dataFile, 'ascii');
                     json = JSON.parse(fileData);

@@ -18,7 +18,17 @@ export namespace Spritesheets {
 }
 
 export namespace Atlases {
-    class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
+    enum AtlasesP2WalkFrames {
+    }
+    export class AtlasesP2Walk {
+        static getName(): string { return 'p2_walk'; }
+
+        static getJSON(): string { return require('assets/atlases/p2_walk.json'); }
+
+        static getPNGundefined(): string { return require('assets/atlases/p2_walk.png'); }
+
+        static Frames = AtlasesP2WalkFrames;
+    }
 }
 
 export namespace Audio {
