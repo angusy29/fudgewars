@@ -43,7 +43,7 @@ export default class Game extends Phaser.State {
 
     private getNextFrame() {
         this.nextFrame = (this.nextFrame + 1) % 5
-        return this.nextFrame;
+        return this.characterFrames[this.nextFrame];
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
