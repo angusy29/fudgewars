@@ -167,14 +167,9 @@ export default class Game extends Phaser.State {
     }
     
     public update(): void {
-        this.afterPlayerUpdate();
-        
-    }
-    
-    private afterPlayerUpdate(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-
+    
         // implement collision detection between players and flags
         for (let playerKey of Object.keys(this.players)) {
             let player = this.players[playerKey];
