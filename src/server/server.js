@@ -5,6 +5,8 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
+let Player = require('./player');
+
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
 });
@@ -32,6 +34,7 @@ function clamp(low, high, value) {
     return value;
 }
 
+<<<<<<< HEAD
 class Player {
     constructor(id, x, y) {
         this.id = id;
@@ -88,8 +91,9 @@ class Player {
     }
 }
 
+=======
+>>>>>>> angus_branch
 class World {
-
     constructor(width, height, tilesize) {
         this.width = width;
         this.height = height;
@@ -115,11 +119,12 @@ class World {
         socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
-            player.keydown(direction)
+            player.keydown(direction);
         });
 
         socket.on('keyup',function(direction) {
-            player.keyup(direction)
+            player.keyup(direction);
+            io.emit('player_stop', id);
         });
 
         socket.on('disconnect', () => {
@@ -191,12 +196,8 @@ class World {
 
 world = new World(768, 640, 64);
 
-io.on('connection',function(socket){
-
-    socket.on('join_game',function(){
-        // if (world.playerCount < 5) {
-            world.addPlayer(socket)
-        // }
+io.on('connection', function(socket) {
+    socket.on('join_game', function() {
+        world.addPlayer(socket)
     });
-
 });
