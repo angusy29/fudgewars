@@ -61,11 +61,6 @@ class World {
 
         socket.on('keydown', function(direction) {
             player.keydown(direction);
-            // put this here because i felt like server had responsibility of managing socket
-            // and not the player
-            if (direction === 'up' || direction === 'left' || direction === 'down' || direction === 'right') {
-                io.emit('player_walk', id);
-            }
         });
 
         socket.on('keyup',function(direction) {

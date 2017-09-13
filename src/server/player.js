@@ -38,7 +38,8 @@ module.exports = class Player {
             id: this.id,
             x: this.x,
             y: this.y,
-            vx: this.vx
+            vx: this.vx,
+            vy: this.vy
         }
     }
 }

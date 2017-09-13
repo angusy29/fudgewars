@@ -14,9 +14,6 @@ export default class Game extends Phaser.State {
     private isDown: any = {};
     private nextFrame = 0;
 
-    private redSheet: Phaser.Tilemap;      // red team spritesheet
-    private blueSheet: Phaser.Tilemap;     // blue team spritesheet
-
     // unneeded shit
     private testKey: Phaser.Key;
 
@@ -33,9 +30,9 @@ export default class Game extends Phaser.State {
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
 
-                if (player.vx !== 0) {
+                if (player.vx || player.vy) {
                     this.players[player.id].sprite.animations.play('walk', 20, true);
-                } else if (player.vx === 0) {
+                } else {
                     this.players[player.id].sprite.animations.stop(null, true);
                 }
             }
@@ -45,14 +42,6 @@ export default class Game extends Phaser.State {
             console.log('player left');
             this.players[id].sprite.destroy();
             delete this.players[id];
-        });
-
-        this.socket.on('player_walk', (id: number) => {
-            this.players[id].sprite.animations.play('walk', 20, true);
-        });
-
-        this.socket.on('player_stop', (id: number) => {
-            this.players[id].sprite.animations.stop(null, true);
         });
     }
 
@@ -73,7 +62,6 @@ export default class Game extends Phaser.State {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
             let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
-            // sprite.scale.setTo(64, 64);
             sprite.animations.add('walk');
             this.players[player.id] = new Player(player.id, sprite);
         }
