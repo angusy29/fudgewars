@@ -1,66 +1,7 @@
 /* AUTO GENERATED FILE. DO NOT MODIFY. YOU WILL LOSE YOUR CHANGES ON BUILD. */
 
 export namespace Images {
-    export class FlagsFlagBlue {
-        static getName(): string { return 'flagBlue'; }
-
-        static getPNG(): string { return require('assets/flags/flagBlue.png'); }
-    }
-    export class FlagsFlagBlue2 {
-        static getName(): string { return 'flagBlue2'; }
-
-        static getPNG(): string { return require('assets/flags/flagBlue2.png'); }
-    }
-    export class FlagsFlagBlueHanging {
-        static getName(): string { return 'flagBlueHanging'; }
-
-        static getPNG(): string { return require('assets/flags/flagBlueHanging.png'); }
-    }
-    export class FlagsFlagGreen {
-        static getName(): string { return 'flagGreen'; }
-
-        static getPNG(): string { return require('assets/flags/flagGreen.png'); }
-    }
-    export class FlagsFlagGreen2 {
-        static getName(): string { return 'flagGreen2'; }
-
-        static getPNG(): string { return require('assets/flags/flagGreen2.png'); }
-    }
-    export class FlagsFlagGreenHanging {
-        static getName(): string { return 'flagGreenHanging'; }
-
-        static getPNG(): string { return require('assets/flags/flagGreenHanging.png'); }
-    }
-    export class FlagsFlagRed {
-        static getName(): string { return 'flagRed'; }
-
-        static getPNG(): string { return require('assets/flags/flagRed.png'); }
-    }
-    export class FlagsFlagRed2 {
-        static getName(): string { return 'flagRed2'; }
-
-        static getPNG(): string { return require('assets/flags/flagRed2.png'); }
-    }
-    export class FlagsFlagRedHanging {
-        static getName(): string { return 'flagRedHanging'; }
-
-        static getPNG(): string { return require('assets/flags/flagRedHanging.png'); }
-    }
-    export class FlagsFlagYellow {
-        static getName(): string { return 'flagYellow'; }
-
-        static getPNG(): string { return require('assets/flags/flagYellow.png'); }
-    }
-    export class FlagsFlagYellow2 {
-        static getName(): string { return 'flagYellow2'; }
-
-        static getPNG(): string { return require('assets/flags/flagYellow2.png'); }
-    }
-    export class FlagsFlagYellowHanging {
-        static getName(): string { return 'flagYellowHanging'; }
-
-        static getPNG(): string { return require('assets/flags/flagYellowHanging.png'); }
-    }
+    class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
 }
 
 export namespace Spritesheets {
