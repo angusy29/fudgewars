@@ -5,6 +5,8 @@ let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
+const FLAG_COLLISION_THRESHOLD = 40;
+
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
 });
@@ -81,6 +83,7 @@ class Flag {
         this.x = x;
         this.y = y;
         this.colorIdx = colorIdx;
+        this.captured = false;
     }
 
 }
@@ -89,23 +92,24 @@ class World {
     constructor(width, height, tilesize) {
         this.width = width;
         this.height = height;
-        this.top = 0;
-        this.bottom = height - tilesize;
-        this.left = 0;
-        this.right = width - tilesize;
+        this.top = 0 + tilesize/2;
+        this.bottom = height - tilesize/2;
+        this.left = 0 + tilesize/2;
+        this.right = width - tilesize/2;
         this.players = {};
         this.playerCount = 0;
         this.max_velocity = 600     // px/s
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
-        this.timeout = null
-        this.flags = [];
+        this.timeout = null;
 
         // setup four different color flags
-        this.flags.push(new Flag(tilesize,tilesize,0));
-        this.flags.push(new Flag(width-tilesize,height-tilesize,1));
-        this.flags.push(new Flag(width-tilesize,tilesize,2));
-        this.flags.push(new Flag(tilesize,height-tilesize,3));
+        this.flags = [
+            new Flag(tilesize,tilesize,0),
+            new Flag(width-tilesize,height-tilesize,1),
+            new Flag(width-tilesize,tilesize,2),
+            new Flag(tilesize,height-tilesize,3)
+        ];
     }
 
     initFlags(socket) {
@@ -121,6 +125,19 @@ class World {
         this.playerCount++;
         socket.broadcast.emit('player_joined', player.getRep());
 
+        socket.on('capture_flag', (flagId) => {
+            // check if the collision is valid
+            if (flagId < 0 || flagId >= this.flags.length)
+                return; // ignore the collision;
+            let xDist = Math.pow(this.flags[flagId].x - player.x, 2);
+            let yDist = Math.pow(this.flags[flagId].y - player.y, 2);
+            // check if the player is close enough to the flag
+            if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
+                io.emit('capture_flag_ack', flagId);
+                this.flags[flagId].captured = true;
+            }
+        });
+    
         socket.on('keydown', function(direction) {
             player.keydown(direction)
         });

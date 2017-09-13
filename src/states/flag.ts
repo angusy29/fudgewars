@@ -5,6 +5,7 @@ import { Atlases } from '../assets';
 export default class Flag {
     id: number;
     sprite: Phaser.Sprite = null;
+    isFlagUp: boolean = false;
 
     private static colors: any = [
         [
@@ -25,13 +26,39 @@ export default class Flag {
         ]
     ];
 
-    constructor(game: any, x: number, y: number, colorIdx: number) {
+    private static flagDownColors: any = [
+        Atlases.ItemsSpritesheet.Frames.FlagBlueHanging,
+        Atlases.ItemsSpritesheet.Frames.FlagGreenHanging,
+        Atlases.ItemsSpritesheet.Frames.FlagRedHanging,
+        Atlases.ItemsSpritesheet.Frames.FlagYellowHanging,
+    ];
+
+    constructor(game: any, x: number, y: number, colorIdx: number, captured: boolean) {
+        this.id = colorIdx;
         // this.sprite = game.add.sprite(x, y, Flag.registeredFlags[colorIdx][0] , 0);
         this.sprite = game.add.sprite(x, y, Atlases.ItemsSpritesheet.getName() , Flag.colors[colorIdx][0]);
         this.sprite.anchor.setTo(0, 1); // reset the anchor to the center of the flag pole
         this.sprite.scale.setTo(0.6, 0.6); // scale down the flag
+        this.sprite.animations.add('flag_up', Flag.colors[colorIdx], 5, true, false);
+        this.sprite.animations.add('flag_down', [Flag.flagDownColors[colorIdx]], 5, true, false);
+        game.physics.enable(this.sprite, Phaser.Physics.ARCADE); // setup physics engine
+        if (captured) {
+            this.isFlagUp = false;
+            this.setFlagDown();
+        } else {
+            this.isFlagUp = true;
+            this.setFlagUp(); // flag up
+        }
+    }
+    
+    setFlagUp(): void {
         // animations
-        this.sprite.animations.add('flag_move', Flag.colors[colorIdx], 5, true, false);
-        this.sprite.animations.play('flag_move');
+        this.isFlagUp = true;
+        this.sprite.animations.play('flag_up');
+    }
+
+    setFlagDown(): void {
+        this.isFlagUp = false;
+        this.sprite.animations.play('flag_down');
     }
 }
