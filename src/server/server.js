@@ -76,8 +76,16 @@ class Player {
     }
 }
 
-class World {
+class Flag {
+    constructor(x, y, colorIdx) {
+        this.x = x;
+        this.y = y;
+        this.colorIdx = colorIdx;
+    }
 
+}
+
+class World {
     constructor(width, height, tilesize) {
         this.width = width;
         this.height = height;
@@ -91,6 +99,17 @@ class World {
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
         this.timeout = null
+        this.flags = [];
+
+        // setup four different color flags
+        this.flags.push(new Flag(tilesize,tilesize,0));
+        this.flags.push(new Flag(width-tilesize,height-tilesize,1));
+        this.flags.push(new Flag(width-tilesize,tilesize,2));
+        this.flags.push(new Flag(tilesize,height-tilesize,3));
+    }
+
+    initFlags(socket) {
+        socket.emit('init_flags',this.flags);
     }
 
     addPlayer(socket) {
@@ -117,7 +136,7 @@ class World {
 
         // Start updates
         if (this.timeout == null) {
-            this.timeout = setInterval(()=>{this.update()}, 30)
+            this.timeout = setInterval(()=>{this.update()}, 30);
         }
     }
 
@@ -183,7 +202,8 @@ io.on('connection',function(socket){
 
     socket.on('join_game',function(){
         // if (world.playerCount < 5) {
-            world.addPlayer(socket)
+            world.addPlayer(socket);
+            world.initFlags(socket);
         // }
     });
 

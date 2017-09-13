@@ -1,6 +1,7 @@
 import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
+import Flag from './flag';
 
 /*
  * The actual game client
@@ -12,12 +13,15 @@ export default class Game extends Phaser.State {
     private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
     private players: any = {};
+    private flags: Flag[] = [];
+    private flagGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
 
     public init(): void {
 
         this.game.stage.disableVisibilityChange = true;
+        this.flagGroup = this.game.add.group();
         this.socket = io.connect();
 
         this.socket.on('update', (data: any) => {
@@ -39,17 +43,24 @@ export default class Game extends Phaser.State {
         });
 
 
+        this.socket.on('init_flags', (flags) => {
+            for (let f of flags) {
+                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx);
+                this.flags.push(newFlag);
+                this.flagGroup.add(newFlag.sprite);
+            }
+        });
     }
-
+    
     private getNextFrame() {
-        this.nextFrame = (this.nextFrame + 1) % 5
+        this.nextFrame = (this.nextFrame + 1) % 5;
         return this.characterFrames[this.nextFrame];
     }
-
+    
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
-
+    
     private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
@@ -104,15 +115,18 @@ export default class Game extends Phaser.State {
     }
 
     public create(): void {
+        
         // add enter key listener
         this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         this.testKey.onDown.add(() => {
             console.log('enter key pressed');
         });
-
+        
         // this is the tilesheet
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+
+
 
         let layer: Phaser.TilemapLayer;
 
@@ -135,6 +149,8 @@ export default class Game extends Phaser.State {
         });
         this.googleFontText.anchor.setTo(0.5);
         this.socket.emit('join_game');
+
+
     }
 
     public preload(): void {
@@ -143,6 +159,7 @@ export default class Game extends Phaser.State {
     }
 
     public update(): void {
+        this.game.world.bringToTop(this.flagGroup);
     }
 }
 
