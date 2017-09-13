@@ -1,7 +1,6 @@
 import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
-import Flag from './flag';
 
 /*
  * The actual game client
@@ -10,7 +9,6 @@ export default class Game extends Phaser.State {
     private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
     private characterFrames: any[] = [151, 152, 168, 169, 185];
-    private flagFrame: number = 151;
     private socket: any;
     private players: any = {};
     private isDown: any = {};
@@ -34,17 +32,28 @@ export default class Game extends Phaser.State {
                 }
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
+
+                if (player.vx !== 0) {
+                    this.players[player.id].sprite.animations.play('walk', 20, true);
+                } else if (player.vx === 0) {
+                    this.players[player.id].sprite.animations.stop(null, true);
+                }
             }
         });
 
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
-            // this.characterFrames.push(this.players[id].frame);
             this.players[id].sprite.destroy();
             delete this.players[id];
         });
 
+        this.socket.on('player_walk', (id: number) => {
+            this.players[id].sprite.animations.play('walk', 20, true);
+        });
 
+        this.socket.on('player_stop', (id: number) => {
+            this.players[id].sprite.animations.stop(null, true);
+        });
     }
 
     /*
@@ -64,8 +73,8 @@ export default class Game extends Phaser.State {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
             let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+            // sprite.scale.setTo(64, 64);
             sprite.animations.add('walk');
-            sprite.animations.play('walk', 10, true);
             this.players[player.id] = new Player(player.id, sprite);
         }
         // this.playerMap[id].anchor.setTo(0.5, 0.5);
@@ -77,17 +86,17 @@ export default class Game extends Phaser.State {
         }
         this.isDown[e.keyCode] = true;
         switch (e.keyCode) {
-            case 37:
-                this.socket.emit('keydown', 'left');
-                break;
-            case 38:
+            case 87:    // w
                 this.socket.emit('keydown', 'up');
                 break;
-            case 39:
-                this.socket.emit('keydown', 'right');
+            case 65:    // a
+                this.socket.emit('keydown', 'left');
                 break;
-            case 40:
+            case 83:    // s
                 this.socket.emit('keydown', 'down');
+                break;
+            case 68:    // d
+                this.socket.emit('keydown', 'right');
                 break;
             default:
                 break;
@@ -97,17 +106,17 @@ export default class Game extends Phaser.State {
     private onUp(e: KeyboardEvent): void {
         this.isDown[e.keyCode] = false;
         switch (e.keyCode) {
-            case 37:
-                this.socket.emit('keyup', 'left');
-                break;
-            case 38:
+            case 87:    // w
                 this.socket.emit('keyup', 'up');
                 break;
-            case 39:
-                this.socket.emit('keyup', 'right');
+            case 65:    // a
+                this.socket.emit('keyup', 'left');
                 break;
-            case 40:
+            case 83:    // s
                 this.socket.emit('keyup', 'down');
+                break;
+            case 68:    // d
+                this.socket.emit('keyup', 'right');
                 break;
             default:
                 break;
@@ -137,7 +146,6 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.game.add.sprite(0, 0, 'world.[64,64]', this.flagFrame);        // add flag for lulz
 
         this.title = this.game.add.text(
             this.game.world.centerX,
