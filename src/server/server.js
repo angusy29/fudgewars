@@ -88,7 +88,7 @@ class World {
         };
     }
 
-    collides(x, y, bounds=this.playerBounds) {
+    collides(playerId, x, y, bounds=this.playerBounds) {
         let topBound = y - bounds.top;
         let rightBound = x + bounds.right;
         let bottomBound = y + bounds.bottom;
@@ -112,6 +112,23 @@ class World {
             }
         }
 
+        for (let id in this.players) {
+            let other = this.players[id];
+
+            if (playerId === other.id) continue;
+
+            let otherTopBound = other.y - bounds.top;
+            let otherRightBound = other.x + bounds.right;
+            let otherBottomBound = other.y + bounds.bottom;
+            let otherLeftBound = other.x - bounds.left;
+            let xOverlap = (leftBound < otherRightBound) && (rightBound > otherLeftBound);
+            let yOverlap = (topBound < otherBottomBound) && (bottomBound > otherTopBound);
+            let collision = xOverlap && yOverlap;
+            if (collision) {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -129,7 +146,7 @@ class World {
         do {
             x = randomInt(this.left, this.right);
             y = randomInt(this.top, this.bottom);
-        } while (this.collides(x, y));
+        } while (this.collides(id, x, y));
         let player = new Player(id, x, y);
         this.players[id] = player;
         this.playerCount++;
@@ -215,7 +232,7 @@ class World {
                 let oldX = player.x;
                 player.x += (player.vx * seconds) / steps;
                 player.x = clamp(this.left - this.playerBounds.left, this.right + this.playerBounds.right, player.x);
-                if(this.collides(player.x, player.y)) {
+                if(this.collides(player.id, player.x, player.y)) {
                     player.x = oldX;
                     collideX = true;
                     player.vx = 0;
@@ -223,7 +240,7 @@ class World {
                 let oldY = player.y;
                 player.y += (player.vy * seconds) / steps;
                 player.y = clamp(this.top + this.playerBounds.top, this.bottom + this.playerBounds.bottom, player.y);
-                if(this.collides(player.x, player.y)) {
+                if(this.collides(player.id, player.x, player.y)) {
                     player.y = oldY;
                     player.vy = 0;
                     if (collideX) {
