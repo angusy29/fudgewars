@@ -82,6 +82,8 @@ export default class MainMenu extends Phaser.State {
         let button: Phaser.Button = this.game.add.button(x, y,
             Assets.Atlases.ButtonsBlueSheet.getName(), callback,
             this, MainMenu.buttons[0], MainMenu.buttons[1], MainMenu.buttons[2], MainMenu.buttons[3]);
+        button.onInputOver.add(this.over, this);
+        button.onInputOut.add(this.out, this);
         button.anchor.setTo(0.5, 0.5);
         return button;
     }
@@ -120,18 +122,25 @@ export default class MainMenu extends Phaser.State {
     }
 
     /*
-     * Called every frame, and animates (moves) the text when
-     * buttons are hovered over
+     * Callback for on hover
      */
-    public update(): void {
-        // perhaps calling update every frame is too computationally intensive?
+    private over(): void {
         this.allButtons.forEach(function(item) {
             if (item.getButton().input.pointerOver()) {
                 if (item.getIsEnter()) return;
                 item.setIsEnter(true);
                 item.getText().anchor.setTo(0.5, 0.5);
                 this.game.sound.play('rollover1');
-            } else {
+            }
+        }, this);
+    }
+
+    /*
+     * Callback for leaving a button
+     */
+    private out(): void {
+        this.allButtons.forEach(function(item) {
+            if (!item.getButton().input.pointerOver()) {
                 item.setIsEnter(false);
                 item.getText().anchor.setTo(0.5, 0.4);
             }
