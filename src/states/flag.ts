@@ -1,4 +1,3 @@
-import * as Assets from '../assets';
 import { NumberUtils } from '../utils/utils';
 import { Atlases } from '../assets';
 
