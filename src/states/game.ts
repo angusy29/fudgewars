@@ -6,7 +6,6 @@ import Player from './player';
  * The actual game client
  */
 export default class Game extends Phaser.State {
-    private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
     private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
@@ -134,13 +133,6 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-
-        this.title = this.game.add.text(
-            this.game.world.centerX,
-            this.game.world.centerY - 100, 'Fudge Wars', {
-            font: '50px ' + Assets.GoogleWebFonts.Roboto
-        });
-        this.title.anchor.setTo(0.5);
         this.socket.emit('join_game');
     }
 
@@ -149,9 +141,5 @@ export default class Game extends Phaser.State {
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
         // this.game.load.spritesheet('bluesheet', 'assets/spritesheets/p2_walk.png', 70, 94, 11);
         // this.game.load.spritesheet('redsheet', 'assets/spritesheets/p3_walk.png', 70, 94, 11);
-    }
-
-    /* Gets called every frame */
-    public update(): void {
     }
 }
