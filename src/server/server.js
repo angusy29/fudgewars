@@ -88,10 +88,6 @@ class World {
         };
     }
 
-    initFlags(socket) {
-        socket.emit('init_flags',this.flags);
-    }
-
     collides(x, y, bounds=this.playerBounds) {
         let topBound = y - bounds.top;
         let rightBound = x + bounds.right;
@@ -119,6 +115,13 @@ class World {
         return false;
     }
 
+    sendInitialData(socket) {
+        socket.emit('loaded', {
+            terrain: this.terrain,
+            flags: this.flags
+        });
+    }
+
     addPlayer(socket) {
         let id = socket.id;
         let x;
@@ -131,10 +134,6 @@ class World {
         this.players[id] = player;
         this.playerCount++;
         socket.broadcast.emit('player_joined', player.getRep());
-
-        socket.emit('loaded', {
-            terrain: this.terrain
-        });
 
         socket.on('capture_flag', (flagId) => {
             // check if the collision is valid
@@ -245,7 +244,7 @@ world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
     socket.on('join_game',function(){
+        world.sendInitialData(socket);
         world.addPlayer(socket);
-        world.initFlags(socket);
     });
 });

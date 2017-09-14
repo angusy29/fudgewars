@@ -31,6 +31,7 @@ export default class Game extends Phaser.State {
 
         this.socket.on('loaded', (data: any) => {
             this.loadTerrain(data.terrain);
+            this.loadFlags(data.flags);
         });
 
         this.socket.on('update', (data: any) => {
@@ -54,15 +55,6 @@ export default class Game extends Phaser.State {
             console.log('player left');
             this.players[id].sprite.destroy();
             delete this.players[id];
-        });
-
-        this.socket.on('init_flags', (flags) => {
-            for (let f of flags) {
-                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
-                this.flags[f.colorIdx] = newFlag;
-                this.flagGroup.add(newFlag.sprite);
-            }
-
         });
 
         this.socket.on('capture_flag_ack', (flagId) => {
@@ -170,6 +162,14 @@ export default class Game extends Phaser.State {
         let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
         terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
         this.terrainLayer = terrainMap.createLayer(0);
+    }
+
+    private loadFlags(flags: any): void {
+        for (let f of flags) {
+            let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+            this.flags[f.colorIdx] = newFlag;
+            this.flagGroup.add(newFlag.sprite);
+        }
     }
 
     public create(): void {
