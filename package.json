@@ -20,6 +20,7 @@
     "checkDepsVersions": "npm-check --skip-unused -u",
     "start:server": "nodemon ./src/server/server.js",
     "start": "node ./src/server/server.js",
+    "watch": "webpack --config webpack.dev.config.js --progress --colors --watch --hide-modules",
     "postinstall": "webpack --config webpack.dev.config.js"
   },
   "devDependencies": {
