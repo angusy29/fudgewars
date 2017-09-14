@@ -9,34 +9,34 @@ export default class Flag {
 
     private static colors: any = [
         [
-            Atlases.ItemsSpritesheet.Frames.FlagBlue,
-            Atlases.ItemsSpritesheet.Frames.FlagBlue2
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagBlue,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagBlue2
         ],
         [
-            Atlases.ItemsSpritesheet.Frames.FlagGreen,
-            Atlases.ItemsSpritesheet.Frames.FlagGreen2,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen2,
         ],
         [
-            Atlases.ItemsSpritesheet.Frames.FlagRed,
-            Atlases.ItemsSpritesheet.Frames.FlagRed2,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRed,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRed2,
         ],
         [
-            Atlases.ItemsSpritesheet.Frames.FlagYellow,
-            Atlases.ItemsSpritesheet.Frames.FlagYellow2,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagYellow,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagYellow2,
         ]
     ];
 
     private static flagDownColors: any = [
-        Atlases.ItemsSpritesheet.Frames.FlagBlueHanging,
-        Atlases.ItemsSpritesheet.Frames.FlagGreenHanging,
-        Atlases.ItemsSpritesheet.Frames.FlagRedHanging,
-        Atlases.ItemsSpritesheet.Frames.FlagYellowHanging,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagBlueHanging,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreenHanging,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRedHanging,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagYellowHanging,
     ];
 
     constructor(game: any, x: number, y: number, colorIdx: number, captured: boolean) {
         this.id = colorIdx;
         // this.sprite = game.add.sprite(x, y, Flag.registeredFlags[colorIdx][0] , 0);
-        this.sprite = game.add.sprite(x, y, Atlases.ItemsSpritesheet.getName() , Flag.colors[colorIdx][0]);
+        this.sprite = game.add.sprite(x, y, Atlases.SpritesheetsItemsSpritesheet.getName() , Flag.colors[colorIdx][0]);
         this.sprite.anchor.setTo(0, 1); // reset the anchor to the center of the flag pole
         this.sprite.scale.setTo(0.6, 0.6); // scale down the flag
         this.sprite.animations.add('flag_up', Flag.colors[colorIdx], 5, true, false);

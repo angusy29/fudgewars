@@ -18,7 +18,7 @@ export namespace Spritesheets {
 }
 
 export namespace Atlases {
-    enum ItemsSpritesheetFrames {
+    enum SpritesheetsItemsSpritesheetFrames {
         Bomb = <any>'bomb.png',
         BombFlash = <any>'bombFlash.png',
         Bush = <any>'bush.png',
@@ -79,14 +79,14 @@ export namespace Atlases {
         Weight = <any>'weight.png',
         WeightChained = <any>'weightChained.png',
     }
-    export class ItemsSpritesheet {
+    export class SpritesheetsItemsSpritesheet {
         static getName(): string { return 'items_spritesheet'; }
 
-        static getPNG(): string { return require('assets/items_spritesheet.png'); }
+        static getPNG(): string { return require('assets/spritesheets/items_spritesheet.png'); }
 
-        static getXML(): string { return require('assets/items_spritesheet.xml'); }
+        static getXML(): string { return require('assets/spritesheets/items_spritesheet.xml'); }
 
-        static Frames = ItemsSpritesheetFrames;
+        static Frames = SpritesheetsItemsSpritesheetFrames;
     }
 }
 
