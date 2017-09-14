@@ -24,8 +24,8 @@ export default class Game extends Phaser.State {
 
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        
-        
+
+
         this.socket = io.connect();
 
         this.socket.on('update', (data: any) => {
@@ -56,7 +56,7 @@ export default class Game extends Phaser.State {
                 this.flags[f.colorIdx] = newFlag;
                 this.flagGroup.add(newFlag.sprite);
             }
-            
+
         });
 
         this.socket.on('capture_flag_ack', (flagId) => {
@@ -73,11 +73,11 @@ export default class Game extends Phaser.State {
         this.nextFrame = (this.nextFrame + 1) % 5;
         return this.characterFrames[this.nextFrame];
     }
-    
+
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
-    
+
     private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
@@ -135,13 +135,13 @@ export default class Game extends Phaser.State {
     }
 
     public create(): void {
-        
+
         // add enter key listener
         this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         this.testKey.onDown.add(() => {
             console.log('enter key pressed');
         });
-        
+
         // this is the tilesheet
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
@@ -169,7 +169,7 @@ export default class Game extends Phaser.State {
         this.title.anchor.setTo(0.5);
         this.socket.emit('join_game');
     }
-    
+
     public preload(): void {
         // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
@@ -180,7 +180,7 @@ export default class Game extends Phaser.State {
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-    
+
         // implement collision detection between players and flags
         for (let playerKey of Object.keys(this.players)) {
             let player = this.players[playerKey];

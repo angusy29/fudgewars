@@ -49,7 +49,7 @@ export default class Flag {
             this.setFlagUp(); // flag up
         }
     }
-    
+
     setFlagUp(): void {
         // animations
         this.isFlagUp = true;
