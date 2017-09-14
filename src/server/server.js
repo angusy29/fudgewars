@@ -6,6 +6,8 @@ let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
 const FLAG_COLLISION_THRESHOLD = 40;
+let Player = require('./player');
+let Flag = require('./flag');
 
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
@@ -32,60 +34,6 @@ function clamp(low, high, value) {
         value = low;
     }
     return value;
-}
-
-class Player {
-    constructor(id, x, y) {
-        this.id = id;
-        this.x = x;     // position
-        this.y = y;
-        this.vx = 0;    // velocity
-        this.vy = 0;
-        this.ix = 0;    // input, -1, 0, 1
-        this.iy = 0;
-    }
-
-    keydown(direction) {
-        if (direction === 'up') {
-            this.iy = -1;
-        } else if (direction === 'down') {
-            this.iy = 1;
-        } else if (direction === 'left') {
-            this.ix = -1
-        } else if (direction === 'right') {
-            this.ix = 1;
-        }
-    }
-
-    keyup(direction) {
-        if (direction === 'up') {
-            this.iy = 0;
-        } else if (direction === 'down') {
-            this.iy = 0;
-        } else if (direction === 'left') {
-            this.ix = 0;
-        } else if (direction === 'right') {
-            this.ix = 0;
-        }
-    }
-
-    getRep() {
-        return {
-            id: this.id,
-            x: this.x,
-            y: this.y
-        }
-    }
-}
-
-class Flag {
-    constructor(x, y, colorIdx) {
-        this.x = x;
-        this.y = y;
-        this.colorIdx = colorIdx;
-        this.captured = false;
-    }
-
 }
 
 class World {
@@ -139,11 +87,12 @@ class World {
         });
     
         socket.on('keydown', function(direction) {
-            player.keydown(direction)
+            player.keydown(direction);
         });
 
         socket.on('keyup',function(direction) {
-            player.keyup(direction)
+            player.keyup(direction);
+            io.emit('player_stop', id);
         });
 
         socket.on('disconnect', () => {
@@ -216,12 +165,8 @@ class World {
 world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
-
     socket.on('join_game',function(){
-        // if (world.playerCount < 5) {
-            world.addPlayer(socket);
-            world.initFlags(socket);
-        // }
+        world.addPlayer(socket);
+        world.initFlags(socket);
     });
-
 });

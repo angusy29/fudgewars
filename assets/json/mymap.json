@@ -37,7 +37,8 @@
          "name":"tilesheet",
          "tileheight":64,
          "tilewidth":64
-        }],
+        }
+    ],
  "tilewidth":64,
  "type":"map",
  "version":1,

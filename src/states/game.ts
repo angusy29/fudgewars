@@ -7,8 +7,7 @@ import Flag from './flag';
  * The actual game client
  */
 export default class Game extends Phaser.State {
-    private googleFontText: Phaser.Text = null;
-    private testKey: Phaser.Key;
+    private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
     private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
@@ -17,6 +16,9 @@ export default class Game extends Phaser.State {
     private flagGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
+
+    // unneeded shit
+    private testKey: Phaser.Key;
 
     public init(): void {
 
@@ -33,16 +35,20 @@ export default class Game extends Phaser.State {
                 }
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
+
+                if (player.vx || player.vy) {
+                    this.players[player.id].sprite.animations.play('walk', 20, true);
+                } else {
+                    this.players[player.id].sprite.animations.stop(null, true);
+                }
             }
         });
 
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
-            // this.characterFrames.push(this.players[id].frame);
             this.players[id].sprite.destroy();
             delete this.players[id];
         });
-
 
         this.socket.on('init_flags', (flags) => {
             for (let f of flags) {
@@ -58,7 +64,11 @@ export default class Game extends Phaser.State {
             this.flags[flagId].setFlagDown();
         });
     }
-    
+
+    /*
+     *  getNextFrame()
+     *  Returns: A random character avatar
+     */
     private getNextFrame() {
         this.nextFrame = (this.nextFrame + 1) % 5;
         return this.characterFrames[this.nextFrame];
@@ -72,9 +82,10 @@ export default class Game extends Phaser.State {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
             let key: string = 'world.[64,64]';
-            let sprite = this.game.add.sprite(player.x, player.y, 'world.[64,64]', frame);
+            let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
             sprite.anchor.setTo(0.5, 1);
             this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+            sprite.animations.add('walk');
             this.players[player.id] = new Player(player.id, sprite);
         }
 
@@ -86,17 +97,17 @@ export default class Game extends Phaser.State {
         }
         this.isDown[e.keyCode] = true;
         switch (e.keyCode) {
-            case 37:
-                this.socket.emit('keydown', 'left');
-                break;
-            case 38:
+            case 87:    // w
                 this.socket.emit('keydown', 'up');
                 break;
-            case 39:
-                this.socket.emit('keydown', 'right');
+            case 65:    // a
+                this.socket.emit('keydown', 'left');
                 break;
-            case 40:
+            case 83:    // s
                 this.socket.emit('keydown', 'down');
+                break;
+            case 68:    // d
+                this.socket.emit('keydown', 'right');
                 break;
             default:
                 break;
@@ -106,17 +117,17 @@ export default class Game extends Phaser.State {
     private onUp(e: KeyboardEvent): void {
         this.isDown[e.keyCode] = false;
         switch (e.keyCode) {
-            case 37:
-                this.socket.emit('keyup', 'left');
-                break;
-            case 38:
+            case 87:    // w
                 this.socket.emit('keyup', 'up');
                 break;
-            case 39:
-                this.socket.emit('keyup', 'right');
+            case 65:    // a
+                this.socket.emit('keyup', 'left');
                 break;
-            case 40:
+            case 83:    // s
                 this.socket.emit('keyup', 'down');
+                break;
+            case 68:    // d
+                this.socket.emit('keyup', 'right');
                 break;
             default:
                 break;
@@ -150,13 +161,12 @@ export default class Game extends Phaser.State {
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
 
-        // render the title
-        this.googleFontText = this.game.add.text(
+        this.title = this.game.add.text(
             this.game.world.centerX,
             this.game.world.centerY - 100, 'Fudge Wars', {
             font: '50px ' + Assets.GoogleWebFonts.Roboto
         });
-        this.googleFontText.anchor.setTo(0.5);
+        this.title.anchor.setTo(0.5);
         this.socket.emit('join_game');
     }
     
@@ -165,7 +175,8 @@ export default class Game extends Phaser.State {
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
-    
+
+    /* Gets called every frame */
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
@@ -190,4 +201,3 @@ export default class Game extends Phaser.State {
         }
     }
 }
-
