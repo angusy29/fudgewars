@@ -1,7 +1,11 @@
 let express = require('express');
 let app = express();
 let server = require('http').Server(app);
-let io = require('socket.io').listen(server);
+let io = require('socket.io').listen(server, {
+    pingInterval: 1000,
+    pingTimeout: 1000,
+    cookie: false
+  });
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 
