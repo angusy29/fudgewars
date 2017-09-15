@@ -176,7 +176,6 @@ export class Loader {
         if (onComplete) {
             this.game.load.onLoadComplete.addOnce(onComplete, onCompleteContext);
         }
-
         this.loadImages();
         this.loadSpritesheets();
         this.loadAtlases();

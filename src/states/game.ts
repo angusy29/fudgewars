@@ -1,6 +1,7 @@
 import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
+import Flag from './flag';
 
 /*
  * The actual game client
@@ -9,6 +10,8 @@ export default class Game extends Phaser.State {
     private map: Phaser.Tilemap;
     private socket: any;
     private players: any = {};
+    private flags: Flag[] = [];
+    private flagGroup: Phaser.Group = null;
     private isDown: any = {};
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -47,6 +50,20 @@ export default class Game extends Phaser.State {
             this.players[id].sprite.destroy();
             this.players[id].name.destroy();
             delete this.players[id];
+        });
+
+        this.socket.on('init_flags', (flags) => {
+            for (let f of flags) {
+                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+                this.flags[f.colorIdx] = newFlag;
+                this.flagGroup.add(newFlag.sprite);
+            }
+
+        });
+
+        this.socket.on('capture_flag_ack', (flagId) => {
+            console.log('capture_flag_ack');
+            this.flags[flagId].setFlagDown();
         });
     }
 
@@ -87,6 +104,7 @@ export default class Game extends Phaser.State {
         // set up sprite
         let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
         sprite.anchor.setTo(0.5, 0.5);
+        sprite.scale.setTo(0.5);
         sprite.animations.add('walk');
         this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
@@ -153,6 +171,8 @@ export default class Game extends Phaser.State {
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
 
+
+
         let layer: Phaser.TilemapLayer;
 
         for (let i = 0; i < this.map.layers.length; i++) {
@@ -171,5 +191,31 @@ export default class Game extends Phaser.State {
     public preload(): void {
         // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    }
+
+    /* Gets called every frame */
+    public update(): void {
+        // push flags to the top of all sprites
+        this.game.world.bringToTop(this.flagGroup);
+
+        // implement collision detection between players and flags
+        for (let playerKey of Object.keys(this.players)) {
+            let player = this.players[playerKey];
+            for (let flag of this.flags) {
+                if (flag.isFlagUp) {
+                    this.game.physics.arcade.collide(player.sprite, flag.sprite,
+                        (obj1, obj2) => {
+                            // collision callback
+                            this.socket.emit('capture_flag', flag.id);
+                        },
+                        (obj1, obj2) => {
+                            // process callback
+                            return true;
+                        },
+                    this);
+                }
+            }
+        }
     }
 }

@@ -67,6 +67,8 @@ export default class MainMenu extends Phaser.State {
         let button: Phaser.Button = this.createButton(this.game.world.centerX, this.game.world.centerY, this.loadGame);
         let text: Phaser.Text = this.createText(button.x, button.y, 'Play online');
         this.startGame = new CustomButton(button, text);
+        button.onInputOver.add(this.over.bind(this, this.startGame), this);
+        button.onInputOut.add(this.out.bind(this, this.startGame), this);
         this.allButtons.push(this.startGame);
     }
 
@@ -78,6 +80,8 @@ export default class MainMenu extends Phaser.State {
         let button: Phaser.Button = this.createButton(this.startGame.getButton().x, this.startGame.getButton().y + 64, this.loadHowToPlay);
         let text: Phaser.Text = this.createText(button.x, button.y, 'How to play');
         this.howToPlay = new CustomButton(button, text);
+        button.onInputOver.add(this.over.bind(this, this.howToPlay), this);
+        button.onInputOut.add(this.out.bind(this, this.howToPlay), this);
         this.allButtons.push(this.howToPlay);
     }
 
@@ -89,6 +93,8 @@ export default class MainMenu extends Phaser.State {
         let button = this.createButton(this.howToPlay.getButton().x, this.howToPlay.getButton().y + 64, this.loadOptions);
         let text: Phaser.Text = this.createText(button.x, button.y, 'Options');
         this.options = new CustomButton(button, text);
+        button.onInputOver.add(this.over.bind(this, this.options), this);
+        button.onInputOut.add(this.out.bind(this, this.options), this);
         this.allButtons.push(this.options);
     }
 
@@ -143,26 +149,18 @@ export default class MainMenu extends Phaser.State {
     /*
      * Callback for on hover
      */
-    private over(): void {
-        this.allButtons.forEach(function(item) {
-            if (item.getButton().input.pointerOver()) {
-                if (item.getIsEnter()) return;
-                item.setIsEnter(true);
-                item.getText().anchor.setTo(0.5, 0.5);
-                this.game.sound.play('rollover1');
-            }
-        }, this);
+    private over(item: CustomButton): void {
+        if (item.getIsEnter()) return;
+        item.setIsEnter(true);
+        item.getText().anchor.setTo(0.5, 0.5);
+        this.game.sound.play('rollover1');
     }
 
     /*
      * Callback for leaving a button
      */
-    private out(): void {
-        this.allButtons.forEach(function(item) {
-            if (!item.getButton().input.pointerOver()) {
-                item.setIsEnter(false);
-                item.getText().anchor.setTo(0.5, 0.4);
-            }
-        }, this);
+    private out(item: CustomButton): void {
+        item.setIsEnter(false);
+        item.getText().anchor.setTo(0.5, 0.4);
     }
 }
