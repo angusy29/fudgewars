@@ -29,7 +29,7 @@ export default class Game extends Phaser.State {
         this.socket.on('update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
-                    this.addNewPlayer(player, player.name);
+                    this.addNewPlayer(player);
                 }
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
@@ -100,7 +100,7 @@ export default class Game extends Phaser.State {
      *
      * player: A player object from the server
      */
-    private addNewPlayer(player: any, playername: string): void {
+    private addNewPlayer(player: any): void {
         // set up sprite
         let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
         sprite.anchor.setTo(0.5, 0.5);
@@ -109,7 +109,7 @@ export default class Game extends Phaser.State {
         this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
         // set up label of the player
-        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, playername, {
+        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, player.name, {
             font: '12px ' + Assets.GoogleWebFonts.Roboto
         });
         name.anchor.setTo(0.5, 0.5);
