@@ -23,6 +23,7 @@
     "postinstall": "webpack --config webpack.dev.config.js"
   },
   "devDependencies": {
+    "@orange-games/phaser-input": "^2.0.5",
     "electron": "1.6.11",
     "electron-packager": "8.7.2"
   },

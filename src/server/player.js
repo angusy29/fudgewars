@@ -1,6 +1,7 @@
 module.exports = class Player {
-    constructor(id, x, y) {
+    constructor(id, name, x, y) {
         this.id = id;
+        this.name = name;
         this.x = x;     // position
         this.y = y;
         this.vx = 0;    // velocity
@@ -48,6 +49,7 @@ module.exports = class Player {
     getRep() {
         return {
             id: this.id,
+            name: this.name,
             x: this.x,
             y: this.y,
             vx: this.vx,        // velocities used to animate walking

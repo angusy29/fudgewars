@@ -68,11 +68,11 @@ class World {
         socket.emit('init_flags',this.flags);
     }
 
-    addPlayer(socket) {
+    addPlayer(socket, name) {
         let id = socket.id;
         let x = randomInt(this.left, this.right);
         let y = randomInt(this.top, this.bottom);
-        let player = new Player(id, x, y);
+        let player = new Player(id, name, x, y);
         this.players[id] = player;
         this.playerCount++;
         socket.broadcast.emit('player_joined', player.getRep());
@@ -169,8 +169,8 @@ class World {
 world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
-    socket.on('join_game',function(){
-        world.addPlayer(socket);
+    socket.on('join_game', function(name) {
+        world.addPlayer(socket, name);
         world.initFlags(socket);
     });
 });

@@ -7,7 +7,11 @@ import CustomButton from './custombutton';
 export default class MainMenu extends Phaser.State {
     private background: Phaser.Image;
 
-    // main menu buttons and text
+    // input field
+    private nicknameInput: PhaserInput.InputField;
+
+
+    // main menu buttons
     private allButtons: CustomButton[] = [];
     private startGame: CustomButton;
     private howToPlay: CustomButton;
@@ -26,10 +30,26 @@ export default class MainMenu extends Phaser.State {
 
     public preload(): void {
         // Load any assets you need for your preloader state here.
+        this.game.plugins.add(PhaserInput.Plugin);
     }
 
     public create(): void {
         this.background = this.game.add.image(0, 0, 'titlescreen');
+
+        // using ['inputField'] is shit style, if anyone knows how to properly set up plugins please fix
+        // this is using PhaserInput plugin, phaser doesn't have build in inputFields, have to use plugin
+        // can't use anchor.setTo, because placeholder and input text isn't anchored
+        this.nicknameInput = this.game.add['inputField'](this.game.world.centerX - 108, this.game.world.centerY - 92, {
+            font: '24px Roboto',
+            width: 200,
+            padding: 8,
+            borderWidth: 1,
+            borderColor: '#000',
+            borderRadius: 4,
+            placeHolder: 'Nickname',
+            fillAlpha: 0.9,
+            type: PhaserInput.InputType.text
+        });
 
         // must be called in this order
         // as subsequent buttons depend on previous button position
@@ -88,6 +108,7 @@ export default class MainMenu extends Phaser.State {
         let button: Phaser.Button = this.game.add.button(x, y,
             Assets.Atlases.ButtonsBlueSheet.getName(), callback,
             this, MainMenu.buttons[0], MainMenu.buttons[1], MainMenu.buttons[2], MainMenu.buttons[3]);
+        button.alpha = 0.9;
         button.anchor.setTo(0.5, 0.5);
         return button;
     }
@@ -112,7 +133,7 @@ export default class MainMenu extends Phaser.State {
      */
     private loadGame(): void {
         this.game.sound.play('click1');
-        this.game.state.start('game');
+        this.game.state.start('game', true, false, this.nicknameInput.value);
     }
 
     private loadHowToPlay(): void {
