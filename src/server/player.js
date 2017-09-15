@@ -50,8 +50,10 @@ module.exports = class Player {
             id: this.id,
             x: this.x,
             y: this.y,
-            vx: this.vx,
-            vy: this.vy
+            vx: this.vx,        // velocities used to animate walking
+            vy: this.vy,
+            left: this.left,    // left and right used to flip sprite
+            right: this.right
         }
     }
 }
