@@ -4,6 +4,7 @@ let server = require('http').Server(app);
 let io = require('socket.io').listen(server);
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
+let maps = path.resolve(__dirname + '/../../assets/json');
 
 const FLAG_COLLISION_THRESHOLD = 40;
 let Player = require('./player');
@@ -36,6 +37,30 @@ function clamp(low, high, value) {
     return value;
 }
 
+function getTerrain(data) {
+    return data["terrain"];
+}
+
+function getWorld(data) {
+    return data["world"];
+}
+
+function getFlags(data) {
+    return data["flags"];
+}
+
+function getFlagCoords(data, tilesize) {
+    let flags = [];
+    for (let i = 0; i < data.length; i++) {
+        let f = data[i];
+        flags.push(new Flag(f.x * tilesize, f.y * tilesize, i));
+    }
+
+    console.log(flags);
+
+    return flags;
+}
+
 class World {
     constructor(width, height, tilesize) {
         this.width = width;
@@ -50,14 +75,13 @@ class World {
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
         this.timeout = null;
+    
+        let data = require(maps + '/map.test.json');
+        this.terrain = getTerrain(data);
+        this.world = getWorld(data);
 
         // setup four different color flags
-        this.flags = [
-            new Flag(tilesize,tilesize,0),
-            new Flag(width-tilesize,height-tilesize,1),
-            new Flag(width-tilesize,tilesize,2),
-            new Flag(tilesize,height-tilesize,3)
-        ];
+        this.flags = getFlagCoords(getFlags(data), tilesize);
     }
 
     initFlags(socket) {
@@ -84,6 +108,12 @@ class World {
                 io.emit('capture_flag_ack', flagId);
                 this.flags[flagId].captured = true;
             }
+        });
+
+        socket.emit('loaded', {
+            terrain: this.terrain,
+            world: this.world
+            // flag: 
         });
     
         socket.on('keydown', function(direction) {

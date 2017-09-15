@@ -16,7 +16,8 @@ export default class Game extends Phaser.State {
     private flagGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
-
+    private terrainLayer: Phaser.TilemapLayer;
+    private flagLayer: Phaser.TilemapLayer;
     // unneeded shit
     private testKey: Phaser.Key;
 
@@ -24,9 +25,14 @@ export default class Game extends Phaser.State {
 
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        
-        
+
+
         this.socket = io.connect();
+
+        this.socket.on('loaded', (data: any) => {
+            this.generateWorld(data.world);
+            this.generateTerrain(data.terrain);
+        });
 
         this.socket.on('update', (data: any) => {
             for (let player of data) {
@@ -56,7 +62,7 @@ export default class Game extends Phaser.State {
                 this.flags[f.colorIdx] = newFlag;
                 this.flagGroup.add(newFlag.sprite);
             }
-            
+
         });
 
         this.socket.on('capture_flag_ack', (flagId) => {
@@ -73,11 +79,11 @@ export default class Game extends Phaser.State {
         this.nextFrame = (this.nextFrame + 1) % 5;
         return this.characterFrames[this.nextFrame];
     }
-    
+
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
-    
+
     private addNewPlayer(player: any): void {
         if (this.characterFrames.length > 0) {
             let frame: number = this.getNextFrame();
@@ -134,28 +140,58 @@ export default class Game extends Phaser.State {
         }
     }
 
+    private generateTerrain(terrain: number[][]): void {
+        let data: string = this.parseLayer(terrain);
+
+        this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
+        let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
+        terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
+
+        this.terrainLayer = terrainMap.createLayer(0);
+    }
+
+    private generateWorld(world: number[][]): void {
+        let data: string = this.parseLayer(world);
+
+        this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
+        this.map = this.game.add.tilemap('world', 64, 64);
+        this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+
+        let layer: Phaser.TilemapLayer = this.map.createLayer(0);
+        layer.inputEnabled = true;
+
+        layer.events.onInputUp.add(this.getCoordinates);
+    }
+
+    private parseLayer(layer: number[][]): string {
+        console.log(layer);
+        // Format terrain data
+        let data: string = '';
+        let y: any;
+        for (y in layer) {
+            let row = layer[y];
+            let x: any;
+            for (x in row) {
+                let col = row[x];
+                data += col.toString();
+                if (x < row.length - 1) {
+                    data +=  ',';
+                }
+            }
+            if (y < layer.length - 1) {
+                data +=  '\n';
+            }
+        }
+        return data;
+    }
+
     public create(): void {
-        
+
         // add enter key listener
         this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         this.testKey.onDown.add(() => {
             console.log('enter key pressed');
         });
-        
-        // this is the tilesheet
-        this.map = this.game.add.tilemap('world');
-        this.map.addTilesetImage('tilesheet', 'world.[64,64]');
-
-
-
-        let layer: Phaser.TilemapLayer;
-
-        for (let i = 0; i < this.map.layers.length; i++) {
-            layer = this.map.createLayer(i);
-        }
-        layer.inputEnabled = true;
-
-        layer.events.onInputUp.add(this.getCoordinates);
 
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
@@ -169,10 +205,10 @@ export default class Game extends Phaser.State {
         this.title.anchor.setTo(0.5);
         this.socket.emit('join_game');
     }
-    
+
     public preload(): void {
         // load the map
-        this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
+        // this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
@@ -180,7 +216,7 @@ export default class Game extends Phaser.State {
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-    
+
         // implement collision detection between players and flags
         for (let playerKey of Object.keys(this.players)) {
             let player = this.players[playerKey];
