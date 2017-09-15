@@ -168,22 +168,9 @@ class World {
 
 world = new World(768, 640, 64);
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-io.on('connection', function(socket) {
-    socket.on('join_game', function() {
-        world.addPlayer(socket)
-=======
 io.on('connection',function(socket){
     socket.on('join_game', function(name) {
         world.addPlayer(socket, name);
         world.initFlags(socket);
->>>>>>> Stashed changes
-=======
-io.on('connection',function(socket){
-    socket.on('join_game',function(){
-        world.addPlayer(socket);
-        world.initFlags(socket);
->>>>>>> master
     });
 });
