@@ -11,18 +11,27 @@ export default class Game extends Phaser.State {
     private players: any = {};
     private isDown: any = {};
 
-    public init(): void {
+    static readonly PLAYER_NAME_Y_OFFSET = 24;
+
+    // need to give it to create()
+    private client_player_name: string;
+
+    public init(playername: string): void {
         this.game.stage.disableVisibilityChange = true;
+        this.flagGroup = this.game.add.group();
+        this.client_player_name = playername;
+
         this.socket = io.connect();
 
         this.socket.on('update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
-                    this.addNewPlayer(player);
+                    this.addNewPlayer(player, player.name);
                 }
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
-
+                this.players[player.id].name.x = player.x;
+                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
                 this.updateSpriteDirection(player);
 
                 if (player.vx || player.vy) {
@@ -36,6 +45,7 @@ export default class Game extends Phaser.State {
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
             this.players[id].sprite.destroy();
+            this.players[id].name.destroy();
             delete this.players[id];
         });
     }
@@ -73,11 +83,20 @@ export default class Game extends Phaser.State {
      *
      * player: A player object from the server
      */
-    private addNewPlayer(player: any): void {
+    private addNewPlayer(player: any, playername: string): void {
+        // set up sprite
         let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
         sprite.anchor.setTo(0.5, 0.5);
         sprite.animations.add('walk');
-        this.players[player.id] = new Player(player.id, sprite);
+        this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+
+        // set up label of the player
+        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, playername, {
+            font: '12px ' + Assets.GoogleWebFonts.Roboto
+        });
+        name.anchor.setTo(0.5, 0.5);
+
+        this.players[player.id] = new Player(player.id, name, sprite);
     }
 
     /*
@@ -146,7 +165,7 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.socket.emit('join_game');
+        this.socket.emit('join_game', this.client_player_name);
     }
 
     public preload(): void {

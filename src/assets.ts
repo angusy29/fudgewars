@@ -301,7 +301,11 @@ export namespace Text {
 }
 
 export namespace Scripts {
-    class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
+    export class PhaserInput {
+        static getName(): string { return 'phaser-input'; }
+
+        static getJS(): string { return require('assets/phaser-input.js'); }
+    }
 }
 export namespace Shaders {
     class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
