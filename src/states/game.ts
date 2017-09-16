@@ -229,7 +229,7 @@ export default class Game extends Phaser.State {
     public preload(): void {
         // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        // this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
     /* Gets called every frame */
