@@ -60,8 +60,8 @@ export default class Game extends Phaser.State {
             delete this.players[id];
         });
 
-        this.socket.on('capture_flag_ack', (flagId) => {
-            console.log('capture_flag_ack');
+        this.socket.on('capture_flag', (flagId) => {
+            console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
     }
@@ -236,24 +236,5 @@ export default class Game extends Phaser.State {
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-
-        // implement collision detection between players and flags
-        for (let playerKey of Object.keys(this.players)) {
-            let player = this.players[playerKey];
-            for (let flag of this.flags) {
-                if (flag.isFlagUp) {
-                    this.game.physics.arcade.collide(player.sprite, flag.sprite,
-                        (obj1, obj2) => {
-                            // collision callback
-                            this.socket.emit('capture_flag', flag.id);
-                        },
-                        (obj1, obj2) => {
-                            // process callback
-                            return true;
-                        },
-                    this);
-                }
-            }
-        }
     }
 }

@@ -152,19 +152,6 @@ class World {
         this.playerCount++;
         socket.broadcast.emit('player_joined', player.getRep());
 
-        socket.on('capture_flag', (flagId) => {
-            // check if the collision is valid
-            if (flagId < 0 || flagId >= this.flags.length)
-                return; // ignore the collision;
-            let xDist = Math.pow(this.flags[flagId].x - player.x, 2);
-            let yDist = Math.pow(this.flags[flagId].y - player.y, 2);
-            // check if the player is close enough to the flag
-            if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
-                io.emit('capture_flag_ack', flagId);
-                this.flags[flagId].captured = true;
-            }
-        });
-
         socket.on('keydown', function(direction) {
             player.keydown(direction);
         });
@@ -246,6 +233,17 @@ class World {
                     if (collideX) {
                         break;
                     }
+                }
+            }
+
+            // determine if the player is capturing the flag
+            for (let f of this.flags) {
+                let xDist = Math.pow(f.x - player.x, 2);
+                let yDist = Math.pow(f.y - player.y, 2);
+                // check if the player is close enough to the flag
+                if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
+                    f.captured = true;
+                    io.emit('capture_flag', f.colorIdx);
                 }
             }
 
