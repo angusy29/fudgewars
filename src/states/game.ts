@@ -13,6 +13,8 @@ export default class Game extends Phaser.State {
     private flags: Flag[] = [];
     private flagGroup: Phaser.Group = null;
     private isDown: any = {};
+    private nextFrame = 0;
+    private terrainLayer: Phaser.TilemapLayer;
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
 
@@ -26,11 +28,17 @@ export default class Game extends Phaser.State {
 
         this.socket = io.connect();
 
+        this.socket.on('loaded', (data: any) => {
+            this.loadTerrain(data.terrain);
+            this.loadFlags(data.flags);
+        });
+
         this.socket.on('update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
+
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
@@ -50,15 +58,6 @@ export default class Game extends Phaser.State {
             this.players[id].sprite.destroy();
             this.players[id].name.destroy();
             delete this.players[id];
-        });
-
-        this.socket.on('init_flags', (flags) => {
-            for (let f of flags) {
-                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
-                this.flags[f.colorIdx] = newFlag;
-                this.flagGroup.add(newFlag.sprite);
-            }
-
         });
 
         this.socket.on('capture_flag_ack', (flagId) => {
@@ -163,6 +162,45 @@ export default class Game extends Phaser.State {
                 break;
             default:
                 break;
+        }
+    }
+
+    private loadTerrain(terrain: number[][]): void {
+        console.log(terrain);
+        let tilemapMapping = {
+            0: 16, // Air
+            1: 186 // Wall
+        };
+        // Format terrain data
+        let data: string = '';
+        let y: any;
+        for (y in terrain) {
+            let row = terrain[y];
+            let x: any;
+            for (x in row) {
+                let col = row[x];
+                col = tilemapMapping[col];
+                data += col.toString();
+                if (x < row.length - 1) {
+                    data +=  ',';
+                }
+            }
+            if (y < terrain.length - 1) {
+                data +=  '\n';
+            }
+        }
+
+        this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
+        let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
+        terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
+        this.terrainLayer = terrainMap.createLayer(0);
+    }
+
+    private loadFlags(flags: any): void {
+        for (let f of flags) {
+            let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+            this.flags[f.colorIdx] = newFlag;
+            this.flagGroup.add(newFlag.sprite);
         }
     }
 
