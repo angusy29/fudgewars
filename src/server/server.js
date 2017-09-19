@@ -139,7 +139,7 @@ class World {
         });
     }
 
-    addPlayer(socket) {
+    addPlayer(socket, name) {
         let id = socket.id;
         let x;
         let y;
@@ -147,23 +147,10 @@ class World {
             x = randomInt(this.left, this.right);
             y = randomInt(this.top, this.bottom);
         } while (this.collides(id, x, y));
-        let player = new Player(id, x, y);
+        let player = new Player(id, name, x, y);
         this.players[id] = player;
         this.playerCount++;
         socket.broadcast.emit('player_joined', player.getRep());
-
-        socket.on('capture_flag', (flagId) => {
-            // check if the collision is valid
-            if (flagId < 0 || flagId >= this.flags.length)
-                return; // ignore the collision;
-            let xDist = Math.pow(this.flags[flagId].x - player.x, 2);
-            let yDist = Math.pow(this.flags[flagId].y - player.y, 2);
-            // check if the player is close enough to the flag
-            if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
-                io.emit('capture_flag_ack', flagId);
-                this.flags[flagId].captured = true;
-            }
-        });
 
         socket.on('keydown', function(direction) {
             player.keydown(direction);
@@ -249,6 +236,17 @@ class World {
                 }
             }
 
+            // determine if the player is capturing the flag
+            for (let f of this.flags) {
+                let xDist = Math.pow(f.x - player.x, 2);
+                let yDist = Math.pow(f.y - player.y, 2);
+                // check if the player is close enough to the flag
+                if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
+                    f.captured = true;
+                    io.emit('capture_flag', f.colorIdx);
+                }
+            }
+
             all.push(player.getRep());
 
         }
@@ -260,8 +258,8 @@ class World {
 world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
-    socket.on('join_game',function(){
+    socket.on('join_game', function(name) {
+        world.addPlayer(socket, name);
         world.sendInitialData(socket);
-        world.addPlayer(socket);
     });
 });

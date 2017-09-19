@@ -7,9 +7,7 @@ import Flag from './flag';
  * The actual game client
  */
 export default class Game extends Phaser.State {
-    private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
-    private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
     private players: any = {};
     private flags: Flag[] = [];
@@ -18,14 +16,15 @@ export default class Game extends Phaser.State {
     private nextFrame = 0;
     private terrainLayer: Phaser.TilemapLayer;
 
-    // unneeded shit
-    private testKey: Phaser.Key;
+    static readonly PLAYER_NAME_Y_OFFSET = 24;
 
-    public init(): void {
+    // need to give it to create()
+    private client_player_name: string;
 
+    public init(playername: string): void {
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-
+        this.client_player_name = playername;
 
         this.socket = io.connect();
 
@@ -42,6 +41,9 @@ export default class Game extends Phaser.State {
 
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
+                this.players[player.id].name.x = player.x;
+                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
+                this.updateSpriteDirection(player);
 
                 if (player.vx || player.vy) {
                     this.players[player.id].sprite.animations.play('walk', 20, true);
@@ -54,42 +56,69 @@ export default class Game extends Phaser.State {
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
             this.players[id].sprite.destroy();
+            this.players[id].name.destroy();
             delete this.players[id];
         });
 
-        this.socket.on('capture_flag_ack', (flagId) => {
-            console.log('capture_flag_ack');
+        this.socket.on('capture_flag', (flagId) => {
+            console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
     }
 
     /*
-     *  getNextFrame()
-     *  Returns: A random character avatar
+     * Flips the player sprite depending on direction of movement
+     * player: A player object sent from the server
      */
-    private getNextFrame() {
-        this.nextFrame = (this.nextFrame + 1) % 5;
-        return this.characterFrames[this.nextFrame];
+    private updateSpriteDirection(player: any) {
+        // player is moving left
+        if (player.left !== 0) {
+            // player is facing right
+            if (this.players[player.id].getIsFaceRight()) {
+                // so we need to flip him
+                this.players[player.id].setIsFaceRight(false);
+                this.players[player.id].sprite.scale.x *= -1;
+            }
+        } else if (player.right !== 0) {    // player is moving right
+            // player is facing left, so we need to flip him
+            if (!this.players[player.id].getIsFaceRight()) {
+                this.players[player.id].setIsFaceRight(true);
+                this.players[player.id].sprite.scale.x *= -1;
+            }
+        }
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
 
+    /*
+     * Adds a new player to the game
+     * Creates a sprite for the player and populates list of players
+     * on the client
+     *
+     * player: A player object from the server
+     */
     private addNewPlayer(player: any): void {
-        if (this.characterFrames.length > 0) {
-            let frame: number = this.getNextFrame();
-            let key: string = 'world.[64,64]';
-            let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
-            sprite.anchor.setTo(0.5);
-            sprite.scale.setTo(0.5);
-            this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-            sprite.animations.add('walk');
-            this.players[player.id] = new Player(player.id, sprite);
-        }
+        // set up sprite
+        let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+        sprite.anchor.setTo(0.5, 0.5);
+        sprite.scale.setTo(0.5);
+        sprite.animations.add('walk');
+        this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
+        // set up label of the player
+        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, player.name, {
+            font: '12px ' + Assets.GoogleWebFonts.Roboto
+        });
+        name.anchor.setTo(0.5, 0.5);
+
+        this.players[player.id] = new Player(player.id, name, sprite);
     }
 
+    /*
+     * Callback for when key is pressed down
+     */
     private onDown(e: KeyboardEvent): void {
         if (this.isDown[e.keyCode]) {
             return;
@@ -113,6 +142,9 @@ export default class Game extends Phaser.State {
         }
     }
 
+    /*
+     * Callback for when key is bounced back up
+     */
     private onUp(e: KeyboardEvent): void {
         this.isDown[e.keyCode] = false;
         switch (e.keyCode) {
@@ -173,13 +205,6 @@ export default class Game extends Phaser.State {
     }
 
     public create(): void {
-
-        // add enter key listener
-        this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
-        this.testKey.onDown.add(() => {
-            console.log('enter key pressed');
-        });
-
         // this is the tilesheet
         this.map = this.game.add.tilemap('world');
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
@@ -198,44 +223,18 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-
-        this.title = this.game.add.text(
-            this.game.world.centerX,
-            this.game.world.centerY - 100, 'Fudge Wars', {
-            font: '50px ' + Assets.GoogleWebFonts.Roboto
-        });
-        this.title.anchor.setTo(0.5);
-        this.socket.emit('join_game');
+        this.socket.emit('join_game', this.client_player_name);
     }
 
     public preload(): void {
         // load the map
         this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        // this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
     /* Gets called every frame */
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-
-        // implement collision detection between players and flags
-        for (let playerKey of Object.keys(this.players)) {
-            let player = this.players[playerKey];
-            for (let flag of this.flags) {
-                if (flag.isFlagUp) {
-                    this.game.physics.arcade.collide(player.sprite, flag.sprite,
-                        (obj1, obj2) => {
-                            // collision callback
-                            this.socket.emit('capture_flag', flag.id);
-                        },
-                        (obj1, obj2) => {
-                            // process callback
-                            return true;
-                        },
-                    this);
-                }
-            }
-        }
     }
 }
