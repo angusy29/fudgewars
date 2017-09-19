@@ -8,6 +8,7 @@ let io = require('socket.io').listen(server, {
   });
 let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
+let maps = path.resolve(__dirname + '/../../assets/json');
 
 const FLAG_COLLISION_THRESHOLD = 40;
 let Player = require('./player');
@@ -40,6 +41,28 @@ function clamp(low, high, value) {
     return value;
 }
 
+function getTerrain(data) {
+    return data["terrain"];
+}
+
+function getWorld(data) {
+    return data["world"];
+}
+
+function getFlags(data) {
+    return data["flags"];
+}
+
+function getFlagCoords(data, tilesize) {
+    let flags = [];
+    for (let i = 0; i < data.length; i++) {
+        let f = data[i];
+        flags.push(new Flag(f.x * tilesize, f.y * tilesize, i));
+    }
+
+    return flags;
+}
+
 class World {
     constructor(width, height, tilesize) {
         this.width = width;
@@ -55,30 +78,20 @@ class World {
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
         this.timeout = null;
+    
+        let data = require(maps + '/map.test.json');
 
-        // setup four different color flags
-        this.flags = [
-            new Flag(tilesize,tilesize,0),
-            new Flag(width-tilesize,height-tilesize,1),
-            new Flag(width-tilesize,tilesize,2),
-            new Flag(tilesize,height-tilesize,3)
-        ];
-
+        this.world = getWorld(data);
+        
         // 0 = air, 1 = wall
         // Use single digits so it's visually easier to modify (all aligned)
         // Add extra numbers for different tilemap indices
         // Where 0 is the only non-collision
-        this.terrain = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-                        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-                        [0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0],
-                        [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
-                        [0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0],
-                        [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0],
-                        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+        this.terrain = getTerrain(data);
 
+        // setup four different color flags
+        this.flags = getFlagCoords(getFlags(data), tilesize);
+        
         // Bounds determined by the sprite
         this.playerBounds = {
             top: 0,
@@ -134,6 +147,7 @@ class World {
 
     sendInitialData(socket) {
         socket.emit('loaded', {
+            world: this.world,
             terrain: this.terrain,
             flags: this.flags
         });
