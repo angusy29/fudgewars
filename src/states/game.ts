@@ -13,6 +13,8 @@ export default class Game extends Phaser.State {
     private flags: Flag[] = [];
     private flagGroup: Phaser.Group = null;
     private isDown: any = {};
+    private nextFrame = 0;
+    private terrainLayer: Phaser.TilemapLayer;
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
 
@@ -26,11 +28,18 @@ export default class Game extends Phaser.State {
 
         this.socket = io.connect();
 
+        this.socket.on('loaded', (data: any) => {
+            this.loadWorld(data.world);
+            this.loadTerrain(data.terrain);
+            this.loadFlags(data.flags);
+        });
+
         this.socket.on('update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
+
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
@@ -52,17 +61,8 @@ export default class Game extends Phaser.State {
             delete this.players[id];
         });
 
-        this.socket.on('init_flags', (flags) => {
-            for (let f of flags) {
-                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
-                this.flags[f.colorIdx] = newFlag;
-                this.flagGroup.add(newFlag.sprite);
-            }
-
-        });
-
-        this.socket.on('capture_flag_ack', (flagId) => {
-            console.log('capture_flag_ack');
+        this.socket.on('capture_flag', (flagId) => {
+            console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
     }
@@ -166,22 +166,78 @@ export default class Game extends Phaser.State {
         }
     }
 
-    public create(): void {
-        // this is the tilesheet
-        this.map = this.game.add.tilemap('world');
+    private loadTerrain(terrain: number[][]): void {
+        // Format terrain data
+        let data: string = this.parseLayer(terrain);
+
+        this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
+        let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
+        terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
+        this.terrainLayer = terrainMap.createLayer(0);
+    }
+
+    private loadFlags(flags: any): void {
+        for (let f of flags) {
+            let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+            this.flags[f.colorIdx] = newFlag;
+            this.flagGroup.add(newFlag.sprite);
+        }
+    }
+
+    // public create(): void {
+    //     // this is the tilesheet
+    //     this.map = this.game.add.tilemap('world');
+    //     this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+
+    //     this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
+    //     let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
+    //     terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
+
+    //     this.terrainLayer = terrainMap.createLayer(0);
+    // }
+
+    private loadWorld(world: number[][]): void {
+        let data: string = this.parseLayer(world);
+
+        this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
+        this.map = this.game.add.tilemap('world', 64, 64);
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
 
-
-
-        let layer: Phaser.TilemapLayer;
-
-        for (let i = 0; i < this.map.layers.length; i++) {
-            layer = this.map.createLayer(i);
-        }
+        let layer: Phaser.TilemapLayer = this.map.createLayer(0);
         layer.inputEnabled = true;
 
         layer.events.onInputUp.add(this.getCoordinates);
+    }
 
+    private parseLayer(layer: number[][]): string {
+        // Format data
+        let tilemapMapping = {
+            0: 16, // Air
+            // 1: 186 // Wall
+        };
+        let data: string = '';
+        let y: any;
+        for (y in layer) {
+            let row = layer[y];
+            let x: any;
+            for (x in row) {
+                let col = row[x];
+                if (col === 0) {
+                    col = tilemapMapping[col];
+                }
+                data += col.toString();
+                if (x < row.length - 1) {
+                    data +=  ',';
+                }
+            }
+            if (y < layer.length - 1) {
+                data +=  '\n';
+            }
+        }
+        return data;
+    }
+
+    public create(): void {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
@@ -190,32 +246,13 @@ export default class Game extends Phaser.State {
 
     public preload(): void {
         // load the map
-        this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        // this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
+        // this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
     /* Gets called every frame */
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-
-        // implement collision detection between players and flags
-        for (let playerKey of Object.keys(this.players)) {
-            let player = this.players[playerKey];
-            for (let flag of this.flags) {
-                if (flag.isFlagUp) {
-                    this.game.physics.arcade.collide(player.sprite, flag.sprite,
-                        (obj1, obj2) => {
-                            // collision callback
-                            this.socket.emit('capture_flag', flag.id);
-                        },
-                        (obj1, obj2) => {
-                            // process callback
-                            return true;
-                        },
-                    this);
-                }
-            }
-        }
     }
 }

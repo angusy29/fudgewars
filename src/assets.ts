@@ -355,6 +355,11 @@ export namespace BitmapFonts {
 }
 
 export namespace JSON {
+    export class JsonMapTest {
+        static getName(): string { return 'map.test'; }
+
+        static getJSON(): string { return require('assets/json/map.test.json'); }
+    }
     export class JsonMymap {
         static getName(): string { return 'mymap'; }
 
