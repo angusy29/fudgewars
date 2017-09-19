@@ -40,7 +40,7 @@ export default class Flag {
         this.sprite.scale.setTo(0.6, 0.6); // scale down the flag
         this.sprite.animations.add('flag_up', Flag.colors[colorIdx], 5, true, false);
         this.sprite.animations.add('flag_down', [Flag.flagDownColors[colorIdx]], 5, true, false);
-        game.physics.enable(this.sprite, Phaser.Physics.ARCADE); // setup physics engine
+        // game.physics.enable(this.sprite, Phaser.Physics.ARCADE); // setup physics engine
         if (captured) {
             this.isFlagUp = false;
             this.setFlagDown();
@@ -49,7 +49,7 @@ export default class Flag {
             this.setFlagUp(); // flag up
         }
     }
-    
+
     setFlagUp(): void {
         // animations
         this.isFlagUp = true;

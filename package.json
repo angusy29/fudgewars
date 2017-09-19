@@ -20,9 +20,11 @@
     "checkDepsVersions": "npm-check --skip-unused -u",
     "start:server": "nodemon ./src/server/server.js",
     "start": "node ./src/server/server.js",
+    "watch": "webpack --config webpack.dev.config.js --progress --colors --watch --hide-modules",
     "postinstall": "webpack --config webpack.dev.config.js"
   },
   "devDependencies": {
+    "@orange-games/phaser-input": "^2.0.5",
     "electron": "1.6.11",
     "electron-packager": "8.7.2"
   },

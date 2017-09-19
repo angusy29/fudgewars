@@ -7,9 +7,7 @@ import Flag from './flag';
  * The actual game client
  */
 export default class Game extends Phaser.State {
-    private title: Phaser.Text = null;
     private map: Phaser.Tilemap;
-    private characterFrames: any[] = [151, 152, 168, 169, 185];
     private socket: any;
     private players: any = {};
     private flags: Flag[] = [];
@@ -17,21 +15,23 @@ export default class Game extends Phaser.State {
     private isDown: any = {};
     private nextFrame = 0;
     private terrainLayer: Phaser.TilemapLayer;
-    private flagLayer: Phaser.TilemapLayer;
-    // unneeded shit
-    private testKey: Phaser.Key;
 
-    public init(): void {
+    static readonly PLAYER_NAME_Y_OFFSET = 24;
 
+    // need to give it to create()
+    private client_player_name: string;
+
+    public init(playername: string): void {
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-
+        this.client_player_name = playername;
 
         this.socket = io.connect();
 
         this.socket.on('loaded', (data: any) => {
-            this.generateWorld(data.world);
-            this.generateTerrain(data.terrain);
+            this.loadWorld(data.world);
+            this.loadTerrain(data.terrain);
+            this.loadFlags(data.flags);
         });
 
         this.socket.on('update', (data: any) => {
@@ -39,8 +39,12 @@ export default class Game extends Phaser.State {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
+
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
+                this.players[player.id].name.x = player.x;
+                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
+                this.updateSpriteDirection(player);
 
                 if (player.vx || player.vy) {
                     this.players[player.id].sprite.animations.play('walk', 20, true);
@@ -53,50 +57,69 @@ export default class Game extends Phaser.State {
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
             this.players[id].sprite.destroy();
+            this.players[id].name.destroy();
             delete this.players[id];
         });
 
-        this.socket.on('init_flags', (flags) => {
-            for (let f of flags) {
-                let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
-                this.flags[f.colorIdx] = newFlag;
-                this.flagGroup.add(newFlag.sprite);
-            }
-
-        });
-
-        this.socket.on('capture_flag_ack', (flagId) => {
-            console.log('capture_flag_ack');
+        this.socket.on('capture_flag', (flagId) => {
+            console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
     }
 
     /*
-     *  getNextFrame()
-     *  Returns: A random character avatar
+     * Flips the player sprite depending on direction of movement
+     * player: A player object sent from the server
      */
-    private getNextFrame() {
-        this.nextFrame = (this.nextFrame + 1) % 5;
-        return this.characterFrames[this.nextFrame];
+    private updateSpriteDirection(player: any) {
+        // player is moving left
+        if (player.left !== 0) {
+            // player is facing right
+            if (this.players[player.id].getIsFaceRight()) {
+                // so we need to flip him
+                this.players[player.id].setIsFaceRight(false);
+                this.players[player.id].sprite.scale.x *= -1;
+            }
+        } else if (player.right !== 0) {    // player is moving right
+            // player is facing left, so we need to flip him
+            if (!this.players[player.id].getIsFaceRight()) {
+                this.players[player.id].setIsFaceRight(true);
+                this.players[player.id].sprite.scale.x *= -1;
+            }
+        }
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
     }
 
+    /*
+     * Adds a new player to the game
+     * Creates a sprite for the player and populates list of players
+     * on the client
+     *
+     * player: A player object from the server
+     */
     private addNewPlayer(player: any): void {
-        if (this.characterFrames.length > 0) {
-            let frame: number = this.getNextFrame();
-            let key: string = 'world.[64,64]';
-            let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
-            sprite.anchor.setTo(0.5, 1);
-            this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-            sprite.animations.add('walk');
-            this.players[player.id] = new Player(player.id, sprite);
-        }
+        // set up sprite
+        let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+        sprite.anchor.setTo(0.5, 0.5);
+        sprite.scale.setTo(0.5);
+        sprite.animations.add('walk');
+        this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
+        // set up label of the player
+        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, player.name, {
+            font: '12px ' + Assets.GoogleWebFonts.Roboto
+        });
+        name.anchor.setTo(0.5, 0.5);
+
+        this.players[player.id] = new Player(player.id, name, sprite);
     }
 
+    /*
+     * Callback for when key is pressed down
+     */
     private onDown(e: KeyboardEvent): void {
         if (this.isDown[e.keyCode]) {
             return;
@@ -120,6 +143,9 @@ export default class Game extends Phaser.State {
         }
     }
 
+    /*
+     * Callback for when key is bounced back up
+     */
     private onUp(e: KeyboardEvent): void {
         this.isDown[e.keyCode] = false;
         switch (e.keyCode) {
@@ -140,17 +166,37 @@ export default class Game extends Phaser.State {
         }
     }
 
-    private generateTerrain(terrain: number[][]): void {
+    private loadTerrain(terrain: number[][]): void {
+        // Format terrain data
         let data: string = this.parseLayer(terrain);
 
         this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
         let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
         terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
-
         this.terrainLayer = terrainMap.createLayer(0);
     }
 
-    private generateWorld(world: number[][]): void {
+    private loadFlags(flags: any): void {
+        for (let f of flags) {
+            let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+            this.flags[f.colorIdx] = newFlag;
+            this.flagGroup.add(newFlag.sprite);
+        }
+    }
+
+    // public create(): void {
+    //     // this is the tilesheet
+    //     this.map = this.game.add.tilemap('world');
+    //     this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+
+    //     this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
+    //     let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
+    //     terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
+
+    //     this.terrainLayer = terrainMap.createLayer(0);
+    // }
+
+    private loadWorld(world: number[][]): void {
         let data: string = this.parseLayer(world);
 
         this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
@@ -164,8 +210,11 @@ export default class Game extends Phaser.State {
     }
 
     private parseLayer(layer: number[][]): string {
-        console.log(layer);
-        // Format terrain data
+        // Format data
+        let tilemapMapping = {
+            0: 16, // Air
+            // 1: 186 // Wall
+        };
         let data: string = '';
         let y: any;
         for (y in layer) {
@@ -173,6 +222,9 @@ export default class Game extends Phaser.State {
             let x: any;
             for (x in row) {
                 let col = row[x];
+                if (col === 0) {
+                    col = tilemapMapping[col];
+                }
                 data += col.toString();
                 if (x < row.length - 1) {
                     data +=  ',';
@@ -186,54 +238,21 @@ export default class Game extends Phaser.State {
     }
 
     public create(): void {
-
-        // add enter key listener
-        this.testKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
-        this.testKey.onDown.add(() => {
-            console.log('enter key pressed');
-        });
-
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-
-        this.title = this.game.add.text(
-            this.game.world.centerX,
-            this.game.world.centerY - 100, 'Fudge Wars', {
-            font: '50px ' + Assets.GoogleWebFonts.Roboto
-        });
-        this.title.anchor.setTo(0.5);
-        this.socket.emit('join_game');
+        this.socket.emit('join_game', this.client_player_name);
     }
 
     public preload(): void {
         // load the map
         // this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        // this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
     /* Gets called every frame */
     public update(): void {
         // push flags to the top of all sprites
         this.game.world.bringToTop(this.flagGroup);
-
-        // implement collision detection between players and flags
-        for (let playerKey of Object.keys(this.players)) {
-            let player = this.players[playerKey];
-            for (let flag of this.flags) {
-                if (flag.isFlagUp) {
-                    this.game.physics.arcade.collide(player.sprite, flag.sprite,
-                        (obj1, obj2) => {
-                            // collision callback
-                            this.socket.emit('capture_flag', flag.id);
-                        },
-                        (obj1, obj2) => {
-                            // process callback
-                            return true;
-                        },
-                    this);
-                }
-            }
-        }
     }
 }
