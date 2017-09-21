@@ -14,6 +14,7 @@ export default class Game extends Phaser.State {
     private flagGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
+    private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -32,6 +33,11 @@ export default class Game extends Phaser.State {
             this.loadWorld(data.world);
             this.loadTerrain(data.terrain);
             this.loadFlags(data.flags);
+
+            // Sprite ordering
+            this.game.world.sendToBack(this.flagGroup);
+            this.game.world.sendToBack(this.terrainLayer);
+            this.game.world.sendToBack(this.mapLayer);
         });
 
         this.socket.on('update', (data: any) => {
@@ -204,6 +210,8 @@ export default class Game extends Phaser.State {
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
 
         let layer: Phaser.TilemapLayer = this.map.createLayer(0);
+        this.mapLayer = layer;
+
         layer.inputEnabled = true;
 
         layer.events.onInputUp.add(this.getCoordinates);
@@ -252,7 +260,5 @@ export default class Game extends Phaser.State {
 
     /* Gets called every frame */
     public update(): void {
-        // push flags to the top of all sprites
-        this.game.world.bringToTop(this.flagGroup);
     }
 }
