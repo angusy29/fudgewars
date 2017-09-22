@@ -13,6 +13,7 @@ let maps = path.resolve(__dirname + '/../../assets/json');
 const FLAG_COLLISION_THRESHOLD = 40;
 let Player = require('./player');
 let Flag = require('./flag');
+let utils = require('./utils');
 
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
@@ -26,19 +27,6 @@ try {
     });
 } catch (err) {
 
-}
-
-function randomInt (low, high) {
-    return Math.floor(Math.random() * (high - low) + low);
-}
-
-function clamp(low, high, value) {
-    if (value > high) {
-        value = high;
-    } else if (value < low) {
-        value = low;
-    }
-    return value;
 }
 
 function getTerrain(data) {
@@ -74,15 +62,12 @@ class World {
         this.right = width - tilesize/2;
         this.players = {};
         this.playerCount = 0;
-        this.max_velocity = 600     // px/s
-        this.acceleration = 600     // px/s/s
-        this.decceleration = 1000   // px/s/s
         this.timeout = null;
-    
+
         let data = require(maps + '/map.test.json');
 
         this.world = getWorld(data);
-        
+
         // 0 = air, 1 = wall
         // Use single digits so it's visually easier to modify (all aligned)
         // Add extra numbers for different tilemap indices
@@ -91,25 +76,18 @@ class World {
 
         // setup four different color flags
         this.flags = getFlagCoords(getFlags(data), tilesize);
-        
-        // Bounds determined by the sprite
-        this.playerBounds = {
-            top: 0,
-            right: 10,
-            bottom: 24,
-            left: 10
-        };
     }
 
-    collides(playerId, x, y, bounds=this.playerBounds) {
-        let topBound = y - bounds.top;
-        let rightBound = x + bounds.right;
-        let bottomBound = y + bounds.bottom;
-        let leftBound = x - bounds.left;
-
+    /**
+     * Takes in a two points representing a bounding box which both have an x and y property
+     * and tells you if the box collides with the terrain
+     */
+    collidesTerrain(topLeft, bottomRight) {
         // TODO Is the tilesize 64 or 32?!
-        let topLeftTile  = { x: Math.floor(leftBound / 64), y: Math.floor(topBound / 64) };
-        let bottomRightTile  = { x: Math.floor(rightBound / 64), y: Math.floor(bottomBound / 64) };
+        let tilesize = 64;
+
+        let topLeftTile  = { x: Math.floor(topLeft.x / tilesize), y: Math.floor(topLeft.y / tilesize) };
+        let bottomRightTile  = { x: Math.floor(bottomRight.x / tilesize), y: Math.floor(bottomRight.y / tilesize) };
 
         for (let y = topLeftTile.y; y <= bottomRightTile.y; y++) {
             for (let x = topLeftTile.x; x <= bottomRightTile.x; x++) {
@@ -125,24 +103,43 @@ class World {
             }
         }
 
+    }
+
+    collidesObject(topLeft, bottomRight, otherTopLeft, otherBottomRight) {
+        let xOverlap = (topLeft.x < otherBottomRight.x) && (bottomRight.x > otherTopLeft.x);
+        let yOverlap = (topLeft.y < otherBottomRight.y) && (bottomRight.y > otherTopLeft.y);
+        let hasCollision = xOverlap && yOverlap;
+
+        return hasCollision;
+    }
+
+    /**
+     * Checks collision against other players, given a player id.
+     *
+     * Returns the other player, if collided, or null.
+     */
+    collidesPlayers(playerId) {
+        let player = this.players[playerId];
+        if (player === undefined) return false;
+
         for (let id in this.players) {
             let other = this.players[id];
 
             if (playerId === other.id) continue;
 
-            let otherTopBound = other.y - bounds.top;
-            let otherRightBound = other.x + bounds.right;
-            let otherBottomBound = other.y + bounds.bottom;
-            let otherLeftBound = other.x - bounds.left;
-            let xOverlap = (leftBound < otherRightBound) && (rightBound > otherLeftBound);
-            let yOverlap = (topBound < otherBottomBound) && (bottomBound > otherTopBound);
-            let collision = xOverlap && yOverlap;
-            if (collision) {
-                return true;
+            if (this.collidesObject(player.getTopLeft(), player.getBottomRight(),
+                                    other.getTopLeft(), other.getBottomRight())) {
+                return other;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    collides(playerId) {
+        let player = this.players[playerId]
+        if (player === undefined) return false;
+        return this.collidesPlayers(playerId) || this.collidesTerrain(player.getTopLeft(), player.getBottomRight())
     }
 
     sendInitialData(socket) {
@@ -157,22 +154,33 @@ class World {
         let id = socket.id;
         let x;
         let y;
-        do {
-            x = randomInt(this.left, this.right);
-            y = randomInt(this.top, this.bottom);
-        } while (this.collides(id, x, y));
-        let player = new Player(id, name, x, y);
+        let spawnPointCollides = false;
+
+        let player = new Player(id, name, 0, 0, this);
         this.players[id] = player;
         this.playerCount++;
+
+        do {
+            x = utils.randomInt(this.left, this.right);
+            y = utils.randomInt(this.top, this.bottom);
+            player.x = x;
+            player.y = y;
+            spawnPointCollides = this.collides(id);
+        } while (spawnPointCollides);
+
         socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
             player.keydown(direction);
         });
 
-        socket.on('keyup',function(direction) {
+        socket.on('keyup', function(direction) {
             player.keyup(direction);
             io.emit('player_stop', id);
+        });
+
+        socket.on('hook', function(angle) {
+            player.startHooking(angle);
         });
 
         socket.on('disconnect', () => {
@@ -182,7 +190,7 @@ class World {
 
         // Start updates
         if (this.timeout == null) {
-            this.timeout = setInterval(()=>{this.update()}, 30);
+            this.timeout = setInterval(() => {this.update()}, 30);
         }
     }
 
@@ -202,68 +210,20 @@ class World {
         for (let id in this.players) {
             let player = this.players[id]
             let seconds = 30/1000
-            // Update velocity
-            let accel = seconds * this.acceleration
-            let deccel = seconds * this.decceleration
-            if (player.vx !== 0 && Math.sign(player.ix) !== Math.sign(player.vx)) {
-                if (player.vx > deccel || player.vx < -deccel) {
-                    player.vx -= deccel * Math.sign(player.vx);
-                } else {
-                    player.vx = 0;
-                }
-            } else {
-                player.vx += accel * player.ix;
-            }
-            if (player.vy !== 0 && Math.sign(player.iy) !== Math.sign(player.vy)) {
-                if (player.vy > deccel || player.vy < -deccel) {
-                    player.vy -= deccel * Math.sign(player.vy);
-                } else {
-                    player.vy = 0;
-                }
-            } else {
-                player.vy += accel * player.iy;
-            }
-            // Clamp velocity
-            player.vx = clamp(-this.max_velocity, this.max_velocity, player.vx);
-            player.vy = clamp(-this.max_velocity, this.max_velocity, player.vy);
 
-            let steps = 5;
-            let collideX = false;
-            for (let i = 0; i < steps; i++) {
-                let oldX = player.x;
-                player.x += (player.vx * seconds) / steps;
-                player.x = clamp(this.left - this.playerBounds.left, this.right + this.playerBounds.right, player.x);
-                if(this.collides(player.id, player.x, player.y)) {
-                    player.x = oldX;
-                    collideX = true;
-                    player.vx = 0;
-                }
-                let oldY = player.y;
-                player.y += (player.vy * seconds) / steps;
-                player.y = clamp(this.top + this.playerBounds.top, this.bottom + this.playerBounds.bottom, player.y);
-                if(this.collides(player.id, player.x, player.y)) {
-                    player.y = oldY;
-                    player.vy = 0;
-                    if (collideX) {
-                        break;
-                    }
-                }
-            }
+            player.update(seconds);
 
             // determine if the player is capturing the flag
             for (let f of this.flags) {
-                let xDist = Math.pow(f.x - player.x, 2);
-                let yDist = Math.pow(f.y - player.y, 2);
-                // check if the player is close enough to the flag
-                if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
+                if (utils.distance({ x: player.x, y: player.y }, { x: f.x, y: f.y }) < FLAG_COLLISION_THRESHOLD) {
                     f.captured = true;
                     io.emit('capture_flag', f.colorIdx);
                 }
             }
 
             all.push(player.getRep());
-
         }
+
         io.emit('update', all)
     }
 

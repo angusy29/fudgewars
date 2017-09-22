@@ -41,21 +41,36 @@ export default class Game extends Phaser.State {
         });
 
         this.socket.on('update', (data: any) => {
-            for (let player of data) {
-                if (!this.players[player.id]) {
-                    this.addNewPlayer(player);
+            for (let playerUpdate of data) {
+                if (!this.players[playerUpdate.id]) {
+                    this.addNewPlayer(playerUpdate);
                 }
 
-                this.players[player.id].sprite.x = player.x;
-                this.players[player.id].sprite.y = player.y;
-                this.players[player.id].name.x = player.x;
-                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
-                this.updateSpriteDirection(player);
+                let player = this.players[playerUpdate.id];
+
+                if (playerUpdate.hook) {
+                    if (player.hookSprite === null) {
+                        player.hookSprite = this.game.add.sprite(playerUpdate.hook.startX, playerUpdate.hook.startY, 'p2_walk');
+                        player.hookSprite.scale.setTo(0.2);
+                    } else {
+                        player.hookSprite.x = playerUpdate.hook.x;
+                        player.hookSprite.y = playerUpdate.hook.y;
+                    }
+                } else if (player.hookSprite) {
+                    player.hookSprite.destroy();
+                    player.hookSprite = null;
+                }
+
+                player.sprite.x = playerUpdate.x;
+                player.sprite.y = playerUpdate.y;
+                player.name.x = playerUpdate.x;
+                player.name.y = playerUpdate.y - Game.PLAYER_NAME_Y_OFFSET;
+                this.updateSpriteDirection(playerUpdate);
 
                 if (player.vx || player.vy) {
-                    this.players[player.id].sprite.animations.play('walk', 20, true);
+                    player.sprite.animations.play('walk', 20, true);
                 } else {
-                    this.players[player.id].sprite.animations.stop(null, true);
+                    player.sprite.animations.stop(null, true);
                 }
             }
         });
@@ -214,7 +229,18 @@ export default class Game extends Phaser.State {
 
         layer.inputEnabled = true;
 
-        layer.events.onInputUp.add(this.getCoordinates);
+        // layer.events.onInputUp.add(this.getCoordinates);
+        layer.events.onInputDown.add(this.hook.bind(this));
+    }
+
+    private hook(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
+        if (pointer.leftButton.isDown) {
+            let id = this.socket.id;
+            let me: Player = this.players[id];
+            console.log(me.sprite.x, me.sprite.y, pointer.x, pointer.y);
+            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            this.socket.emit('hook', angle);
+        }
     }
 
     private parseLayer(layer: number[][]): string {
@@ -249,6 +275,9 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
+        this.game.input.mouse.capture = true;
+        this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
         this.socket.emit('join_game', this.client_player_name);
     }
 
