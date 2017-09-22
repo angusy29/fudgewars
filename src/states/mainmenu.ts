@@ -10,7 +10,6 @@ export default class MainMenu extends Phaser.State {
     // input field
     private nicknameInput: PhaserInput.InputField;
 
-
     // main menu buttons
     private allButtons: CustomButton[] = [];
     private startGame: CustomButton;
@@ -35,6 +34,8 @@ export default class MainMenu extends Phaser.State {
 
     public create(): void {
         this.background = this.game.add.image(0, 0, 'titlescreen');
+        this.background.height = this.game.height;
+        this.background.width = this.game.width;
 
         // using ['inputField'] is shit style, if anyone knows how to properly set up plugins please fix
         // this is using PhaserInput plugin, phaser doesn't have build in inputFields, have to use plugin
@@ -48,6 +49,7 @@ export default class MainMenu extends Phaser.State {
             borderRadius: 4,
             placeHolder: 'Nickname',
             fillAlpha: 0.9,
+            max: 15,
             type: PhaserInput.InputType.text
         });
 

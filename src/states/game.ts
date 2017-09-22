@@ -17,9 +17,8 @@ export default class Game extends Phaser.State {
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
-    static readonly PLAYER_NAME_Y_OFFSET = 24;
-
     // need to give it to create()
+    // also used to render own client's name green
     private client_player_name: string;
 
     public init(playername: string): void {
@@ -46,12 +45,28 @@ export default class Game extends Phaser.State {
                     this.addNewPlayer(player);
                 }
 
+                // update sprite position
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
-                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
+                this.players[player.id].name.y = player.y - Player.PLAYER_NAME_Y_OFFSET;
+                // group items are relative to the group object, so we 
+                // loop through and set each one instead
+                this.players[player.id].healthBar.forEach(element => {
+                    element.x = player.x - Player.HEALTH_BAR_X_OFFSET;
+                    element.y = player.y - Player.HEALTH_BAR_Y_OFFSET;
+                });
+
+                /* Sample code on how to decrease health */
+                let healthFg = this.players[player.id].healthBar.getChildAt(1);
+                if (this.players[player.id].getHealth() > 0) {
+                    this.players[player.id].health -= 1;
+                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health/100)
+                }
+
                 this.updateSpriteDirection(player);
 
+                // update player animation, if they are walking
                 if (player.vx || player.vy) {
                     this.players[player.id].sprite.animations.play('walk', 20, true);
                 } else {
@@ -84,12 +99,13 @@ export default class Game extends Phaser.State {
             if (this.players[player.id].getIsFaceRight()) {
                 // so we need to flip him
                 this.players[player.id].setIsFaceRight(false);
+                // so when we flip the sprite, the name gets flipped back to original orientation
                 this.players[player.id].sprite.scale.x *= -1;
             }
         } else if (player.right !== 0) {    // player is moving right
             // player is facing left, so we need to flip him
             if (!this.players[player.id].getIsFaceRight()) {
-                this.players[player.id].setIsFaceRight(true);
+                this.players[player.id].setIsFaceRight(true);           
                 this.players[player.id].sprite.scale.x *= -1;
             }
         }
@@ -115,12 +131,53 @@ export default class Game extends Phaser.State {
         this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
         // set up label of the player
-        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, player.name, {
-            font: '12px ' + Assets.GoogleWebFonts.Roboto
+        let name = this.game.add.text(player.x, player.y - Player.PLAYER_NAME_Y_OFFSET, player.name, {
+            font: '14px ' + Assets.GoogleWebFonts.Roboto
         });
         name.anchor.setTo(0.5, 0.5);
 
-        this.players[player.id] = new Player(player.id, name, sprite);
+        // if this is the client's player, set the colour to be limegreen
+        if (player.name === this.client_player_name) {
+            name.addColor('#32CD32', 0);
+        }
+
+        let healthBar = this.createPlayerHealthBar(player);
+        this.players[player.id] = new Player(player.id, name, healthBar, sprite);
+    }
+
+    /*
+     * Creates the canvas for player health bar
+     * player: Player to create health bar for
+     * 
+     * return: A group containing the health bar foreground (green part)
+     * and the health bar background (red part), they are indexes 0 and 1
+     * respectively
+     */
+    private createPlayerHealthBar(player: any): Phaser.Group {
+        // create health bar canvas
+        let healthBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.beginPath();
+        healthBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.fillStyle = Player.HEALTH_GREEN_COLOUR;
+        healthBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        let healthBgBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.beginPath();
+        healthBgBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.fillStyle = Player.HEALTH_RED_COLOUR;
+        healthBgBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        // health bar green part
+        let healthBarFg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBMP);
+
+        // health bar red part
+        let healthBarBg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBgBMP);
+
+        let healthBar = new Phaser.Group(this.game);
+        healthBar.addAt(healthBarBg, 0);
+        healthBar.addAt(healthBarFg, 1);
+
+        return healthBar;
     }
 
     /*
@@ -256,9 +313,5 @@ export default class Game extends Phaser.State {
         // load the map
         // this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
         // this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    }
-
-    /* Gets called every frame */
-    public update(): void {
     }
 }
