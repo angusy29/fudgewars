@@ -78,11 +78,11 @@ class World {
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
         this.timeout = null;
-    
+
         let data = require(maps + '/map.test.json');
 
         this.world = getWorld(data);
-        
+
         // 0 = air, 1 = wall
         // Use single digits so it's visually easier to modify (all aligned)
         // Add extra numbers for different tilemap indices
@@ -91,7 +91,7 @@ class World {
 
         // setup four different color flags
         this.flags = getFlagCoords(getFlags(data), tilesize);
-        
+
         // Bounds determined by the sprite
         this.playerBounds = {
             top: 0,
@@ -252,19 +252,40 @@ class World {
 
             // determine if the player is capturing the flag
             for (let f of this.flags) {
-                let xDist = Math.pow(f.x - player.x, 2);
-                let yDist = Math.pow(f.y - player.y, 2);
-                // check if the player is close enough to the flag
-                if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
-                    f.captured = true;
-                    io.emit('capture_flag', f.colorIdx);
+                // only check for collision if the flag is not captured by any player
+                if (f.capturedBy == null && player.capturedFlag == null) {
+                    let xDist = Math.pow(f.x - player.x, 2);
+                    let yDist = Math.pow(f.y - player.y, 2);
+                    // check if the player is close enough to the flag
+                    if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
+                        f.capturedBy = player;
+                        player.capturedFlag = f;
+                        f.updatePos();
+                        // io.emit('capture_flag', f.colorIdx);
+                    }
+                } else {
+                    // sync the position of the flag the player if captured
+                    f.updatePos();
                 }
             }
 
             all.push(player.getRep());
-
         }
-        io.emit('update', all)
+
+        let flagsPos = [];
+        for (let f of this.flags) {
+            flagsPos.push({
+                'colorIdx': f.colorIdx,
+                'x': f.x,
+                'y': f.y,
+                'isCaptured' : (f.capturedBy != null)
+            });
+        }
+
+        io.emit('update', {
+            'players': all,
+            'flags':   flagsPos
+        });
     }
 
 }
