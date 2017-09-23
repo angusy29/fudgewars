@@ -22,6 +22,11 @@ export default class Hook {
         this.g = this.game.add.graphics(0, 0);
     }
 
+    public destroy(): void {
+        this.sprite.destroy();
+        this.g.clear();
+    }
+
     public update(hookUpdate: any): void {
         this.g.clear();
         if (hookUpdate) {

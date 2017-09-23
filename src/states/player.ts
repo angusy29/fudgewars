@@ -15,6 +15,12 @@ export default class Player {
         this.isFaceRight = true;
     }
 
+    public destroy(): void {
+        this.sprite.destroy();
+        this.name.destroy();
+        this.hook.destroy();
+    }
+
     public setIsFaceRight(b: boolean): void {
         this.isFaceRight = b;
     }

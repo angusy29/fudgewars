@@ -67,8 +67,7 @@ export default class Game extends Phaser.State {
 
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
-            this.players[id].sprite.destroy();
-            this.players[id].name.destroy();
+            this.players[id].destroy();
             delete this.players[id];
         });
 
