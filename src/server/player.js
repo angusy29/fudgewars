@@ -12,7 +12,7 @@ module.exports = class Player {
         this.right = 0;
         this.up = 0;
         this.down= 0;
-        this.capturedFlag = null;
+        this.carryingFlag = null;
     }
 
     keydown(direction) {

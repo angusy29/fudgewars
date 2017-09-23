@@ -10,7 +10,11 @@ let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 let maps = path.resolve(__dirname + '/../../assets/json');
 
-const FLAG_COLLISION_THRESHOLD = 40;
+const FLAG_PLAYER_COLLISION_THRESHOLD = 38;
+const BASE_PLAYER_COLLISION_THRESHOLD = 40;
+const PLAYER_ANCHOR_Y_OFFSET = 20;
+const TILE_SIZE = 64;
+
 let Player = require('./player');
 let Flag = require('./flag');
 
@@ -78,6 +82,10 @@ class World {
         this.acceleration = 600     // px/s/s
         this.decceleration = 1000   // px/s/s
         this.timeout = null;
+        this.basePos = {
+            y: 2 * TILE_SIZE + TILE_SIZE*0.32,
+            x: 8 * TILE_SIZE + TILE_SIZE*0.4
+        };
 
         let data = require(maps + '/map.test.json');
 
@@ -94,10 +102,10 @@ class World {
 
         // Bounds determined by the sprite
         this.playerBounds = {
-            top: 0,
-            right: 10,
-            bottom: 24,
-            left: 10
+            top: -5,
+            right: 0,
+            bottom: 18,
+            left: 0
         };
     }
 
@@ -108,8 +116,8 @@ class World {
         let leftBound = x - bounds.left;
 
         // TODO Is the tilesize 64 or 32?!
-        let topLeftTile  = { x: Math.floor(leftBound / 64), y: Math.floor(topBound / 64) };
-        let bottomRightTile  = { x: Math.floor(rightBound / 64), y: Math.floor(bottomBound / 64) };
+        let topLeftTile  = { x: Math.floor(leftBound / TILE_SIZE), y: Math.floor(topBound / TILE_SIZE) };
+        let bottomRightTile  = { x: Math.floor(rightBound / TILE_SIZE), y: Math.floor(bottomBound / TILE_SIZE) };
 
         for (let y = topLeftTile.y; y <= bottomRightTile.y; y++) {
             for (let x = topLeftTile.x; x <= bottomRightTile.x; x++) {
@@ -252,18 +260,32 @@ class World {
 
             // determine if the player is capturing the flag
             for (let f of this.flags) {
-                // only check for collision if the flag is not captured by any player
-                if (f.capturedBy == null && player.capturedFlag == null) {
+                // only check if the flag is not captured by any player
+                // and the player is not carrying any flag
+                if (f.carringBy == null && !f.isCaptured && player.carryingFlag == null) {
                     let xDist = Math.pow(f.x - player.x, 2);
                     let yDist = Math.pow(f.y - player.y, 2);
                     // check if the player is close enough to the flag
-                    if (Math.sqrt(xDist + yDist) < FLAG_COLLISION_THRESHOLD) {
-                        f.capturedBy = player;
-                        player.capturedFlag = f;
-                        f.updatePos();
-                        // io.emit('capture_flag', f.colorIdx);
+                    if (Math.sqrt(xDist + yDist) < FLAG_PLAYER_COLLISION_THRESHOLD) {
+                        // if the player is close enough with the flag
+                        // they can capture(carry) the flag
+                        f.carryingBy = player;
+                        f.isCaptured = true;
+                        player.carryingFlag = f;
                     }
-                } else {
+                } else if (f.carryingBy != null && f.isCaptured &&
+                    (player.x >= this.basePos.x-BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.x <= this.basePos.x+BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.y >= this.basePos.y-BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.y <= this.basePos.y+BASE_PLAYER_COLLISION_THRESHOLD)) {
+                    // flag is with in the basePos area
+
+                    f.setPos(player.x, player.y+PLAYER_ANCHOR_Y_OFFSET);
+                    f.carryingBy = null;
+                    player.carryingFlag = null;
+                }
+
+                if (f.isCaptured && f.carryingBy != null) {
                     // sync the position of the flag the player if captured
                     f.updatePos();
                 }
@@ -278,7 +300,7 @@ class World {
                 'colorIdx': f.colorIdx,
                 'x': f.x,
                 'y': f.y,
-                'isCaptured' : (f.capturedBy != null)
+                'isCaptured': (f.isCaptured && f.carryingBy != null)
             });
         }
 

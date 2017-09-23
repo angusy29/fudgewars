@@ -77,10 +77,6 @@ export default class Game extends Phaser.State {
             delete this.players[id];
         });
 
-        // this.socket.on('capture_flag', (flagId) => {
-        //     console.log('capture_flag');
-        //     this.flags[flagId].setFlagDown();
-        // });
     }
 
     /*
