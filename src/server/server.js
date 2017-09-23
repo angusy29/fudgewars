@@ -262,7 +262,7 @@ class World {
             for (let f of this.flags) {
                 // only check if the flag is not captured by any player
                 // and the player is not carrying any flag
-                if (f.carringBy == null && !f.isCaptured && player.carryingFlag == null) {
+                if (f.carryingBy == null && !f.isCaptured && player.carryingFlag == null) {
                     let xDist = Math.pow(f.x - player.x, 2);
                     let yDist = Math.pow(f.y - player.y, 2);
                     // check if the player is close enough to the flag
