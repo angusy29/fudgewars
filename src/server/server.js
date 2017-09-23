@@ -156,7 +156,7 @@ class World {
         let y;
         let spawnPointCollides = false;
 
-        let player = new Player(id, name, 0, 0, this);
+        let player = new Player(this, id, name, 0, 0);
         this.players[id] = player;
         this.playerCount++;
 
@@ -215,7 +215,7 @@ class World {
 
             // determine if the player is capturing the flag
             for (let f of this.flags) {
-                if (utils.distance({ x: player.x, y: player.y }, { x: f.x, y: f.y }) < FLAG_COLLISION_THRESHOLD) {
+                if (utils.distance(player.x, player.y, f.x, f.y) < FLAG_COLLISION_THRESHOLD) {
                     f.captured = true;
                     io.emit('capture_flag', f.colorIdx);
                 }

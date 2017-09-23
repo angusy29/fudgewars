@@ -14,8 +14,8 @@ const BOUNDS = {
 };
 
 module.exports = class Player extends Collidable {
-    constructor(id, name, x, y, world) {
-        super(x, y, BOUNDS, world);
+    constructor(world, id, name, x, y) {
+        super(world, x, y, BOUNDS);
 
         this.id = id;
         this.name = name;
@@ -28,7 +28,7 @@ module.exports = class Player extends Collidable {
         this.up = 0;
         this.down = 0;
 
-        this.hook = new Hook(this);
+        this.hook = new Hook(world, this);
         this.hookedBy = null;
     }
 
@@ -63,8 +63,8 @@ module.exports = class Player extends Collidable {
         this.hookedBy = hooker;
     }
 
-    moveTowards(player) {
-        let angle = Math.atan2(player.y - this.y, player.x - this.x);
+    moveTowards(object) {
+        let angle = Math.atan2(object.y - this.y, object.x - this.x);
 
         let steps = 5;
         let collideX = false;
@@ -74,27 +74,37 @@ module.exports = class Player extends Collidable {
             this.x = utils.clamp(this.world.left - this.bounds.left, this.world.right + this.bounds.right, this.x);
             if (this.world.collides(this.id)) {
                 if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),
-                                              player.getTopLeft(), player.getBottomRight())) {
+                                              this.hookedBy.getTopLeft(), this.hookedBy.getBottomRight())) {
+                    this.hookedBy.hook.deactivate();
                     this.hookedBy = null;
                 }
                 this.x = oldX;
-                collideX = true;
                 this.vx = 0;
+                collideX = true;
+                if (this.hookedBy === null) {
+                    break;
+                }
             }
             let oldY = this.y;
             this.y += (Math.sin(angle) * HOOKED_SPEED) / steps;
             this.y = utils.clamp(this.world.top + this.bounds.top, this.world.bottom + this.bounds.bottom, this.y);
             if (this.world.collides(this.id)) {
                 if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),
-                                              player.getTopLeft(), player.getBottomRight())) {
+                                              this.hookedBy.getTopLeft(), this.hookedBy.getBottomRight())) {
+                    this.hookedBy.hook.deactivate();
                     this.hookedBy = null;
                 }
                 this.y = oldY;
                 this.vy = 0;
-                if (collideX) {
+                if (collideX || this.hookedBy === null) {
                     break;
                 }
             }
+        }
+
+        if (this.hookedBy !== null) {
+            this.hookedBy.hook.x = this.x;
+            this.hookedBy.hook.y = this.y;
         }
     }
 

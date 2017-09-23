@@ -1,9 +1,9 @@
 module.exports = class Collidable {
-    constructor(x, y, bounds, world) {
+    constructor(world, x, y, bounds) {
+        this.world = world;
         this.x = x;
         this.y = y;
         this.bounds = bounds;
-        this.world = world;
     }
 
     getTopLeft() {

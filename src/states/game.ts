@@ -48,18 +48,7 @@ export default class Game extends Phaser.State {
 
                 let player = this.players[playerUpdate.id];
 
-                if (playerUpdate.hook) {
-                    if (player.hookSprite === null) {
-                        player.hookSprite = this.game.add.sprite(playerUpdate.hook.startX, playerUpdate.hook.startY, 'p2_walk');
-                        player.hookSprite.scale.setTo(0.2);
-                    } else {
-                        player.hookSprite.x = playerUpdate.hook.x;
-                        player.hookSprite.y = playerUpdate.hook.y;
-                    }
-                } else if (player.hookSprite) {
-                    player.hookSprite.destroy();
-                    player.hookSprite = null;
-                }
+                player.updateHook(playerUpdate.hook);
 
                 player.sprite.x = playerUpdate.x;
                 player.sprite.y = playerUpdate.y;
@@ -67,11 +56,12 @@ export default class Game extends Phaser.State {
                 player.name.y = playerUpdate.y - Game.PLAYER_NAME_Y_OFFSET;
                 this.updateSpriteDirection(playerUpdate);
 
-                if (player.vx || player.vy) {
+                if (playerUpdate.vx || playerUpdate.vy) {
                     player.sprite.animations.play('walk', 20, true);
                 } else {
                     player.sprite.animations.stop(null, true);
                 }
+                this.game.world.bringToTop(player.sprite);
             }
         });
 
@@ -135,7 +125,7 @@ export default class Game extends Phaser.State {
         });
         name.anchor.setTo(0.5, 0.5);
 
-        this.players[player.id] = new Player(player.id, name, sprite);
+        this.players[player.id] = new Player(this, player.id, name, sprite);
     }
 
     /*
@@ -237,7 +227,6 @@ export default class Game extends Phaser.State {
         if (pointer.leftButton.isDown) {
             let id = this.socket.id;
             let me: Player = this.players[id];
-            console.log(me.sprite.x, me.sprite.y, pointer.x, pointer.y);
             let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
             this.socket.emit('hook', angle);
         }

@@ -11,9 +11,9 @@ exports.clamp = function(low, high, value) {
     return value;
 }
 
-exports.distance = function(pointA, pointB) {
-    let xDist = Math.pow(pointA.x - pointB.x, 2);
-    let yDist = Math.pow(pointA.y - pointB.y, 2);
+exports.distance = function(x1, y1, x2, y2) {
+    let xDist = Math.pow(x1 - x2, 2);
+    let yDist = Math.pow(y1 - y2, 2);
     let distance = Math.sqrt(xDist + yDist);
     return distance;
 }
