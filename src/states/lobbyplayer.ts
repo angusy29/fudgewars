@@ -25,4 +25,12 @@ export default class LobbyPlayer {
     public getIsReady(): boolean {
         return this.isReady;
     }
+
+    public setSprite(sprite: Phaser.Sprite): void {
+        this.sprite = sprite;
+    }
+
+    public setName(name: Phaser.Text): void {
+        this.name = name;
+    }
 }

@@ -1,8 +1,9 @@
 module.exports = class LobbyPlayer {
-    constructor(id, name, team) {
+    constructor(id, name, tile, team) {
         this.id = id;
         this.name = name;
         this.team = team;
+        this.tile = tile;
         this.isReady = false;
     }
 
@@ -11,6 +12,7 @@ module.exports = class LobbyPlayer {
             id: this.id,
             name: this.name,
             team: this.team,
+            tile: this.tile,
             isReady: this.isReady
         }
     }

@@ -29,11 +29,12 @@ module.exports = class Lobby {
 
         // add to red team or blue team depending on current size of team
         if (this.bluecount <= this.redcount) {
-            player = new LobbyPlayer(id, name, BLUE);
+            // tile must be bluecount
+            player = new LobbyPlayer(id, name, this.bluecount, BLUE);
             this.blue[player.id] = player;
             this.bluecount++;
         } else {
-            player = new LobbyPlayer(id, name, RED);
+            player = new LobbyPlayer(id, name, this.redcount, RED);
             this.red[player.id] = player;
             this.redcount++;
         }
@@ -43,8 +44,22 @@ module.exports = class Lobby {
         // socket.broadcast.emit('lobby_player_joined', player.getRep());
 
         // toggle player ready
-        socket.on('player_ready', (id) => {
+        socket.on('player_ready', () => {
             this.players[id].isReady = !this.players[id].isReady;
+        });
+
+        socket.on('blue_team_change', (tile) => {
+            console.log('moved ' + this.players[id].name);
+            this.players[id].team = BLUE;
+            this.players[id].tile = tile;
+            this.io.emit('player_moved', this.players[id]);
+        });
+
+        socket.on('red_team_change', (tile) => {
+            console.log('moved ' + this.players[id].name);
+            this.players[id].team = RED;
+            this.players[id].tile = tile;
+            this.io.emit('player_moved', this.players[id]);
         });
 
         // If player control q's out or quits browser
@@ -54,9 +69,6 @@ module.exports = class Lobby {
             this.io.emit('lobby_player_left', id);
             this.print();
         });
-
-        console.log(this.players);
-        console.log(this.players[id].isReady);
 
         // Start updates
         if (this.timeout == null) {
