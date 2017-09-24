@@ -50,7 +50,7 @@ export default class Game extends Phaser.State {
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
                 this.players[player.id].name.y = player.y - Player.PLAYER_NAME_Y_OFFSET;
-                // group items are relative to the group object, so we 
+                // group items are relative to the group object, so we
                 // loop through and set each one instead
                 this.players[player.id].healthBar.forEach(element => {
                     element.x = player.x - Player.HEALTH_BAR_X_OFFSET;
@@ -58,12 +58,15 @@ export default class Game extends Phaser.State {
                 });
 
                 /* Sample code on how to decrease health */
-                let healthFg = this.players[player.id].healthBar.getChildAt(1);
                 if (this.players[player.id].getHealth() > 0) {
+                    let healthFg = this.players[player.id].healthBar.getChildAt(1);
                     this.players[player.id].health -= 1;
-                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health/100)
-                }
-
+                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health / 100);
+                } else if (this.players[player.id].alive) {
+                    this.players[player.id].alive = false;
+                    this.changePlayerVisibility(player, false);
+                    this.socket.emit('dead');
+}
                 this.updateSpriteDirection(player);
 
                 // update player animation, if they are walking
@@ -79,12 +82,22 @@ export default class Game extends Phaser.State {
             console.log('player left');
             this.players[id].sprite.destroy();
             this.players[id].name.destroy();
+            this.players[id].healthBar.destroy();
             delete this.players[id];
         });
 
         this.socket.on('capture_flag', (flagId) => {
             console.log('capture_flag');
             this.flags[flagId].setFlagDown();
+        });
+
+        this.socket.on('respawn', (player: any) => {
+            console.log('respawn');
+            if (this.players[player.id]) {
+                this.players[player.id].alive = true;
+                this.changePlayerVisibility(player, true);
+                this.players[player.id].setHealth(100);
+            }
         });
     }
 
@@ -105,7 +118,7 @@ export default class Game extends Phaser.State {
         } else if (player.right !== 0) {    // player is moving right
             // player is facing left, so we need to flip him
             if (!this.players[player.id].getIsFaceRight()) {
-                this.players[player.id].setIsFaceRight(true);           
+                this.players[player.id].setIsFaceRight(true);
                 this.players[player.id].sprite.scale.x *= -1;
             }
         }
@@ -113,6 +126,12 @@ export default class Game extends Phaser.State {
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
+    }
+
+    private changePlayerVisibility(player: any, visible: boolean): void {
+        this.players[player.id].sprite.visible = visible;
+        this.players[player.id].name.visible = visible;
+        this.players[player.id].healthBar.visible = visible;
     }
 
     /*
