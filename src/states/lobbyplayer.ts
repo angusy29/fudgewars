@@ -14,7 +14,6 @@ export default class LobbyPlayer {
         this.team = team;
         this.tile = tile;
         this.sprite = sprite;
-        
         this.isReady = false;
         this.readyImg = null;
     }

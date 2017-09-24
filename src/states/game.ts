@@ -17,23 +17,20 @@ export default class Game extends Phaser.State {
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
-    // need to give it to create()
-    // also used to render own client's name green
-    private client_player_name: string;
+    // used to render own client's name green
     private client_id: string;
 
-    public init(playerid: string, playername: string, socket: any): void {
+    static readonly BLUE = 0;
+    static readonly RED = 1;
+
+    public init(socket: any): void {
         // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        this.client_id = playerid;
-        this.client_player_name = playername;
+        this.client_id = socket.id;
 
         this.socket = socket;
 
-        console.log('init');
         this.socket.on('loaded', (data: any) => {
-            console.log('loaded');
-            console.log(this.players);
             this.loadWorld(data.world);
             this.loadTerrain(data.terrain);
             this.loadFlags(data.flags);
@@ -129,8 +126,12 @@ export default class Game extends Phaser.State {
      * player: A player object from the server
      */
     private addNewPlayer(player: any): void {
+        let frame;
+        if (player.team === Game.BLUE) frame = 'p2_walk';
+        if (player.team === Game.RED) frame = 'p3_walk';
+
         // set up sprite
-        let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+        let sprite = this.game.add.sprite(player.x, player.y, frame);
         sprite.anchor.setTo(0.5, 0.5);
         sprite.scale.setTo(0.5);
         sprite.animations.add('walk');
@@ -312,7 +313,7 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.socket.emit('join_game', this.client_player_name);
+        this.socket.emit('join_game');
     }
 
     public preload(): void {

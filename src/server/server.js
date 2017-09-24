@@ -154,7 +154,7 @@ class World {
         });
     }
 
-    addPlayer(socket, name) {
+    addPlayer(socket) {
         let id = socket.id;
         let x;
         let y;
@@ -162,7 +162,9 @@ class World {
             x = randomInt(this.left, this.right);
             y = randomInt(this.top, this.bottom);
         } while (this.collides(id, x, y));
-        let player = new Player(id, name, x, y);
+        let name = lobby.getPlayers()[id].name;
+        let team = lobby.getPlayers()[id].team;
+        let player = new Player(id, name, team, x, y);
         this.players[id] = player;
         this.playerCount++;
         // socket.broadcast.emit('player_joined', player.getRep());
@@ -282,12 +284,9 @@ io.on('connection',function(socket){
     });
 
     socket.on('prepare_world', function() {
-
-        socket.on('join_game', function(name) {
-            world.addPlayer(socket, name);
+        socket.on('join_game', function() {
+            world.addPlayer(socket);
             world.sendInitialData(socket);
-
-            console.log(world.players);
          });
     });
 });

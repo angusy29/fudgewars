@@ -51,7 +51,7 @@ export default class Lobby extends Phaser.State {
                     this.addNewPlayer(player);
                 }
 
-                // create tick ready image    
+                // create tick ready image
                 if (player.isReady) {
                     if (this.players[player.id].readyImg !== null) continue;
 
@@ -61,10 +61,10 @@ export default class Lobby extends Phaser.State {
                     let tile = this.players[player.id].tile;
                     let posX = obj[tile].image.centerX + 16;
                     let posY = obj[tile].image.centerY + 16;
-    
+
                     let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
                                         Lobby.team_sheets[2]);
-    
+
                     this.players[player.id].readyImg = readyTick;
 
                     this.players[player.id].sprite.animations.play('walk', 20, true);
@@ -81,7 +81,7 @@ export default class Lobby extends Phaser.State {
             console.log('lobby start');
             this.unsubscribeAll();
             this.socket.emit('prepare_world');
-            this.game.state.start('game', true, false, this.socket.id, this.client_player_name, this.socket);
+            this.game.state.start('game', true, false, this.socket);
         });
 
         this.socket.on('lobby_player_left', (id: any) => {
@@ -124,8 +124,14 @@ export default class Lobby extends Phaser.State {
         let tile = 0;
 
         let teamtiles;
-        if (player.team === Lobby.BLUE) teamtiles = this.blueTiles;
-        if (player.team === Lobby.RED) teamtiles = this.redTiles;
+        let frame;
+        if (player.team === Lobby.BLUE) {
+            teamtiles = this.blueTiles;
+            frame = 'p2_walk';
+        } else if (player.team === Lobby.RED) {
+            teamtiles = this.redTiles;
+            frame = 'p3_walk';
+        }
 
         // add to blue or red team
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM; i++) {
@@ -145,10 +151,10 @@ export default class Lobby extends Phaser.State {
         });
         name.anchor.setTo(0.5, 0.5);
 
-        let sprite = this.game.add.sprite(spritePosX, spritePosY, 'p2_walk');   
+        let sprite = this.game.add.sprite(spritePosX, spritePosY, frame);
         sprite.anchor.setTo(0.5, 0.5);
         sprite.scale.setTo(0.5);
-        sprite.animations.add('walk');     
+        sprite.animations.add('walk');
         this.players[player.id] = new LobbyPlayer(player.id, name, player.team, tile, sprite);
 
         // tell blueTiles or redTiles that someone is on that tile now

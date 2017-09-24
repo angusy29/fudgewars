@@ -117,6 +117,13 @@ module.exports = class Lobby {
     }
 
     /*
+     *  Returns all the players
+     */
+    getPlayers() {
+        return this.players;
+    }
+
+    /*
      * Debugging purposes
      */
     print() {
