@@ -2,10 +2,9 @@ let Collidable = require('./collidable');
 let Hook = require('./hook');
 let utils = require('./utils');
 
-const MAX_VELOCITY = 600;     // px/s
+const MAX_VELOCITY = 100;     // px/s
 const ACCELERATION = 600;     // px/s/s
 const DECELERATION = 1000;   // px/s/s
-const HOOKED_SPEED = 30;
 const BOUNDS = {
     top: 0,
     right: 10,
@@ -48,7 +47,7 @@ module.exports = class Player extends Collidable {
 
     update(delta) {
         if (this.hookedBy !== null) {
-            this.moveTowards(this.hookedBy);
+            // Note: Hook will handle movement
             this.vx = 0;
             this.vy = 0;
         } else {
@@ -63,49 +62,8 @@ module.exports = class Player extends Collidable {
         this.hookedBy = hooker;
     }
 
-    moveTowards(object) {
-        let angle = Math.atan2(object.y - this.y, object.x - this.x);
-
-        let steps = 5;
-        let collideX = false;
-        for (let i = 0; i < steps; i++) {
-            let oldX = this.x;
-            this.x += (Math.cos(angle) * HOOKED_SPEED) / steps;
-            this.x = utils.clamp(this.world.left - this.bounds.left, this.world.right + this.bounds.right, this.x);
-            if (this.world.collides(this.id)) {
-                if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),
-                                              this.hookedBy.getTopLeft(), this.hookedBy.getBottomRight())) {
-                    this.hookedBy.hook.deactivate();
-                    this.hookedBy = null;
-                }
-                this.x = oldX;
-                this.vx = 0;
-                collideX = true;
-                if (this.hookedBy === null) {
-                    break;
-                }
-            }
-            let oldY = this.y;
-            this.y += (Math.sin(angle) * HOOKED_SPEED) / steps;
-            this.y = utils.clamp(this.world.top + this.bounds.top, this.world.bottom + this.bounds.bottom, this.y);
-            if (this.world.collides(this.id)) {
-                if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),
-                                              this.hookedBy.getTopLeft(), this.hookedBy.getBottomRight())) {
-                    this.hookedBy.hook.deactivate();
-                    this.hookedBy = null;
-                }
-                this.y = oldY;
-                this.vy = 0;
-                if (collideX || this.hookedBy === null) {
-                    break;
-                }
-            }
-        }
-
-        if (this.hookedBy !== null) {
-            this.hookedBy.hook.x = this.x;
-            this.hookedBy.hook.y = this.y;
-        }
+    getUnhooked() {
+        this.hookedBy = null;
     }
 
     move(delta) {

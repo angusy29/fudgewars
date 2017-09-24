@@ -6,12 +6,14 @@ export default class Player {
     sprite: Phaser.Sprite;
     isFaceRight: boolean;   // is the player facing right
     hook: Hook;
+    world: Phaser.State;
 
-    constructor(game: Phaser.State, id: any, name: Phaser.Text, sprite: Phaser.Sprite) {
+    constructor(world: Phaser.State, id: any, name: Phaser.Text, sprite: Phaser.Sprite) {
+        this.world = world;
         this.id = id;
         this.name = name;
         this.sprite = sprite;
-        this.hook = new Hook(game, this);
+        this.hook = new Hook(world, this);
         this.isFaceRight = true;
     }
 
