@@ -41,7 +41,7 @@ export default class Game extends Phaser.State {
         });
 
         this.socket.on('update', (data: any) => {
-            for (let player of data) {
+            for (let player of data.players) {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
@@ -58,6 +58,16 @@ export default class Game extends Phaser.State {
                     this.players[player.id].sprite.animations.stop(null, true);
                 }
             }
+
+            // update the position of the flags
+            for (let f of data.flags) {
+                this.flags[f.colorIdx].sprite.x = f.x;
+                this.flags[f.colorIdx].sprite.y = f.y;
+                if (f.isCaptured)
+                    this.flags[f.colorIdx].setFlagDown();
+                else
+                    this.flags[f.colorIdx].setFlagUp();
+            }
         });
 
         this.socket.on('player_left', (id: number) => {
@@ -67,10 +77,6 @@ export default class Game extends Phaser.State {
             delete this.players[id];
         });
 
-        this.socket.on('capture_flag', (flagId) => {
-            console.log('capture_flag');
-            this.flags[flagId].setFlagDown();
-        });
     }
 
     /*
