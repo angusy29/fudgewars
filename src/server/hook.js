@@ -2,7 +2,7 @@ let Collidable = require('./collidable');
 
 let utils = require('./utils');
 
-const COOLDOWN = 1;
+const COOLDOWN = 5;
 const DURATION = 1;
 const SPEED = 12;
 const RETURN_DISTANCE = SPEED + 1;
@@ -31,7 +31,7 @@ module.exports = class Hook extends Collidable {
     }
 
     start(angle, x, y) {
-        if (!this.active && this.cooldown < 0) {
+        if (!this.active && this.cooldown === 0) {
             this.active = true;
             this.returning = false;
             this.angle = angle;
@@ -47,7 +47,12 @@ module.exports = class Hook extends Collidable {
     }
 
     update(delta) {
-        this.cooldown -= delta;
+        if (this.cooldown > 0) {
+            this.cooldown -= delta;
+            if (this.cooldown < 0) {
+                this.cooldown = 0;
+            }
+        }
 
         if (this.active) {
 
@@ -125,12 +130,27 @@ module.exports = class Hook extends Collidable {
         this.active = false;
     }
 
-    getRep() {
-        return {
-            x: this.x,
-            y: this.y,
-            angle: this.angle,
-            returning: this.returning
+    getRep(toId) {
+        let rep = {
+            active: this.active,
         }
+
+        // Only give the cooldown info to the player if its the owner of the hook
+        if (toId === this.player.id) {
+            rep = Object.assign(rep, {
+                cooldown: this.cooldown,
+            });
+        }
+
+        if (this.active) {
+            rep = Object.assign(rep, {
+                x: this.x,
+                y: this.y,
+                angle: this.angle,
+                returning: this.returning,
+            });
+        }
+
+        return rep;
     }
 }

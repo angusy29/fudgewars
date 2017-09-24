@@ -3,19 +3,27 @@ import * as io from 'socket.io-client';
 import Player from './player';
 import Flag from './flag';
 
+// TODO have a single file for both server/client constants?
+const HOOK_COOLDOWN = 5;
+
 /*
  * The actual game client
  */
 export default class Game extends Phaser.State {
     private map: Phaser.Tilemap;
-    private socket: any;
+    public socket: any;
     private players: any = {};
     private flags: Flag[] = [];
     private flagGroup: Phaser.Group = null;
+    private uiGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
+    public cooldowns: any = {
+        hook: {},
+        // melee: {}
+    };
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
 
@@ -25,11 +33,13 @@ export default class Game extends Phaser.State {
     public init(playername: string): void {
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
+        this.uiGroup = this.game.add.group();
         this.client_player_name = playername;
 
         this.socket = io.connect();
 
         this.socket.on('loaded', (data: any) => {
+            this.loadUI();
             this.loadWorld(data.world);
             this.loadTerrain(data.terrain);
             this.loadFlags(data.flags);
@@ -61,7 +71,11 @@ export default class Game extends Phaser.State {
                 } else {
                     player.sprite.animations.stop(null, true);
                 }
+
                 this.game.world.bringToTop(player.sprite);
+                this.game.world.bringToTop(this.uiGroup);
+
+                this.drawUI();
             }
         });
 
@@ -220,6 +234,72 @@ export default class Game extends Phaser.State {
 
         // layer.events.onInputUp.add(this.getCoordinates);
         layer.events.onInputDown.add(this.hook.bind(this));
+    }
+
+    private drawUI(): void {
+        for (let skillName in this.cooldowns) {
+            let skill = this.cooldowns[skillName];
+            if (skill === {}) continue;
+
+            if (skill.cooldown > 0) {
+                skill.overlayImg.height = (skill.cooldown / HOOK_COOLDOWN) * skill.skillImg.height;
+                skill.overlayImg.visible = true;
+                skill.text.text = skill.cooldown.toFixed(1);
+            } else {
+                skill.overlayImg.visible = false;
+                skill.text.text = '';
+            }
+        }
+    }
+
+    private loadUI(): void {
+        let width: number = 45;
+        let height: number = 45;
+        let x: number = this.game.width / 2 - (width / 2);
+        let y: number = this.game.height - (height / 2);
+
+        let hookImg: Phaser.Image = this.game.add.image(x, y, 'attack_hook');
+        hookImg.width = width;
+        hookImg.height = height;
+        hookImg.anchor.setTo(0.5);
+        hookImg.fixedToCamera = true;
+
+        let overlayImg: Phaser.Image = this.game.add.image(x, y + height / 2, 'skill_cooldown_overlay');
+        overlayImg.width = width;
+        overlayImg.height = height;
+        overlayImg.alpha = 0.5;
+        overlayImg.anchor.setTo(0.5, 1);
+        overlayImg.fixedToCamera = true;
+        overlayImg.visible = false;
+
+        let text: Phaser.Text = this.game.add.text(x, y, '', {
+            font: '16px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        text.anchor.setTo(0.5);
+
+        let buttonText: Phaser.Text = this.game.add.text(x + width / 2, y + height / 2 + 7, 'LMB', {
+            font: '8px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        buttonText.anchor.setTo(1);
+
+        this.cooldowns.hook = {
+            skillImg: hookImg,
+            overlayImg: overlayImg,
+            cooldown: 0,
+            text: text,
+            buttonText: buttonText,
+        };
+
+        this.uiGroup.add(hookImg);
+        this.uiGroup.add(overlayImg);
+        this.uiGroup.add(text);
+        this.uiGroup.add(buttonText);
     }
 
     private hook(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {

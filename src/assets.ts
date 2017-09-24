@@ -1,10 +1,20 @@
 /* AUTO GENERATED FILE. DO NOT MODIFY. YOU WILL LOSE YOUR CHANGES ON BUILD. */
 
 export namespace Images {
-    export class Titlescreen {
+    export class ImagesAttackHook {
+        static getName(): string { return 'attack_hook'; }
+
+        static getPNG(): string { return require('assets/images/attack_hook.png'); }
+    }
+    export class ImagesSkillCooldownOverlay {
+        static getName(): string { return 'skill_cooldown_overlay'; }
+
+        static getPNG(): string { return require('assets/images/skill_cooldown_overlay.png'); }
+    }
+    export class ImagesTitlescreen {
         static getName(): string { return 'titlescreen'; }
 
-        static getPNG(): string { return require('assets/titlescreen.png'); }
+        static getPNG(): string { return require('assets/images/titlescreen.png'); }
     }
 }
 

@@ -2,14 +2,14 @@ import Player from './player';
 import { Atlases } from '../assets';
 
 export default class Hook {
-    world: Phaser.State;
+    world: any;
     player: Player;
     sprite: Phaser.Sprite;
     chainSprites: Phaser.Sprite[] = [];
     lastChainDistance: number = Number.MAX_SAFE_INTEGER;
     active: boolean;
 
-    constructor(world: Phaser.State, player: Player) {
+    constructor(world: any, player: Player) {
         this.world = world;
         this.player = player;
 
@@ -70,7 +70,11 @@ export default class Hook {
     }
 
     public update(hookUpdate: any): void {
-        if (hookUpdate) {
+        if (this.player.id === this.world.socket.id) {
+            this.world.cooldowns.hook.cooldown = hookUpdate.cooldown;
+        }
+
+        if (hookUpdate.active) {
             this.sprite.visible = true;
 
             this.sprite.x = hookUpdate.x;

@@ -155,7 +155,7 @@ module.exports = class Player extends Collidable {
         }
     }
 
-    getRep() {
+    getRep(toId) {
         let rep = {
             id: this.id,
             name: this.name,
@@ -164,11 +164,8 @@ module.exports = class Player extends Collidable {
             vx: this.vx,        // velocities used to animate walking
             vy: this.vy,
             left: this.left,    // left and right used to flip sprite
-            right: this.right
-        }
-
-        if (this.hook.active) {
-            rep = Object.assign(rep, { hook: this.hook.getRep() });
+            right: this.right,
+            hook: this.hook.getRep(toId),
         }
 
         return rep;

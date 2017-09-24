@@ -221,7 +221,7 @@ class World {
                 }
             }
 
-            all.push(player.getRep());
+            all.push(player.getRep(id));
         }
 
         io.emit('update', all)

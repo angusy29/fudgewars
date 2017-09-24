@@ -8,7 +8,7 @@ export default class Player {
     hook: Hook;
     world: Phaser.State;
 
-    constructor(world: Phaser.State, id: any, name: Phaser.Text, sprite: Phaser.Sprite) {
+    constructor(world: any, id: any, name: Phaser.Text, sprite: Phaser.Sprite) {
         this.world = world;
         this.id = id;
         this.name = name;
