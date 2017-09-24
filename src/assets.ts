@@ -6,6 +6,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/attack_hook.png'); }
     }
+    export class ImagesAttackSword {
+        static getName(): string { return 'attack_sword'; }
+
+        static getPNG(): string { return require('assets/images/attack_sword.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 

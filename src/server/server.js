@@ -179,8 +179,12 @@ class World {
             io.emit('player_stop', id);
         });
 
-        socket.on('hook', function(angle) {
-            player.startHooking(angle);
+        socket.on('attack_hook', function(angle) {
+            player.useHook(angle);
+        });
+
+        socket.on('attack_sword', function(angle) {
+            player.useSword(angle);
         });
 
         socket.on('disconnect', () => {

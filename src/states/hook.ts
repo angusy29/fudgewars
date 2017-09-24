@@ -7,7 +7,6 @@ export default class Hook {
     sprite: Phaser.Sprite;
     chainSprites: Phaser.Sprite[] = [];
     lastChainDistance: number = Number.MAX_SAFE_INTEGER;
-    active: boolean;
 
     constructor(world: any, player: Player) {
         this.world = world;
@@ -19,12 +18,13 @@ export default class Hook {
         this.sprite.visible = false;
         this.sprite.anchor.setTo(0.5, 1);
         this.sprite.scale.setTo(0.2, 0.5);
-
-        this.active = false;
     }
 
     public destroy(): void {
         this.sprite.destroy();
+        for (let chainSprite of this.chainSprites) {
+            chainSprite.destroy();
+        }
     }
 
     private createChain(from: Phaser.Sprite, to: Phaser.Sprite,
@@ -71,7 +71,7 @@ export default class Hook {
 
     public update(hookUpdate: any): void {
         if (this.player.id === this.world.socket.id) {
-            this.world.cooldowns.hook.cooldown = hookUpdate.cooldown;
+            this.world.skills.hook.cooldown = hookUpdate.cooldown;
         }
 
         if (hookUpdate.active) {

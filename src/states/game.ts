@@ -4,7 +4,10 @@ import Player from './player';
 import Flag from './flag';
 
 // TODO have a single file for both server/client constants?
-const HOOK_COOLDOWN = 5;
+const COOLDOWNS = {
+    hook: 5,
+    sword: 0.5,
+};
 
 /*
  * The actual game client
@@ -16,13 +19,29 @@ export default class Game extends Phaser.State {
     private flags: Flag[] = [];
     private flagGroup: Phaser.Group = null;
     private uiGroup: Phaser.Group = null;
+    private playerGroup: Phaser.Group = null;
+    private weaponGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
-    public cooldowns: any = {
-        hook: {},
-        // melee: {}
+
+    private skillList: string[] = ['hook', 'sword'];
+    public skills: any = {
+        hook: {
+            name: 'hook',
+            img: 'attack_hook',
+            button: 'LMB',
+            cooldown: 0,
+            ui: {},
+        },
+        sword: {
+            name: 'sword',
+            img: 'attack_sword',
+            button: 'RMB',
+            cooldown: 0,
+            ui: {},
+        },
     };
 
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -34,6 +53,8 @@ export default class Game extends Phaser.State {
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
+        this.playerGroup = this.game.add.group();
+        this.weaponGroup = this.game.add.group();
         this.client_player_name = playername;
 
         this.socket = io.connect();
@@ -58,7 +79,7 @@ export default class Game extends Phaser.State {
 
                 let player = this.players[playerUpdate.id];
 
-                player.updateHook(playerUpdate.hook);
+                player.update(playerUpdate);
 
                 player.sprite.x = playerUpdate.x;
                 player.sprite.y = playerUpdate.y;
@@ -72,7 +93,8 @@ export default class Game extends Phaser.State {
                     player.sprite.animations.stop(null, true);
                 }
 
-                this.game.world.bringToTop(player.sprite);
+                this.game.world.bringToTop(this.playerGroup);
+                this.game.world.bringToTop(this.weaponGroup);
                 this.game.world.bringToTop(this.uiGroup);
 
                 this.drawUI();
@@ -81,6 +103,8 @@ export default class Game extends Phaser.State {
 
         this.socket.on('player_left', (id: number) => {
             console.log('player left');
+            this.playerGroup.remove(this.players[id]);
+            this.weaponGroup.remove(this.players[id].weaponGroup);
             this.players[id].destroy();
             delete this.players[id];
         });
@@ -139,6 +163,9 @@ export default class Game extends Phaser.State {
         name.anchor.setTo(0.5, 0.5);
 
         this.players[player.id] = new Player(this, player.id, name, sprite);
+
+        this.playerGroup.add(this.players[player.id].sprite);
+        this.weaponGroup.add(this.players[player.id].weaponGroup);
     }
 
     /*
@@ -233,21 +260,23 @@ export default class Game extends Phaser.State {
         layer.inputEnabled = true;
 
         // layer.events.onInputUp.add(this.getCoordinates);
-        layer.events.onInputDown.add(this.hook.bind(this));
+        layer.events.onInputDown.add(this.onWorldClick.bind(this));
     }
 
     private drawUI(): void {
-        for (let skillName in this.cooldowns) {
-            let skill = this.cooldowns[skillName];
-            if (skill === {}) continue;
+        for (let skillIndex in this.skillList) {
+            let skillName: string = this.skillList[skillIndex];
+            let skill = this.skills[skillName];
+            if (Object.keys(skill.ui).length === 0) continue;
 
+            let ui = skill.ui;
             if (skill.cooldown > 0) {
-                skill.overlayImg.height = (skill.cooldown / HOOK_COOLDOWN) * skill.skillImg.height;
-                skill.overlayImg.visible = true;
-                skill.text.text = skill.cooldown.toFixed(1);
+                ui.overlayImg.visible = true;
+                ui.overlayImg.height = (skill.cooldown / COOLDOWNS[skill.name]) * ui.skillImg.height;
+                ui.text.text = skill.cooldown.toFixed(1);
             } else {
-                skill.overlayImg.visible = false;
-                skill.text.text = '';
+                ui.overlayImg.visible = false;
+                ui.text.text = '';
             }
         }
     }
@@ -255,59 +284,73 @@ export default class Game extends Phaser.State {
     private loadUI(): void {
         let width: number = 45;
         let height: number = 45;
-        let x: number = this.game.width / 2 - (width / 2);
-        let y: number = this.game.height - (height / 2);
 
-        let hookImg: Phaser.Image = this.game.add.image(x, y, 'attack_hook');
-        hookImg.width = width;
-        hookImg.height = height;
-        hookImg.anchor.setTo(0.5);
-        hookImg.fixedToCamera = true;
+        for (let skillIndex in this.skillList) {
+            let skillName: string = this.skillList[skillIndex];
+            let skill = this.skills[skillName];
 
-        let overlayImg: Phaser.Image = this.game.add.image(x, y + height / 2, 'skill_cooldown_overlay');
-        overlayImg.width = width;
-        overlayImg.height = height;
-        overlayImg.alpha = 0.5;
-        overlayImg.anchor.setTo(0.5, 1);
-        overlayImg.fixedToCamera = true;
-        overlayImg.visible = false;
+            let centerX: number = parseInt(skillIndex) * width;
+            let centerY: number = 0;
 
-        let text: Phaser.Text = this.game.add.text(x, y, '', {
-            font: '16px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
-        text.anchor.setTo(0.5);
+            let skillImg: Phaser.Image = this.game.add.image(centerX, centerY, skill.img);
+            skillImg.width = width;
+            skillImg.height = height;
+            skillImg.anchor.setTo(0.5);
+            skillImg.fixedToCamera = true;
 
-        let buttonText: Phaser.Text = this.game.add.text(x + width / 2, y + height / 2 + 7, 'LMB', {
-            font: '8px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
-        buttonText.anchor.setTo(1);
+            let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, 'skill_cooldown_overlay');
+            overlayImg.width = width;
+            overlayImg.height = height;
+            overlayImg.alpha = 0.5;
+            overlayImg.anchor.setTo(0.5, 1);
+            overlayImg.fixedToCamera = true;
+            overlayImg.visible = false;
 
-        this.cooldowns.hook = {
-            skillImg: hookImg,
-            overlayImg: overlayImg,
-            cooldown: 0,
-            text: text,
-            buttonText: buttonText,
-        };
+            let text: Phaser.Text = this.game.add.text(centerX, centerY, '', {
+                font: '16px ' + Assets.GoogleWebFonts.Roboto,
+                fill: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 3,
+            });
+            text.anchor.setTo(0.5);
 
-        this.uiGroup.add(hookImg);
-        this.uiGroup.add(overlayImg);
-        this.uiGroup.add(text);
-        this.uiGroup.add(buttonText);
+            let buttonText: Phaser.Text = this.game.add.text(centerX + width / 2, centerY + height / 2 + 7, skill.button, {
+                font: '8px ' + Assets.GoogleWebFonts.Roboto,
+                fill: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 3,
+            });
+            buttonText.anchor.setTo(1);
+
+            skill.ui = {
+                skillImg: skillImg,
+                overlayImg: overlayImg,
+                text: text,
+                buttonText: buttonText,
+            };
+
+            this.uiGroup.add(skillImg);
+            this.uiGroup.add(overlayImg);
+            this.uiGroup.add(text);
+            this.uiGroup.add(buttonText);
+        }
+
+        this.uiGroup.x = this.game.width / 2 - this.uiGroup.width / 2 + width / 2;
+        this.uiGroup.y = this.game.height - (height / 2);
     }
 
-    private hook(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
-        if (pointer.leftButton.isDown) {
+    private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
+        if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
             let id = this.socket.id;
             let me: Player = this.players[id];
             let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
-            this.socket.emit('hook', angle);
+            this.socket.emit('attack_hook', angle);
+        }
+        if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
+            let id = this.socket.id;
+            let me: Player = this.players[id];
+            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            this.socket.emit('attack_sword', angle);
         }
     }
 

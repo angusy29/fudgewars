@@ -1,6 +1,7 @@
 let Collidable = require('./collidable');
-let Hook = require('./hook');
 let utils = require('./utils');
+let Hook = require('./hook');
+let Sword = require('./sword');
 
 const MAX_VELOCITY = 100;     // px/s
 const ACCELERATION = 600;     // px/s/s
@@ -29,6 +30,8 @@ module.exports = class Player extends Collidable {
 
         this.hook = new Hook(world, this);
         this.hookedBy = null;
+
+        this.sword = new Sword(world, this);
     }
 
     getFullTopLeft() {
@@ -56,6 +59,7 @@ module.exports = class Player extends Collidable {
 
         // Hook
         this.hook.update(delta);
+        this.sword.update(delta);
     }
 
     getHooked(hooker) {
@@ -117,10 +121,14 @@ module.exports = class Player extends Collidable {
         }
     }
 
-    startHooking(angle) {
+    useHook(angle) {
         if (this.hookedBy === null) {
             this.hook.start(angle, this.x, this.y);
         }
+    }
+
+    useSword(angle) {
+        this.sword.start(angle);
     }
 
     keydown(direction) {
@@ -166,6 +174,7 @@ module.exports = class Player extends Collidable {
             left: this.left,    // left and right used to flip sprite
             right: this.right,
             hook: this.hook.getRep(toId),
+            sword: this.sword.getRep(toId),
         }
 
         return rep;

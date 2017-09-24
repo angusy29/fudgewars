@@ -15,11 +15,10 @@ const BOUNDS = {
 };
 
 module.exports = class Hook extends Collidable {
-    constructor(world, player, angle=null) {
+    constructor(world, player) {
         super(world, 0, 0, BOUNDS);
 
         this.player = player;
-        this.angle = angle;
         this.playerPrevX = 0;
         this.playerPrevY = 0;
         this.active = false;
@@ -28,6 +27,7 @@ module.exports = class Hook extends Collidable {
         this.currentDuration = 0;
         this.hookedPlayer = null;
         this.path = [];
+        this.angle = 0;
     }
 
     start(angle, x, y) {
@@ -114,8 +114,14 @@ module.exports = class Hook extends Collidable {
                     // Collision / end
                     if (this.world.collidesObject(this.player.getTopLeft(), this.player.getBottomRight(),
                                                   this.hookedPlayer.getTopLeft(), this.hookedPlayer.getBottomRight())) {
-                        this.hookedPlayer.x = oldX;
-                        this.hookedPlayer.y = oldY;
+                        let i = 0;
+                        do {
+                            let closestSafeX = this.player.x + Math.cos(angle) * SPEED * i;
+                            let closestSafeY = this.player.y + Math.sin(angle) * SPEED * i;
+                            this.hookedPlayer.x = closestSafeX;
+                            this.hookedPlayer.y = closestSafeY;
+                            i++;
+                        } while (this.world.collides(this.hookedPlayer.id));
                         this.hookedPlayer.getUnhooked();
                         this.deactivate();
                     }
