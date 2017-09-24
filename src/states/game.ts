@@ -66,7 +66,7 @@ export default class Game extends Phaser.State {
                     this.players[player.id].alive = false;
                     this.changePlayerVisibility(player, false);
                     this.socket.emit('dead');
-}
+                }
                 this.updateSpriteDirection(player);
 
                 // update player animation, if they are walking
