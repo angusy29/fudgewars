@@ -61,12 +61,14 @@ export default class Game extends Phaser.State {
 
             // update the position of the flags
             for (let f of data.flags) {
-                this.flags[f.colorIdx].sprite.x = f.x;
-                this.flags[f.colorIdx].sprite.y = f.y;
-                if (f.isCaptured)
-                    this.flags[f.colorIdx].setFlagDown();
-                else
-                    this.flags[f.colorIdx].setFlagUp();
+                if (typeof this.flags[f.colorIdx] !== 'undefined') {
+                    this.flags[f.colorIdx].sprite.x = f.x;
+                    this.flags[f.colorIdx].sprite.y = f.y;
+                    if (f.isCaptured)
+                        this.flags[f.colorIdx].setFlagDown();
+                    else
+                        this.flags[f.colorIdx].setFlagUp();
+                }
             }
         });
 
