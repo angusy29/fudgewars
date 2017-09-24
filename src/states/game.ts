@@ -21,14 +21,16 @@ export default class Game extends Phaser.State {
     // also used to render own client's name green
     private client_player_name: string;
 
-    public init(playername: string): void {
+    public init(playername: string, socket: any): void {
         this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
         this.client_player_name = playername;
 
-        this.socket = io.connect();
+        this.socket = socket;
 
+        console.log('init');
         this.socket.on('loaded', (data: any) => {
+            console.log('hello');
             this.loadWorld(data.world);
             this.loadTerrain(data.terrain);
             this.loadFlags(data.flags);
@@ -50,7 +52,7 @@ export default class Game extends Phaser.State {
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
                 this.players[player.id].name.y = player.y - Player.PLAYER_NAME_Y_OFFSET;
-                // group items are relative to the group object, so we 
+                // group items are relative to the group object, so we
                 // loop through and set each one instead
                 this.players[player.id].healthBar.forEach(element => {
                     element.x = player.x - Player.HEALTH_BAR_X_OFFSET;
@@ -61,7 +63,7 @@ export default class Game extends Phaser.State {
                 let healthFg = this.players[player.id].healthBar.getChildAt(1);
                 if (this.players[player.id].getHealth() > 0) {
                     this.players[player.id].health -= 1;
-                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health/100)
+                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health / 100);
                 }
 
                 this.updateSpriteDirection(player);
@@ -79,6 +81,7 @@ export default class Game extends Phaser.State {
             console.log('player left');
             this.players[id].sprite.destroy();
             this.players[id].name.destroy();
+            this.players[id].healthBar.destroy();
             delete this.players[id];
         });
 
@@ -105,7 +108,7 @@ export default class Game extends Phaser.State {
         } else if (player.right !== 0) {    // player is moving right
             // player is facing left, so we need to flip him
             if (!this.players[player.id].getIsFaceRight()) {
-                this.players[player.id].setIsFaceRight(true);           
+                this.players[player.id].setIsFaceRight(true);
                 this.players[player.id].sprite.scale.x *= -1;
             }
         }
@@ -148,7 +151,7 @@ export default class Game extends Phaser.State {
     /*
      * Creates the canvas for player health bar
      * player: Player to create health bar for
-     * 
+     *
      * return: A group containing the health bar foreground (green part)
      * and the health bar background (red part), they are indexes 0 and 1
      * respectively

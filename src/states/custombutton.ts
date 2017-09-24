@@ -12,13 +12,16 @@ export default class CustomButton {
 
     static readonly TEXT_COLOR = '#FFFAFA';
 
-    private static buttons: any = [
+    static buttons: any = [
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton00,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton01,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton02,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton03,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton04,
-        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05,
+        Assets.Atlases.ButtonsBlueSheet.Frames.BluePanel,
+        Assets.Atlases.ButtonsRedSheet.Frames.RedPanel,
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenBoxTick
     ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {

@@ -13,6 +13,7 @@ let maps = path.resolve(__dirname + '/../../assets/json');
 const FLAG_COLLISION_THRESHOLD = 40;
 let Player = require('./player');
 let Flag = require('./flag');
+let Lobby = require('./lobby');
 
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
@@ -176,6 +177,7 @@ class World {
         });
 
         socket.on('disconnect', () => {
+            console.log('world discon');
             this.removePlayer(id)
             io.emit('player_left', id);
         });
@@ -269,11 +271,26 @@ class World {
 
 }
 
-world = new World(768, 640, 64);
+lobby = new Lobby(io);
 
 io.on('connection',function(socket){
-    socket.on('join_game', function(name) {
-        world.addPlayer(socket, name);
-        world.sendInitialData(socket);
+    socket.on('join_lobby', function(name) {
+        if (!lobby.isFull()) {
+            lobby.addPlayer(socket, name);
+        }
+        lobby.print();
+    });
+
+    socket.once('prepare_world', function() {
+        // remove the events we subscribed to inside lobby
+        socket.removeAllListeners();
+        world = new World(768, 640, 64);
+        console.log('world prepared');
+        io.emit('start_game');
+
+        socket.on('join_game', function(name) {
+            world.addPlayer(socket, name);
+            world.sendInitialData(socket);
+        });
     });
 });
