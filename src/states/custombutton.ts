@@ -19,9 +19,8 @@ export default class CustomButton {
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton03,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton04,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05,
-        Assets.Atlases.ButtonsBlueSheet.Frames.BluePanel,
-        Assets.Atlases.ButtonsRedSheet.Frames.RedPanel,
-        Assets.Atlases.ButtonsGreenSheet.Frames.GreenBoxTick
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenButton00,
+        Assets.Atlases.ButtonsYellowSheet.Frames.YellowButton00
     ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {
@@ -36,6 +35,10 @@ export default class CustomButton {
 
     public getText(): Phaser.Text {
         return this.text;
+    }
+
+    public setText(text: string): void {
+        this.text.text = text;
     }
 
     public setIsEnter(b: boolean) {

@@ -20,17 +20,20 @@ export default class Game extends Phaser.State {
     // need to give it to create()
     // also used to render own client's name green
     private client_player_name: string;
+    private client_id: string;
 
-    public init(playername: string, socket: any): void {
-        this.game.stage.disableVisibilityChange = true;
+    public init(playerid: string, playername: string, socket: any): void {
+        // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
+        this.client_id = playerid;
         this.client_player_name = playername;
 
         this.socket = socket;
 
         console.log('init');
         this.socket.on('loaded', (data: any) => {
-            console.log('hello');
+            console.log('loaded');
+            console.log(this.players);
             this.loadWorld(data.world);
             this.loadTerrain(data.terrain);
             this.loadFlags(data.flags);
@@ -140,7 +143,7 @@ export default class Game extends Phaser.State {
         name.anchor.setTo(0.5, 0.5);
 
         // if this is the client's player, set the colour to be limegreen
-        if (player.name === this.client_player_name) {
+        if (player.id === this.client_id) {
             name.addColor('#32CD32', 0);
         }
 

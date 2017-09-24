@@ -165,7 +165,7 @@ class World {
         let player = new Player(id, name, x, y);
         this.players[id] = player;
         this.playerCount++;
-        socket.broadcast.emit('player_joined', player.getRep());
+        // socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
             player.keydown(direction);
@@ -177,7 +177,7 @@ class World {
         });
 
         socket.on('disconnect', () => {
-            console.log('world discon');
+            console.log('=====world discon=====');
             this.removePlayer(id)
             io.emit('player_left', id);
         });
@@ -262,7 +262,6 @@ class World {
                     io.emit('capture_flag', f.colorIdx);
                 }
             }
-
             all.push(player.getRep());
 
         }
@@ -272,6 +271,7 @@ class World {
 }
 
 lobby = new Lobby(io);
+world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
     socket.on('join_lobby', function(name) {
@@ -281,16 +281,13 @@ io.on('connection',function(socket){
         lobby.print();
     });
 
-    socket.once('prepare_world', function() {
-        // remove the events we subscribed to inside lobby
-        socket.removeAllListeners();
-        world = new World(768, 640, 64);
-        console.log('world prepared');
-        io.emit('start_game');
+    socket.on('prepare_world', function() {
 
         socket.on('join_game', function(name) {
             world.addPlayer(socket, name);
             world.sendInitialData(socket);
-        });
+
+            console.log(world.players);
+         });
     });
 });

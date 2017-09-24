@@ -11,8 +11,6 @@ export default class Lobby extends Phaser.State {
     private background: Phaser.Image;
     private socket: any;
     private players: any = {};
-    private blue: any = {};
-    private red: any = {};
 
     // these group all the tiles on the GUI
     private blueTiles: any = {};
@@ -22,6 +20,7 @@ export default class Lobby extends Phaser.State {
     private ready: CustomButton;
     private back: CustomButton;
 
+    // used to pass to game.ts
     private client_player_name: string;
 
     static readonly MAX_PLAYER_COUNT_PER_TEAM = 6;
@@ -35,14 +34,12 @@ export default class Lobby extends Phaser.State {
     static team_sheets: any = [
         Assets.Atlases.ButtonsBlueSheet.Frames.BluePanel,
         Assets.Atlases.ButtonsRedSheet.Frames.RedPanel,
-        Assets.Atlases.ButtonsGreenSheet.Frames.GreenBoxTick
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenCheckmark
     ];
 
     public init(playername: string): void {
         this.client_player_name = playername;
         this.players = {};  // need to reset these, otherwise
-        this.blue = {};     // state persists, if we go back
-        this.red = {};
         this.blueTiles = {};
         this.redTiles = {};
 
@@ -53,22 +50,44 @@ export default class Lobby extends Phaser.State {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
+
+                // create tick ready image    
+                if (player.isReady) {
+                    if (this.players[player.id].readyImg !== null) continue;
+
+                    let obj;
+                    if (player.team === Lobby.BLUE) obj = this.blueTiles;
+                    else obj = this.redTiles;
+                    let tile = this.players[player.id].tile;
+                    let posX = obj[tile].image.centerX + 16;
+                    let posY = obj[tile].image.centerY + 16;
+    
+                    let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
+                                        Lobby.team_sheets[2]);
+    
+                    this.players[player.id].readyImg = readyTick;
+
+                    this.players[player.id].sprite.animations.play('walk', 20, true);
+                } else if (!player.isReady && this.players[player.id].readyImg !== null) {
+                    // destroy tick ready image
+                    this.players[player.id].readyImg.destroy();
+                    this.players[player.id].sprite.animations.stop(null, true);
+                }
             }
         });
 
         // start the game because everyone is ready
         this.socket.on('lobby_start', () => {
-            this.socket.off('lobby_update');
-            this.socket.off('lobby_player_left');
+            console.log('lobby start');
+            this.unsubscribeAll();
             this.socket.emit('prepare_world');
-        });
-
-        this.socket.on('start_game', () => {
-            this.game.state.start('game', true, false, this.client_player_name, this.socket);
+            this.game.state.start('game', true, false, this.socket.id, this.client_player_name, this.socket);
         });
 
         this.socket.on('lobby_player_left', (id: any) => {
+            console.log('lobby player left');
             this.players[id].name.destroy();
+            if (this.players[id].readyImg !== null) this.players[id].readyImg.destroy();
 
             if (this.players[id].team === Lobby.BLUE) {
                 this.blueTiles[this.players[id].tile].player = null;
@@ -98,39 +117,39 @@ export default class Lobby extends Phaser.State {
      * Add a new player to the lobby screen
      */
     private addNewPlayer(player: any): void {
-        let posX = 0;
-        let posY = 0;
+        let namePosX = 0;
+        let namePosY = 0;
+        let spritePosX = 0;
+        let spritePosY = 0;
         let tile = 0;
 
-        if (player.team === Lobby.BLUE) {
-            // add to blue team
-            for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM; i++) {
-                if (!this.blueTiles[i].player) {
-                    posX = this.blueTiles[i].image.centerX;
-                    posY = this.blueTiles[i].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
-                    tile = i;
-                    break;
-                }
-            }
-        } else {
-            // add to red team
-            for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM; i++) {
-                if (!this.redTiles[i].player) {
-                    posX = this.redTiles[i].image.centerX;
-                    posY = this.redTiles[i].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
-                    tile = i;
-                    break;
-                }
+        let teamtiles;
+        if (player.team === Lobby.BLUE) teamtiles = this.blueTiles;
+        if (player.team === Lobby.RED) teamtiles = this.redTiles;
+
+        // add to blue or red team
+        for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM; i++) {
+            if (!teamtiles[i].player) {
+                namePosX = teamtiles[i].image.centerX;
+                namePosY = teamtiles[i].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
+                spritePosX = teamtiles[i].image.centerX - 16;
+                spritePosY = teamtiles[i].image.centerY + 16;
+                tile = i;
+                break;
             }
         }
 
         // set up label of the player
-        let name = this.game.add.text(posX, posY, player.name, {
+        let name = this.game.add.text(namePosX, namePosY, player.name, {
             font: '14px ' + Assets.GoogleWebFonts.Roboto
         });
         name.anchor.setTo(0.5, 0.5);
 
-        this.players[player.id] = new LobbyPlayer(player.id, name, player.team, tile,  null);
+        let sprite = this.game.add.sprite(spritePosX, spritePosY, 'p2_walk');   
+        sprite.anchor.setTo(0.5, 0.5);
+        sprite.scale.setTo(0.5);
+        sprite.animations.add('walk');     
+        this.players[player.id] = new LobbyPlayer(player.id, name, player.team, tile, sprite);
 
         // tell blueTiles or redTiles that someone is on that tile now
         if (player.team === Lobby.BLUE) {
@@ -184,7 +203,7 @@ export default class Lobby extends Phaser.State {
 
     private initReadyButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX - 108, this.game.world.centerY + 248, this, this.loadReady);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX - 108, this.game.world.centerY + 248, this, this.readyOnClick);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Ready');
         this.ready = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.ready), this);
@@ -204,9 +223,19 @@ export default class Lobby extends Phaser.State {
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.back), this);
     }
 
-    private loadReady(): void {
+    private readyOnClick(): void {
+        console.log('ready');
         this.game.sound.play('click1');
         this.players[this.socket.id].isReady = !this.players[this.socket.id].isReady;
+
+        if (this.players[this.socket.id].isReady) {
+            this.ready.setText('Waiting for others...');
+            this.ready.getText().fontSize = '16px';
+        } else {
+            this.ready.setText('Ready');
+            this.ready.getText().fontSize = '24px';
+        }
+
         this.socket.emit('player_ready', this.socket.id);
     }
 
@@ -215,9 +244,14 @@ export default class Lobby extends Phaser.State {
      */
     private loadBack(): void {
         this.socket.disconnect();
-        this.socket.off('lobby_update');
-        this.socket.off('lobby_player_left');
+        this.unsubscribeAll();
         this.game.sound.play('click1');
         this.game.state.start('mainmenu', true, false);
+    }
+
+    private unsubscribeAll() {
+        this.socket.off('lobby_start');
+        this.socket.off('lobby_update');
+        this.socket.off('lobby_player_left');
     }
 }
