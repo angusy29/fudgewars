@@ -10,10 +10,15 @@ let path = require('path');
 let dist = path.resolve(__dirname + '/../../dist');
 let maps = path.resolve(__dirname + '/../../assets/json');
 
-const FLAG_COLLISION_THRESHOLD = 40;
+const FLAG_PLAYER_COLLISION_THRESHOLD = 38;
+const BASE_PLAYER_COLLISION_THRESHOLD = 40;
+const PLAYER_ANCHOR_Y_OFFSET = 20;
+const TILE_SIZE = 64;
+
 let Player = require('./player');
 let Flag = require('./flag');
 let utils = require('./utils');
+let Lobby = require('./lobby');
 
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
@@ -63,6 +68,10 @@ class World {
         this.players = {};
         this.playerCount = 0;
         this.timeout = null;
+        this.basePos = {
+            y: 2 * TILE_SIZE + TILE_SIZE*0.32,
+            x: 8 * TILE_SIZE + TILE_SIZE*0.4
+        };
 
         let data = require(maps + '/map.test.json');
 
@@ -150,28 +159,33 @@ class World {
         });
     }
 
-    addPlayer(socket, name) {
+    addPlayer(socket) {
         let id = socket.id;
-        let x;
-        let y;
-        let spawnPointCollides = false;
 
-        let player = new Player(this, id, name, 0, 0);
+        let waiting = false;
+        let name = lobby.getPlayers()[id].name;
+        let team = lobby.getPlayers()[id].team;
+
+        let player = new Player(this, id, name, team, 0, 0);
         this.players[id] = player;
         this.playerCount++;
 
+        // Find spawn point that isnt colliding with anything
+        let spawnPointCollides = false;
         do {
-            x = utils.randomInt(this.left, this.right);
-            y = utils.randomInt(this.top, this.bottom);
+            let x = utils.randomInt(this.left, this.right);
+            let y = utils.randomInt(this.top, this.bottom);
             player.x = x;
             player.y = y;
             spawnPointCollides = this.collides(id);
         } while (spawnPointCollides);
 
-        socket.broadcast.emit('player_joined', player.getRep());
+        // socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
-            player.keydown(direction);
+            if (player.alive) {
+                player.keydown(direction);
+            }
         });
 
         socket.on('keyup', function(direction) {
@@ -187,7 +201,26 @@ class World {
             player.useSword(angle);
         });
 
+        socket.on('dead', function() {
+            player.alive = false;
+            if (!waiting) {
+                waiting = true;
+                setTimeout(() => {
+                    player.alive = true;
+                    io.emit('respawn', player);
+                    waiting = false;
+                }, 5000);
+            }
+        });
+
         socket.on('disconnect', () => {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag != null) {
+                this.flags[player.carryingFlag].carryingBy = null;
+                this.flags[player.carryingFlag].isCaptured = false;
+            }
+
+            console.log('=====world discon=====');
             this.removePlayer(id)
             io.emit('player_left', id);
         });
@@ -219,25 +252,70 @@ class World {
 
             // determine if the player is capturing the flag
             for (let f of this.flags) {
-                if (utils.distance(player.x, player.y, f.x, f.y) < FLAG_COLLISION_THRESHOLD) {
-                    f.captured = true;
-                    io.emit('capture_flag', f.colorIdx);
+                // only check if the flag is not captured by any player
+                // and the player is not carrying any flag
+                if (f.carryingBy == null && !f.isCaptured && player.carryingFlag == null) {
+                    // check if the player is close enough to the flag
+                    if (utils.distance(player.x, player.y, f.x, f.y) < FLAG_PLAYER_COLLISION_THRESHOLD) {
+                        // if the player is close enough with the flag
+                        // they can capture(carry) the flag
+                        f.carryingBy = player.id;
+                        f.isCaptured = true;
+                        player.carryingFlag = f.colorIdx;
+                    }
+                } else if (f.carryingBy != null && f.isCaptured &&
+                    (player.x >= this.basePos.x-BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.x <= this.basePos.x+BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.y >= this.basePos.y-BASE_PLAYER_COLLISION_THRESHOLD &&
+                     player.y <= this.basePos.y+BASE_PLAYER_COLLISION_THRESHOLD)) {
+                    // flag is with in the basePos area
+
+                    f.setPos(player.x, player.y+PLAYER_ANCHOR_Y_OFFSET);
+                    f.carryingBy = null;
+                    player.carryingFlag = null;
+                }
+
+                if (f.isCaptured && f.carryingBy == player.id) {
+                    // sync the position of the flag the player if captured
+                    f.updatePos(player.x, player.y);
                 }
             }
-
             all.push(player.getRep(id));
         }
 
-        io.emit('update', all)
+        let flagsPos = [];
+        for (let f of this.flags) {
+            flagsPos.push({
+                'colorIdx': f.colorIdx,
+                'x': f.x,
+                'y': f.y,
+                'isCaptured': (f.isCaptured && f.carryingBy != null)
+            });
+        }
+
+        io.emit('update', {
+            'players': all,
+            'flags':   flagsPos
+        });
     }
 
 }
 
+lobby = new Lobby(io);
 world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
-    socket.on('join_game', function(name) {
-        world.addPlayer(socket, name);
-        world.sendInitialData(socket);
+    socket.on('join_lobby', function(name) {
+        if (!lobby.isFull()) {
+            lobby.addPlayer(socket, name);
+        }
+        lobby.print();
+    });
+
+    socket.on('prepare_world', function() {
+        socket.on('join_game', function() {
+            world.addPlayer(socket);
+            world.sendInitialData(socket);
+         });
     });
 });

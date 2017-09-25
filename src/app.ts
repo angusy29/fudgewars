@@ -7,7 +7,11 @@ import * as WebFontLoader from 'webfontloader';
 import Boot from './states/boot';
 import Preloader from './states/preloader';
 import MainMenu from './states/mainmenu';
+import Lobby from './states/lobby';
+import LobbyPlayer from './states/lobbyplayer';
+import HowToPlay from './states/howtoplay';
 import Game from './states/game';
+import ButtonUtil from './states/buttonutil';
 import * as Utils from './utils/utils';
 import * as Assets from './assets';
 
@@ -18,6 +22,8 @@ class App extends Phaser.Game {
         this.state.add('boot', Boot);
         this.state.add('preloader', Preloader);
         this.state.add('mainmenu', MainMenu);
+        this.state.add('lobby', Lobby);
+        this.state.add('howtoplay', HowToPlay);
         this.state.add('game', Game);
 
         this.state.start('boot');

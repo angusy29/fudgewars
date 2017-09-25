@@ -14,11 +14,12 @@ const BOUNDS = {
 };
 
 module.exports = class Player extends Collidable {
-    constructor(world, id, name, x, y) {
+    constructor(world, id, name, team, x, y) {
         super(world, x, y, BOUNDS);
 
         this.id = id;
         this.name = name;
+        this.team = team;
         this.vx = 0;    // velocity
         this.vy = 0;
         this.ix = 0;    // resolved input, -1, 0, 1
@@ -27,6 +28,9 @@ module.exports = class Player extends Collidable {
         this.right = 0;
         this.up = 0;
         this.down = 0;
+        this.carryingFlag = null;
+        this.alive = true;
+        this.respawn = false;
 
         this.hook = new Hook(world, this);
         this.hookedBy = null;
@@ -167,12 +171,15 @@ module.exports = class Player extends Collidable {
         let rep = {
             id: this.id,
             name: this.name,
+            team: this.team,
             x: this.x,
             y: this.y,
             vx: this.vx,        // velocities used to animate walking
             vy: this.vy,
             left: this.left,    // left and right used to flip sprite
             right: this.right,
+            alive: this.alive,
+            respawn: this.respawn,
             hook: this.hook.getRep(toId),
             sword: this.sword.getRep(toId),
         }

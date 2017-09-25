@@ -59,6 +59,28 @@ export namespace Atlases {
 
         static Frames = AtlasesP2WalkFrames;
     }
+    enum AtlasesP3WalkFrames {
+        Symbol2Copy2Instance10000 = <any>'Symbol 2 copy 2 instance 10000',
+        Symbol2Copy2Instance10001 = <any>'Symbol 2 copy 2 instance 10001',
+        Symbol2Copy2Instance10002 = <any>'Symbol 2 copy 2 instance 10002',
+        Symbol2Copy2Instance10003 = <any>'Symbol 2 copy 2 instance 10003',
+        Symbol2Copy2Instance10004 = <any>'Symbol 2 copy 2 instance 10004',
+        Symbol2Copy2Instance10005 = <any>'Symbol 2 copy 2 instance 10005',
+        Symbol2Copy2Instance10006 = <any>'Symbol 2 copy 2 instance 10006',
+        Symbol2Copy2Instance10007 = <any>'Symbol 2 copy 2 instance 10007',
+        Symbol2Copy2Instance10008 = <any>'Symbol 2 copy 2 instance 10008',
+        Symbol2Copy2Instance10009 = <any>'Symbol 2 copy 2 instance 10009',
+        Symbol2Copy2Instance10010 = <any>'Symbol 2 copy 2 instance 10010',
+    }
+    export class AtlasesP3Walk {
+        static getName(): string { return 'p3_walk'; }
+
+        static getJSONHash(): string { return require('assets/atlases/p3_walk.json'); }
+
+        static getPNG(): string { return require('assets/atlases/p3_walk.png'); }
+
+        static Frames = AtlasesP3WalkFrames;
+    }
     enum ButtonsBlueSheetFrames {
         BlueBoxCheckmark = <any>'blue_boxCheckmark.png',
         BlueBoxCross = <any>'blue_boxCross.png',
