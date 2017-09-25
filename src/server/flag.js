@@ -11,10 +11,10 @@ module.exports = class Flag {
         this.isCaptured = false;
     }
 
-    updatePos() {
+    updatePos(x, y) {
         if (this.carryingBy != null) {
-            this.setPos(this.carryingBy.x + FLAG_CAPTURED_POS_X_OFFSET,
-                this.carryingBy.y + FLAG_CAPTURED_POS_Y_OFFSET);
+            this.setPos(x + FLAG_CAPTURED_POS_X_OFFSET,
+                        y + FLAG_CAPTURED_POS_Y_OFFSET);
         }
     }
 
