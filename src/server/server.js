@@ -184,6 +184,12 @@ class World {
         });
 
         socket.on('disconnect', () => {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag != null) {
+                this.flags[player.carryingFlag].carryingBy = null;
+                this.flags[player.carryingFlag].isCaptured = false;
+            }
+
             this.removePlayer(id)
             io.emit('player_left', id);
         });
@@ -269,9 +275,9 @@ class World {
                     if (Math.sqrt(xDist + yDist) < FLAG_PLAYER_COLLISION_THRESHOLD) {
                         // if the player is close enough with the flag
                         // they can capture(carry) the flag
-                        f.carryingBy = player;
+                        f.carryingBy = player.id;
                         f.isCaptured = true;
-                        player.carryingFlag = f;
+                        player.carryingFlag = f.colorIdx;
                     }
                 } else if (f.carryingBy != null && f.isCaptured &&
                     (player.x >= this.basePos.x-BASE_PLAYER_COLLISION_THRESHOLD &&
@@ -285,9 +291,9 @@ class World {
                     player.carryingFlag = null;
                 }
 
-                if (f.isCaptured && f.carryingBy != null) {
+                if (f.isCaptured && f.carryingBy == player.id) {
                     // sync the position of the flag the player if captured
-                    f.updatePos();
+                    f.updatePos(player.x, player.y);
                 }
             }
 
