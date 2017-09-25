@@ -1,7 +1,8 @@
 module.exports = class Player {
-    constructor(id, name, x, y) {
+    constructor(id, name, team, x, y) {
         this.id = id;
         this.name = name;
+        this.team = team;
         this.x = x;     // position
         this.y = y;
         this.vx = 0;    // velocity
@@ -13,6 +14,8 @@ module.exports = class Player {
         this.up = 0;
         this.down= 0;
         this.carryingFlag = null;
+        this.alive = true;
+        this.respawn = false;
     }
 
     keydown(direction) {
@@ -51,12 +54,15 @@ module.exports = class Player {
         return {
             id: this.id,
             name: this.name,
+            team: this.team,
             x: this.x,
             y: this.y,
             vx: this.vx,        // velocities used to animate walking
             vy: this.vy,
             left: this.left,    // left and right used to flip sprite
-            right: this.right
+            right: this.right,
+            alive: this.alive,
+            respawn: this.respawn
         }
     }
 }

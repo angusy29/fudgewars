@@ -17,17 +17,18 @@ export default class Game extends Phaser.State {
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
-    static readonly PLAYER_NAME_Y_OFFSET = 24;
+    // used to render own client's name green
+    private client_id: string;
 
-    // need to give it to create()
-    private client_player_name: string;
+    static readonly BLUE = 0;
+    static readonly RED = 1;
 
-    public init(playername: string): void {
-        this.game.stage.disableVisibilityChange = true;
+    public init(socket: any): void {
+        // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        this.client_player_name = playername;
+        this.client_id = socket.id;
 
-        this.socket = io.connect();
+        this.socket = socket;
 
         this.socket.on('loaded', (data: any) => {
             this.loadWorld(data.world);
@@ -46,12 +47,31 @@ export default class Game extends Phaser.State {
                     this.addNewPlayer(player);
                 }
 
+                // update sprite position
                 this.players[player.id].sprite.x = player.x;
                 this.players[player.id].sprite.y = player.y;
                 this.players[player.id].name.x = player.x;
-                this.players[player.id].name.y = player.y - Game.PLAYER_NAME_Y_OFFSET;
+                this.players[player.id].name.y = player.y - Player.PLAYER_NAME_Y_OFFSET;
+                // group items are relative to the group object, so we
+                // loop through and set each one instead
+                this.players[player.id].healthBar.forEach(element => {
+                    element.x = player.x - Player.HEALTH_BAR_X_OFFSET;
+                    element.y = player.y - Player.HEALTH_BAR_Y_OFFSET;
+                });
+
+                /* Sample code on how to decrease health */
+                if (this.players[player.id].getHealth() > 0) {
+                    let healthFg = this.players[player.id].healthBar.getChildAt(1);
+                    this.players[player.id].health -= 1;
+                    healthFg.width = Player.HEALTHBAR_WIDTH * (this.players[player.id].health / 100);
+                } else if (this.players[player.id].alive) {
+                    this.players[player.id].alive = false;
+                    this.changePlayerVisibility(player, false);
+                    this.socket.emit('dead');
+                }
                 this.updateSpriteDirection(player);
 
+                // update player animation, if they are walking
                 if (player.vx || player.vy) {
                     this.players[player.id].sprite.animations.play('walk', 20, true);
                 } else {
@@ -76,9 +96,23 @@ export default class Game extends Phaser.State {
             console.log('player left');
             this.players[id].sprite.destroy();
             this.players[id].name.destroy();
+            this.players[id].healthBar.destroy();
             delete this.players[id];
         });
 
+        this.socket.on('capture_flag', (flagId) => {
+            console.log('capture_flag');
+            this.flags[flagId].setFlagDown();
+        });
+
+        this.socket.on('respawn', (player: any) => {
+            console.log('respawn');
+            if (this.players[player.id]) {
+                this.players[player.id].alive = true;
+                this.changePlayerVisibility(player, true);
+                this.players[player.id].setHealth(100);
+            }
+        });
     }
 
     /*
@@ -92,6 +126,7 @@ export default class Game extends Phaser.State {
             if (this.players[player.id].getIsFaceRight()) {
                 // so we need to flip him
                 this.players[player.id].setIsFaceRight(false);
+                // so when we flip the sprite, the name gets flipped back to original orientation
                 this.players[player.id].sprite.scale.x *= -1;
             }
         } else if (player.right !== 0) {    // player is moving right
@@ -107,6 +142,12 @@ export default class Game extends Phaser.State {
         console.log(layer, pointer);
     }
 
+    private changePlayerVisibility(player: any, visible: boolean): void {
+        this.players[player.id].sprite.visible = visible;
+        this.players[player.id].name.visible = visible;
+        this.players[player.id].healthBar.visible = visible;
+    }
+
     /*
      * Adds a new player to the game
      * Creates a sprite for the player and populates list of players
@@ -115,20 +156,65 @@ export default class Game extends Phaser.State {
      * player: A player object from the server
      */
     private addNewPlayer(player: any): void {
+        let frame;
+        if (player.team === Game.BLUE) frame = 'p2_walk';
+        if (player.team === Game.RED) frame = 'p3_walk';
+
         // set up sprite
-        let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+        let sprite = this.game.add.sprite(player.x, player.y, frame);
         sprite.anchor.setTo(0.5, 0.5);
         sprite.scale.setTo(0.5);
         sprite.animations.add('walk');
         this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
         // set up label of the player
-        let name = this.game.add.text(player.x, player.y - Game.PLAYER_NAME_Y_OFFSET, player.name, {
-            font: '12px ' + Assets.GoogleWebFonts.Roboto
+        let name = this.game.add.text(player.x, player.y - Player.PLAYER_NAME_Y_OFFSET, player.name, {
+            font: '14px ' + Assets.GoogleWebFonts.Roboto
         });
         name.anchor.setTo(0.5, 0.5);
 
-        this.players[player.id] = new Player(player.id, name, sprite);
+        // if this is the client's player, set the colour to be limegreen
+        if (player.id === this.client_id) {
+            name.addColor('#32CD32', 0);
+        }
+
+        let healthBar = this.createPlayerHealthBar(player);
+        this.players[player.id] = new Player(player.id, name, healthBar, sprite);
+    }
+
+    /*
+     * Creates the canvas for player health bar
+     * player: Player to create health bar for
+     *
+     * return: A group containing the health bar foreground (green part)
+     * and the health bar background (red part), they are indexes 0 and 1
+     * respectively
+     */
+    private createPlayerHealthBar(player: any): Phaser.Group {
+        // create health bar canvas
+        let healthBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.beginPath();
+        healthBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.fillStyle = Player.HEALTH_GREEN_COLOUR;
+        healthBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        let healthBgBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.beginPath();
+        healthBgBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.fillStyle = Player.HEALTH_RED_COLOUR;
+        healthBgBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        // health bar green part
+        let healthBarFg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBMP);
+
+        // health bar red part
+        let healthBarBg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBgBMP);
+
+        let healthBar = new Phaser.Group(this.game);
+        healthBar.addAt(healthBarBg, 0);
+        healthBar.addAt(healthBarFg, 1);
+
+        return healthBar;
     }
 
     /*
@@ -257,16 +343,12 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.socket.emit('join_game', this.client_player_name);
+        this.socket.emit('join_game');
     }
 
     public preload(): void {
         // load the map
         // this.game.load.tilemap('world', null, this.game.cache.getJSON('mymap'), Phaser.Tilemap.TILED_JSON);
         // this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    }
-
-    /* Gets called every frame */
-    public update(): void {
     }
 }

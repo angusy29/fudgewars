@@ -17,6 +17,7 @@ const TILE_SIZE = 64;
 
 let Player = require('./player');
 let Flag = require('./flag');
+let Lobby = require('./lobby');
 
 server.listen(process.env.PORT || 8081, function(){
     console.log('Listening on ' + server.address().port);
@@ -161,26 +162,43 @@ class World {
         });
     }
 
-    addPlayer(socket, name) {
+    addPlayer(socket) {
         let id = socket.id;
         let x;
         let y;
+        let waiting = false;
         do {
             x = randomInt(this.left, this.right);
             y = randomInt(this.top, this.bottom);
         } while (this.collides(id, x, y));
-        let player = new Player(id, name, x, y);
+        let name = lobby.getPlayers()[id].name;
+        let team = lobby.getPlayers()[id].team;
+        let player = new Player(id, name, team, x, y);
         this.players[id] = player;
         this.playerCount++;
-        socket.broadcast.emit('player_joined', player.getRep());
+        // socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
-            player.keydown(direction);
+            if (player.alive) {
+                player.keydown(direction);
+            }
         });
 
         socket.on('keyup',function(direction) {
             player.keyup(direction);
             io.emit('player_stop', id);
+        });
+
+        socket.on('dead',function() {
+            player.alive = false;
+            if (!waiting) {
+                waiting = true;
+                setTimeout(() => {
+                    player.alive = true;
+                    io.emit('respawn', player);
+                    waiting = false;
+                }, 5000);
+            }
         });
 
         socket.on('disconnect', () => {
@@ -190,6 +208,7 @@ class World {
                 this.flags[player.carryingFlag].isCaptured = false;
             }
 
+            console.log('=====world discon=====');
             this.removePlayer(id)
             io.emit('player_left', id);
         });
@@ -296,7 +315,6 @@ class World {
                     f.updatePos(player.x, player.y);
                 }
             }
-
             all.push(player.getRep());
         }
 
@@ -318,11 +336,21 @@ class World {
 
 }
 
+lobby = new Lobby(io);
 world = new World(768, 640, 64);
 
 io.on('connection',function(socket){
-    socket.on('join_game', function(name) {
-        world.addPlayer(socket, name);
-        world.sendInitialData(socket);
+    socket.on('join_lobby', function(name) {
+        if (!lobby.isFull()) {
+            lobby.addPlayer(socket, name);
+        }
+        lobby.print();
+    });
+
+    socket.on('prepare_world', function() {
+        socket.on('join_game', function() {
+            world.addPlayer(socket);
+            world.sendInitialData(socket);
+         });
     });
 });
