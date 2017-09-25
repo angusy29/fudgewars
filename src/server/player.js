@@ -57,7 +57,7 @@ module.exports = class Player extends Collidable {
             // Note: Hook will handle movement
             this.vx = 0;
             this.vy = 0;
-        } else {
+        } else if (this.alive) {
             this.move(delta);
         }
 

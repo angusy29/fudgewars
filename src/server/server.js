@@ -183,9 +183,7 @@ class World {
         // socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
-            if (player.alive) {
-                player.keydown(direction);
-            }
+            player.keydown(direction);
         });
 
         socket.on('keyup', function(direction) {
@@ -203,6 +201,7 @@ class World {
 
         socket.on('dead', function() {
             player.alive = false;
+
             if (!waiting) {
                 waiting = true;
                 setTimeout(() => {
