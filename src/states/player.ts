@@ -57,6 +57,15 @@ export default class Player {
         this.sword.destroy();
     }
 
+    public changeVisiblity(visible: boolean): void {
+        this.sprite.visible = visible;
+        this.name.visible = visible;
+        this.healthBar.visible = visible;
+
+        this.hook.changeVisiblity(visible);
+        this.sword.changeVisiblity(visible);
+    }
+
     public getHealth(): number {
         return this.health;
     }

@@ -104,7 +104,7 @@ export default class Game extends Phaser.State {
                     healthFg.width = Player.HEALTHBAR_WIDTH * (player.health / 100);
                 } else if (player.alive) {
                     player.alive = false;
-                    this.changePlayerVisibility(playerUpdate, false);
+                    player.changeVisiblity(false);
                     this.socket.emit('dead');
                 }
                 this.updateSpriteDirection(playerUpdate);
@@ -149,12 +149,13 @@ export default class Game extends Phaser.State {
             this.flags[flagId].setFlagDown();
         });
 
-        this.socket.on('respawn', (player: any) => {
+        this.socket.on('respawn', (id: number) => {
             console.log('respawn');
-            if (this.players[player.id]) {
-                this.players[player.id].alive = true;
-                this.changePlayerVisibility(player, true);
-                this.players[player.id].setHealth(100);
+            let player = this.players[id];
+            if (player) {
+                player.alive = true;
+                player.changeVisiblity(true);
+                player.setHealth(100);
             }
         });
     }
@@ -184,12 +185,6 @@ export default class Game extends Phaser.State {
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
         console.log(layer, pointer);
-    }
-
-    private changePlayerVisibility(player: any, visible: boolean): void {
-        this.players[player.id].sprite.visible = visible;
-        this.players[player.id].name.visible = visible;
-        this.players[player.id].healthBar.visible = visible;
     }
 
     /*

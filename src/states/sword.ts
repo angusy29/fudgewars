@@ -29,6 +29,10 @@ export default class Sword {
         this.sprite.destroy();
     }
 
+    public changeVisiblity(visible: boolean): void {
+        this.sprite.visible = visible;
+    }
+
     public update(swordUpdate: any): void {
         if (this.player.id === this.world.socket.id) {
             this.world.skills.sword.cooldown = swordUpdate.cooldown;

@@ -207,7 +207,7 @@ class World {
                 waiting = true;
                 setTimeout(() => {
                     player.alive = true;
-                    io.emit('respawn', player);
+                    io.emit('respawn', player.id);
                     waiting = false;
                 }, 5000);
             }

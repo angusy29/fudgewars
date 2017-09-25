@@ -27,6 +27,13 @@ export default class Hook {
         }
     }
 
+    public changeVisiblity(visible: boolean): void {
+        this.sprite.visible = visible;
+        for (let chainSprite of this.chainSprites) {
+            chainSprite.visible = visible;
+        }
+    }
+
     private createChain(from: Phaser.Sprite, to: Phaser.Sprite,
                         changePos: boolean = true, unshift: boolean = false): Phaser.Sprite {
         let angle = Math.atan2(from.y - to.y,
