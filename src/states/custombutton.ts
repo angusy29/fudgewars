@@ -12,13 +12,15 @@ export default class CustomButton {
 
     static readonly TEXT_COLOR = '#FFFAFA';
 
-    private static buttons: any = [
+    static buttons: any = [
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton00,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton01,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton02,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton03,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton04,
-        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05,
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenButton00,
+        Assets.Atlases.ButtonsYellowSheet.Frames.YellowButton00
     ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {
@@ -33,6 +35,10 @@ export default class CustomButton {
 
     public getText(): Phaser.Text {
         return this.text;
+    }
+
+    public setText(text: string): void {
+        this.text.text = text;
     }
 
     public setIsEnter(b: boolean) {

@@ -17,16 +17,18 @@ export default class Game extends Phaser.State {
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
-    // need to give it to create()
-    // also used to render own client's name green
-    private client_player_name: string;
+    // used to render own client's name green
+    private client_id: string;
 
-    public init(playername: string): void {
-        this.game.stage.disableVisibilityChange = true;
+    static readonly BLUE = 0;
+    static readonly RED = 1;
+
+    public init(socket: any): void {
+        // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        this.client_player_name = playername;
+        this.client_id = socket.id;
 
-        this.socket = io.connect();
+        this.socket = socket;
 
         this.socket.on('loaded', (data: any) => {
             this.loadWorld(data.world);
@@ -142,8 +144,12 @@ export default class Game extends Phaser.State {
      * player: A player object from the server
      */
     private addNewPlayer(player: any): void {
+        let frame;
+        if (player.team === Game.BLUE) frame = 'p2_walk';
+        if (player.team === Game.RED) frame = 'p3_walk';
+
         // set up sprite
-        let sprite = this.game.add.sprite(player.x, player.y, 'p2_walk');
+        let sprite = this.game.add.sprite(player.x, player.y, frame);
         sprite.anchor.setTo(0.5, 0.5);
         sprite.scale.setTo(0.5);
         sprite.animations.add('walk');
@@ -156,7 +162,7 @@ export default class Game extends Phaser.State {
         name.anchor.setTo(0.5, 0.5);
 
         // if this is the client's player, set the colour to be limegreen
-        if (player.name === this.client_player_name) {
+        if (player.id === this.client_id) {
             name.addColor('#32CD32', 0);
         }
 
@@ -167,7 +173,7 @@ export default class Game extends Phaser.State {
     /*
      * Creates the canvas for player health bar
      * player: Player to create health bar for
-     * 
+     *
      * return: A group containing the health bar foreground (green part)
      * and the health bar background (red part), they are indexes 0 and 1
      * respectively
@@ -325,7 +331,7 @@ export default class Game extends Phaser.State {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
         this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.socket.emit('join_game', this.client_player_name);
+        this.socket.emit('join_game');
     }
 
     public preload(): void {
