@@ -135,6 +135,7 @@ class World {
             let other = this.players[id];
 
             if (playerId === other.id) continue;
+            if (!other.alive) continue;
 
             if (this.collidesObject(player.getTopLeft(), player.getBottomRight(),
                                     other.getTopLeft(), other.getBottomRight())) {

@@ -62,8 +62,9 @@ export default class Player {
         this.name.visible = visible;
         this.healthBar.visible = visible;
 
-        this.hook.changeVisiblity(visible);
         this.sword.changeVisiblity(visible);
+
+        // Note: Hook continues even when the player dies
     }
 
     public getHealth(): number {

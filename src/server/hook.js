@@ -31,7 +31,7 @@ module.exports = class Hook extends Collidable {
     }
 
     start(angle, x, y) {
-        if (!this.active && this.cooldown === 0) {
+        if (this.player.alive && !this.active && this.cooldown === 0) {
             this.active = true;
             this.returning = false;
             this.angle = angle;
@@ -84,6 +84,7 @@ module.exports = class Hook extends Collidable {
                         for (let id in this.world.players) {
                             let other = this.world.players[id];
                             if (this.player.id === other.id) continue;
+                            if (!other.alive) continue;
 
                             // Player hooked
                             if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),

@@ -23,7 +23,7 @@ module.exports = class Sword extends Collidable {
     }
 
     start(angle, x, y) {
-        if (!this.active && this.cooldown === 0 && !this.player.hookedBy) {
+        if (this.player.alive && !this.active && this.cooldown === 0 && !this.player.hookedBy) {
             this.active = true;
             this.angle = angle;
             this.cooldown = COOLDOWN;
@@ -31,6 +31,7 @@ module.exports = class Sword extends Collidable {
 
         setTimeout(() => {
             this.active = false;
+            if (!this.player.alive) return;
 
             for (let playerId in this.world.players) {
                 let player = this.world.players[playerId];
