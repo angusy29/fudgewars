@@ -13,6 +13,8 @@ module.exports = class Player {
         this.right = 0;
         this.up = 0;
         this.down= 0;
+        this.alive = true;
+        this.respawn = false;
     }
 
     keydown(direction) {
@@ -57,7 +59,9 @@ module.exports = class Player {
             vx: this.vx,        // velocities used to animate walking
             vy: this.vy,
             left: this.left,    // left and right used to flip sprite
-            right: this.right
+            right: this.right,
+            alive: this.alive,
+            respawn: this.respawn
         }
     }
 }

@@ -6,6 +6,7 @@ export default class Player {
     healthBar: Phaser.Group;   // health bar of the sprite
     sprite: Phaser.Sprite;
     isFaceRight: boolean;   // is the player facing right
+    alive: boolean;
 
     // width of healthbar is 40
     static readonly HEALTHBAR_WIDTH = 40;
@@ -27,6 +28,7 @@ export default class Player {
         this.isFaceRight = true;
 
         this.health = 100;
+        this.alive = true;
     }
 
     public getHealth(): number {

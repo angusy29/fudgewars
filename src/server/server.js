@@ -158,6 +158,7 @@ class World {
         let id = socket.id;
         let x;
         let y;
+        let waiting = false;
         do {
             x = randomInt(this.left, this.right);
             y = randomInt(this.top, this.bottom);
@@ -170,12 +171,26 @@ class World {
         // socket.broadcast.emit('player_joined', player.getRep());
 
         socket.on('keydown', function(direction) {
-            player.keydown(direction);
+            if (player.alive) {
+                player.keydown(direction);
+            }
         });
 
         socket.on('keyup',function(direction) {
             player.keyup(direction);
             io.emit('player_stop', id);
+        });
+
+        socket.on('dead',function() {
+            player.alive = false;
+            if (!waiting) {
+                waiting = true;
+                setTimeout(() => {
+                    player.alive = true;
+                    io.emit('respawn', player);
+                    waiting = false;
+                }, 5000);
+            }
         });
 
         socket.on('disconnect', () => {
