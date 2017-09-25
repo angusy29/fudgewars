@@ -21,6 +21,7 @@ export default class Game extends Phaser.State {
     private uiGroup: Phaser.Group = null;
     private playerGroup: Phaser.Group = null;
     private weaponGroup: Phaser.Group = null;
+    private healthBarGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
     private mapLayer: Phaser.TilemapLayer;
@@ -58,6 +59,7 @@ export default class Game extends Phaser.State {
         this.uiGroup = this.game.add.group();
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
+        this.healthBarGroup = this.game.add.group();
         this.client_id = socket.id;
 
         this.socket = socket;
@@ -81,46 +83,7 @@ export default class Game extends Phaser.State {
                 }
 
                 let player = this.players[playerUpdate.id];
-
                 player.update(playerUpdate);
-
-                // update sprite position
-                player.sprite.x = playerUpdate.x;
-                player.sprite.y = playerUpdate.y;
-                player.name.x = playerUpdate.x;
-                player.name.y = playerUpdate.y - Player.PLAYER_NAME_Y_OFFSET;
-
-                // group items are relative to the group object, so we
-                // loop through and set each one instead
-                player.healthBar.forEach(element => {
-                    element.x = playerUpdate.x - Player.HEALTH_BAR_X_OFFSET;
-                    element.y = playerUpdate.y - Player.HEALTH_BAR_Y_OFFSET;
-                });
-
-                /* Sample code on how to decrease health */
-                if (player.getHealth() > 0) {
-                    let healthFg = player.healthBar.getChildAt(1);
-                    player.health -= 1;
-                    healthFg.width = Player.HEALTHBAR_WIDTH * (player.health / 100);
-                } else if (player.alive) {
-                    player.alive = false;
-                    player.changeVisiblity(false);
-                    this.socket.emit('dead');
-                }
-                this.updateSpriteDirection(playerUpdate);
-
-                // update player animation, if they are walking
-                if (playerUpdate.vx || playerUpdate.vy) {
-                    player.sprite.animations.play('walk', 20, true);
-                } else {
-                    player.sprite.animations.stop(null, true);
-                }
-
-                this.game.world.bringToTop(this.playerGroup);
-                this.game.world.bringToTop(this.weaponGroup);
-                this.game.world.bringToTop(this.uiGroup);
-
-                this.drawUI();
             }
 
             // update the position of the flags
@@ -134,6 +97,13 @@ export default class Game extends Phaser.State {
                         this.flags[f.colorIdx].setFlagUp();
                 }
             }
+
+            this.game.world.bringToTop(this.playerGroup);
+            this.game.world.bringToTop(this.weaponGroup);
+            this.game.world.bringToTop(this.healthBarGroup);
+            this.game.world.bringToTop(this.uiGroup);
+
+            this.drawUI();
         });
 
         this.socket.on('player_left', (id: number) => {
@@ -148,39 +118,6 @@ export default class Game extends Phaser.State {
             console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
-
-        this.socket.on('respawn', (id: number) => {
-            console.log('respawn');
-            let player = this.players[id];
-            if (player) {
-                player.alive = true;
-                player.changeVisiblity(true);
-                player.setHealth(100);
-            }
-        });
-    }
-
-    /*
-     * Flips the player sprite depending on direction of movement
-     * player: A player object sent from the server
-     */
-    private updateSpriteDirection(player: any) {
-        // player is moving left
-        if (player.left !== 0) {
-            // player is facing right
-            if (this.players[player.id].getIsFaceRight()) {
-                // so we need to flip him
-                this.players[player.id].setIsFaceRight(false);
-                // so when we flip the sprite, the name gets flipped back to original orientation
-                this.players[player.id].sprite.scale.x *= -1;
-            }
-        } else if (player.right !== 0) {    // player is moving right
-            // player is facing left, so we need to flip him
-            if (!this.players[player.id].getIsFaceRight()) {
-                this.players[player.id].setIsFaceRight(true);
-                this.players[player.id].sprite.scale.x *= -1;
-            }
-        }
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
@@ -222,6 +159,7 @@ export default class Game extends Phaser.State {
 
         this.playerGroup.add(this.players[player.id].sprite);
         this.weaponGroup.add(this.players[player.id].weaponGroup);
+        this.healthBarGroup.add(healthBar);
     }
 
     /*

@@ -22,6 +22,10 @@ module.exports = class Sword extends Collidable {
         this.angle = 0;
     }
 
+    static get SWORD_DAMAGE() {
+        return 10;
+    }
+
     start(angle, x, y) {
         if (this.player.alive && !this.active && this.cooldown === 0 && !this.player.hookedBy) {
             this.active = true;
@@ -46,13 +50,18 @@ module.exports = class Sword extends Collidable {
                     let hitBounds = { x: hitX, y: hitY };
 
                     if (this.world.collidesObject(hitBounds, hitBounds, player.getFullTopLeft(), player.getFullBottomRight())) {
-                        player.vx += Math.cos(this.angle) * PUSH_BACK;
-                        player.vy += Math.sin(this.angle) * PUSH_BACK;
+                        this.damagePlayer(player);
                         break;
                     }
                 }
             }
         }, ATTACK_DELAY);
+    }
+
+    damagePlayer(player) {
+        player.vx += Math.cos(this.angle) * PUSH_BACK;
+        player.vy += Math.sin(this.angle) * PUSH_BACK;
+        player.setHealth(player.getHealth() - Sword.SWORD_DAMAGE);
     }
 
     update(delta) {

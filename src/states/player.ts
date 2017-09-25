@@ -4,11 +4,11 @@ import Sword from './sword';
 export default class Player {
     id: any;
     world: Phaser.State;
-    name: Phaser.Text;      // child of sprite
-    health: number;         // health out of 100
+    name: Phaser.Text;         // child of sprite
+    private health: number;    // Note: Use the getter and setter to keep alive status accurate
     healthBar: Phaser.Group;   // health bar of the sprite
     sprite: Phaser.Sprite;
-    isFaceRight: boolean;   // is the player facing right
+    isFaceRight: boolean;      // is the player facing right
     alive: boolean;
     weaponGroup: Phaser.Group; // weapon sprites of the player
     hook: Hook;
@@ -33,8 +33,8 @@ export default class Player {
         this.healthBar = healthBar;
         this.sprite = sprite;
         this.isFaceRight = true;
-        this.health = 100;
-        this.alive = true;
+        this.health = 0;
+        this.alive = false;
 
         this.hook = new Hook(world, this);
         this.sword = new Sword(world, this);
@@ -45,6 +45,30 @@ export default class Player {
     }
 
     public update(update: any): void {
+        this.setHealth(update.health);
+
+        // update sprite position
+        this.sprite.x = update.x;
+        this.sprite.y = update.y;
+        this.name.x = update.x;
+        this.name.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
+
+        // group items are relative to the group object, so we
+        // loop through and set each one instead
+        this.healthBar.forEach(element => {
+            element.x = update.x - Player.HEALTH_BAR_X_OFFSET;
+            element.y = update.y - Player.HEALTH_BAR_Y_OFFSET;
+        }, this);
+
+        this.updateSpriteDirection(update);
+
+        // update player animation, if they are walking
+        if (update.vx || update.vy) {
+            this.sprite.animations.play('walk', 20, true);
+        } else {
+            this.sprite.animations.stop(null, true);
+        }
+
         this.hook.update(update.hook);
         this.sword.update(update.sword);
     }
@@ -55,6 +79,29 @@ export default class Player {
         this.healthBar.destroy();
         this.hook.destroy();
         this.sword.destroy();
+    }
+
+    /*
+     * Flips the player sprite depending on direction of movement
+     * player: A player object sent from the server
+     */
+    private updateSpriteDirection(update: any): void {
+        // player is moving left
+        if (update.left !== 0) {
+            // player is facing right
+            if (this.getIsFaceRight()) {
+                // so we need to flip him
+                this.setIsFaceRight(false);
+                // so when we flip the sprite, the name gets flipped back to original orientation
+                this.sprite.scale.x *= -1;
+            }
+        } else if (update.right !== 0) {    // player is moving right
+            // player is facing left, so we need to flip him
+            if (!this.getIsFaceRight()) {
+                this.setIsFaceRight(true);
+                this.sprite.scale.x *= -1;
+            }
+        }
     }
 
     public changeVisiblity(visible: boolean): void {
@@ -72,7 +119,21 @@ export default class Player {
     }
 
     public setHealth(health: number): void {
+        if (this.health === health) return;
+
         this.health = health;
+        let healthFg: Phaser.Sprite = <Phaser.Sprite> this.healthBar.getChildAt(1);
+        healthFg.width = Player.HEALTHBAR_WIDTH * (this.health / 100);
+
+        if (this.alive && this.health <= 0) {
+            // Update status to dead the first time we receive it
+            this.alive = false;
+            this.changeVisiblity(false);
+        } else if (!this.alive && this.health > 0) {
+            // Update status to alive the first time we receive it
+            this.alive = true;
+            this.changeVisiblity(true);
+        }
     }
 
     public setIsFaceRight(b: boolean): void {
