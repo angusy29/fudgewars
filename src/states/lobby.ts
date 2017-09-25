@@ -298,9 +298,9 @@ export default class Lobby extends Phaser.State {
     }
 
     private redPanelClick(tile: number): void {
-        this.game.sound.play('click1');        
+        this.game.sound.play('click1');
         if (this.players[this.socket.id].isReady) return;
-        if (this.redTiles[tile].player !== null) return;        
+        if (this.redTiles[tile].player !== null) return;
         this.socket.emit('red_team_change', tile);
     }
 
