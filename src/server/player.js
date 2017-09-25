@@ -29,13 +29,21 @@ module.exports = class Player extends Collidable {
         this.up = 0;
         this.down = 0;
         this.carryingFlag = null;
+        this._health = Player.MAX_HEALTH; // Note: Use the getter and setter to keep alive status accurate
         this.alive = true;
-        this.respawn = false;
 
         this.hook = new Hook(world, this);
         this.hookedBy = null;
 
         this.sword = new Sword(world, this);
+    }
+
+    static get MAX_HEALTH() {
+        return 100;
+    }
+
+    static get RESPAWN_TIME() {
+        return 5000;
     }
 
     getFullTopLeft() {
@@ -50,6 +58,27 @@ module.exports = class Player extends Collidable {
             x: this.x + 32,
             y: this.y + 32
         };
+    }
+
+    getHealth() {
+        return this._health;
+    }
+
+    setHealth(health) {
+        this._health = health;
+
+        // Set respawn if they just died
+        if (this.alive && this._health <= 0) {
+            this.world.setRespawnTimer(this.id);
+        }
+
+        // Set alive status
+        if (this._health <= 0) {
+            this._health = 0;
+            this.alive = false;
+        } else {
+            this.alive = true;
+        }
     }
 
     update(delta) {
@@ -68,6 +97,7 @@ module.exports = class Player extends Collidable {
 
     getHooked(hooker) {
         this.hookedBy = hooker;
+        this.setHealth(this.getHealth() - Hook.HOOK_DAMAGE);
     }
 
     getUnhooked() {
@@ -178,8 +208,7 @@ module.exports = class Player extends Collidable {
             vy: this.vy,
             left: this.left,    // left and right used to flip sprite
             right: this.right,
-            alive: this.alive,
-            respawn: this.respawn,
+            health: this.getHealth(),
             hook: this.hook.getRep(toId),
             sword: this.sword.getRep(toId),
         }

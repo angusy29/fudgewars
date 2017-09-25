@@ -1,7 +1,7 @@
 import Player from './player';
 import { Atlases } from '../assets';
 
-const ANIMATION_DELAY = 300;
+const ANIMATION_DURATION = 300;
 const ATTACK_LENGTH = 45;
 
 export default class Sword {
@@ -18,7 +18,7 @@ export default class Sword {
         this.sprite = this.world.add.sprite(this.player.sprite.x, this.player.sprite.y,
                                             Atlases.SpritesheetsItemsSpritesheet.getName(),
                                             Atlases.SpritesheetsItemsSpritesheet.Frames.KeyYellow);
-        this.sprite.visible = false;
+        this.sprite.alpha = 0;
         this.sprite.anchor.setTo(0, 0.5);
         this.sprite.scale.setTo(1, 0.2);
         this.sprite.width = 0;
@@ -41,19 +41,19 @@ export default class Sword {
         this.sprite.x = this.player.sprite.x;
         this.sprite.y = this.player.sprite.y;
 
-        if (swordUpdate.active && !this.sprite.visible) {
+        if (swordUpdate.active && this.sprite.alpha === 0) {
             this.sprite.angle = swordUpdate.angle * (180 / Math.PI);
             this.angle = this.sprite.angle;
             this.sprite.width = 0;
-            this.sprite.visible = true;
+            this.sprite.alpha = 100;
             this.play();
         }
     }
 
     public play(): void {
-        let tween = this.world.game.add.tween(this.sprite).to({ width: ATTACK_LENGTH }, ANIMATION_DELAY, Phaser.Easing.Linear.None, true);
+        let tween = this.world.game.add.tween(this.sprite).to({ width: ATTACK_LENGTH }, ANIMATION_DURATION, Phaser.Easing.Linear.None, true);
         tween.onComplete.add(() => {
-            this.sprite.visible = false;
+            this.sprite.alpha = 0;
         }, this);
     }
 }

@@ -30,6 +30,10 @@ module.exports = class Hook extends Collidable {
         this.angle = 0;
     }
 
+    static get HOOK_DAMAGE() {
+        return 45;
+    }
+
     start(angle, x, y) {
         if (this.player.alive && !this.active && this.cooldown === 0) {
             this.active = true;

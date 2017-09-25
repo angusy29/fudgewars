@@ -163,7 +163,6 @@ class World {
     addPlayer(socket) {
         let id = socket.id;
 
-        let waiting = false;
         let name = lobby.getPlayers()[id].name;
         let team = lobby.getPlayers()[id].team;
 
@@ -200,19 +199,6 @@ class World {
             player.useSword(angle);
         });
 
-        socket.on('dead', function() {
-            player.alive = false;
-
-            if (!waiting) {
-                waiting = true;
-                setTimeout(() => {
-                    player.alive = true;
-                    io.emit('respawn', player.id);
-                    waiting = false;
-                }, 5000);
-            }
-        });
-
         socket.on('disconnect', () => {
             // release the flag that is being carry by the player
             if (player.carryingFlag != null) {
@@ -229,6 +215,16 @@ class World {
         if (this.timeout == null) {
             this.timeout = setInterval(() => {this.update()}, 30);
         }
+    }
+
+    setRespawnTimer(id) {
+        setTimeout(() => {
+            let player = this.players[id];
+            if (!player) return;
+
+            player.setHealth(Player.MAX_HEALTH);
+            io.emit('respawn', id);
+        }, Player.RESPAWN_TIME);
     }
 
     removePlayer(id) {
