@@ -3,13 +3,19 @@ let LobbyPlayer = require('./lobbyplayer');
 module.exports = class Lobby {
     constructor(io) {
         this.io = io;
+        this.max_players_in_each_team = 6;
         this.players = {};      // all the players
-        this.red = {};          // red team
-        this.blue = {};         // blue team
         this.playercount = 0;
         this.redcount = 0;
         this.bluecount = 0;
-        this.max_players_in_each_team = 6;
+
+        // initialise blue and red teams, tiles
+        this.blue = {};
+        this.red = {};
+        for (let i = 0; i < this.max_players_in_each_team; i++) {
+            this.blue[i] = null;
+            this.red[i] = null;
+        }
     }
 
     /*
@@ -26,16 +32,24 @@ module.exports = class Lobby {
 
         let id = socket.id;
         let player;
+        let tile;
 
         // add to red team or blue team depending on current size of team
         if (this.bluecount <= this.redcount) {
-            // tile must be bluecount
-            player = new LobbyPlayer(id, name, this.bluecount, BLUE);
-            this.blue[player.id] = player;
+            // find the next available tile
+            for (tile = 0; tile < this.max_players_in_each_team; tile++) {
+                if (this.blue[tile] == null) break;
+            }
+            player = new LobbyPlayer(id, name, tile, BLUE);
+            this.blue[player.tile] = player;
             this.bluecount++;
         } else {
-            player = new LobbyPlayer(id, name, this.redcount, RED);
-            this.red[player.id] = player;
+            // find the next available tile
+            for (tile = 0; tile < this.max_players_in_each_team; tile++) {
+                if (this.red[tile] == null) break;
+            }
+            player = new LobbyPlayer(id, name, tile, RED);
+            this.red[player.tile] = player;
             this.redcount++;
         }
 
@@ -48,31 +62,37 @@ module.exports = class Lobby {
             this.players[id].isReady = !this.players[id].isReady;
         });
 
+        // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
-            // console.log('blue moved ' + this.players[id].name + ' ' + BLUE);
+            let oldTile = this.players[id].tile;
             if (this.players[id].team === RED) {
                 // if player was in red team
-                delete this.red[id]
+                this.red[oldTile] = null;
                 this.redcount--;
-                this.blue[id] = this.players[id];
+            } else {
+                this.blue[oldTile] = null;
+                this.blue[tile] = this.players[id];
             }
             this.players[id].team = BLUE;
             this.players[id].tile = tile;
-            // this.print();            
+            this.print();            
             this.io.emit('player_moved', this.players[id]);
         });
 
+        // when player clicks on red panel this gets called
         socket.on('red_team_change', (tile) => {
-            // console.log('red moved ' + this.players[id].name + ' ' + RED);
-            if (this.players[id].team === BLUE) {
+            let oldTile = this.players[id].tile;            
+            if (this.players[id].team === BLUE) {     
                 // if player was in blue team
-                delete this.blue[id]
+                this.blue[oldTile] = null;
                 this.bluecount--;
-                this.red[id] = this.players[id];
+            } else {
+                this.red[oldTile] = null;
+                this.red[tile] = this.players[id];
             }
             this.players[id].team = RED;
             this.players[id].tile = tile;
-            // this.print();
+            this.print();
             this.io.emit('player_moved', this.players[id]);
         });
 
@@ -160,12 +180,12 @@ module.exports = class Lobby {
         console.log();
         console.log('===BLUE TEAM===');
         for (var id in this.blue) {
-            console.log(this.blue[id]);
+            if (this.blue[id] !== null) console.log(this.blue[id]);
         }
         console.log();
         console.log('===RED TEAM===');
         for (var id in this.red) {
-            console.log(this.red[id]);
+            if (this.red[id] !== null) console.log(this.red[id]);
         }
 
         console.log();
