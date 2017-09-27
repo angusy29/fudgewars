@@ -60,10 +60,24 @@ module.exports = class Lobby {
         // toggle player ready
         socket.on('player_ready', () => {
             this.players[id].isReady = !this.players[id].isReady;
+            this.io.emit('lobby_player_ready', this.players[id]);
+            let startGame = true;
+            for (let id in this.players) {
+                let player = this.players[id];
+                if (player.isReady === false) startGame = false;
+            }
+            // everyone is ready so we start the game
+            if (startGame === true) {
+                clearInterval(this.timeout);
+                this.timeout = null;
+                this.io.emit('lobby_start');
+            }
         });
 
         // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
+            // if the tile we want to move to is not empty, return
+            if (this.blue[tile] != null) return;
             let oldTile = this.players[id].tile;
             if (this.players[id].team === RED) {
                 // if player was in red team
@@ -81,6 +95,8 @@ module.exports = class Lobby {
 
         // when player clicks on red panel this gets called
         socket.on('red_team_change', (tile) => {
+            // if the tile we want to move to is not empty, return
+            if (this.red[tile] != null) return;
             let oldTile = this.players[id].tile;            
             if (this.players[id].team === BLUE) {     
                 // if player was in blue team
@@ -99,29 +115,31 @@ module.exports = class Lobby {
         // If player control q's out or quits browser
         socket.on('disconnect', () => {
             console.log('lobby disconnected');
-            this.removePlayer(id);
+            this.removePlayer(id, player.tile);
             this.io.emit('lobby_player_left', id);
             this.print();
         });
 
+        this.update();
+
         // Start updates
-        if (this.timeout == null) {
-            this.timeout = setInterval(()=>{this.update()}, 30);
-        }
+        // if (this.timeout == null) {
+        //     this.timeout = setInterval(()=>{this.update()}, 30);
+        // }
     }
 
     /*
      * Removes a player from the lobby
      * id: id of player to remove
      */
-    removePlayer(id) {
-        if (id in this.blue) {
-            delete this.blue[id];
+    removePlayer(id, tile) {
+        if (this.blue[tile] !== null && this.blue[tile].id === id) {
+            this.blue[tile] = null;
             this.bluecount--;
         }
 
-        if (id in this.red) {
-            delete this.red[id];
+        if (this.red[tile] !== null && this.red[tile].id === id) {
+            this.red[tile] = null;
             this.redcount--;
         }
 
@@ -129,29 +147,19 @@ module.exports = class Lobby {
         this.playerCount--;
 
         // Stop updates if no more players
-        if (this.playerCount === 0) {
-            clearInterval(this.timeout);
-            this.timeout = null;
-        }
+        // if (this.playerCount === 0) {
+        //     clearInterval(this.timeout);
+        //     this.timeout = null;
+        // }
     }
 
     update() {
         let all = [];
-        let startGame = true;
         for (let id in this.players) {
             let player = this.players[id];
-            if (player.isReady === false) startGame = false;
             all.push(player);
         }
-
         this.io.emit('lobby_update', all)
-
-        // everyone is ready so we start the game
-        if (startGame === true) {
-            clearInterval(this.timeout);
-            this.timeout = null;
-            this.io.emit('lobby_start');
-        }
     }
 
     /*

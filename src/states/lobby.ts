@@ -44,51 +44,56 @@ export default class Lobby extends Phaser.State {
         this.blueTiles = {};
         this.redTiles = {};
 
+        // gets called whenever a new player is added
         this.socket.on('lobby_update', (data: any) => {
             for (let player of data) {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
-
-                // create tick ready image
-                if (player.isReady) {
-                    if (this.players[player.id].readyImg !== null) continue;
-
-                    let obj;
-                    if (player.team === Lobby.BLUE) obj = this.blueTiles;
-                    else obj = this.redTiles;
-
-                    let tile = this.players[player.id].tile;
-                    let posX = obj[tile].image.centerX + 16;
-                    let posY = obj[tile].image.centerY + 16;
-
-                    let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
-                                        Lobby.team_sheets[2]);
-
-                    this.players[player.id].readyImg = readyTick;
-
-                    this.players[player.id].sprite.animations.play('walk', 20, true);
-                } else if (!player.isReady && this.players[player.id].readyImg !== null) {
-                    // destroy tick ready image
-                    this.players[player.id].readyImg.destroy();
-                    this.players[player.id].readyImg = null;
-                    this.players[player.id].sprite.animations.stop(null, true);
-                }
             }
         });
 
+        // server acknowledges that we clicked ready, and sends a message back
+        // and client renders or destroys the tick image
+        this.socket.on('lobby_player_ready', (player: any) => {
+            // create tick ready image
+            if (player.isReady) {
+                if (this.players[player.id].readyImg !== null) return;
+
+                let obj;
+                if (player.team === Lobby.BLUE) obj = this.blueTiles;
+                else obj = this.redTiles;
+
+                let tile = this.players[player.id].tile;
+                let posX = obj[tile].image.centerX + 16;
+                let posY = obj[tile].image.centerY + 16;
+
+                let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
+                                    Lobby.team_sheets[2]);
+
+                this.players[player.id].readyImg = readyTick;
+
+                this.players[player.id].sprite.animations.play('walk', 20, true);
+            } else if (!player.isReady && this.players[player.id].readyImg !== null) {
+                // destroy tick ready image
+                this.players[player.id].readyImg.destroy();
+                this.players[player.id].readyImg = null;
+                this.players[player.id].sprite.animations.stop(null, true);
+            }
+        });
+
+        // when player moves to a new tile
         this.socket.on('player_moved', (player: any) => {
-            console.log(this.players);
             let playerToMove = this.players[player.id];
             let oldteam = playerToMove.team;
             let newteam = player.team;
             let teamtiles;
             let frame;
 
-            // need to clear tile of oldteam
             if (oldteam === Lobby.BLUE) teamtiles = this.blueTiles;
             if (oldteam === Lobby.RED) teamtiles = this.redTiles;
 
+            // need to clear tile of oldteam
             teamtiles[playerToMove.tile].player = null;
 
             if (newteam === Lobby.BLUE) {
@@ -122,7 +127,6 @@ export default class Lobby extends Phaser.State {
 
             // assign player to the new tile
             teamtiles[playerToMove.tile].player = playerToMove;
-            console.log(this.players);
         });
 
         // start the game because everyone is ready
@@ -131,8 +135,8 @@ export default class Lobby extends Phaser.State {
             this.loadGame();
         });
 
+        // when a player leaves the game, gets called
         this.socket.on('lobby_player_left', (id: any) => {
-            console.log('lobby player left');
             this.players[id].name.destroy();
             this.players[id].sprite.destroy();
             if (this.players[id].readyImg !== null) this.players[id].readyImg.destroy();
@@ -309,7 +313,7 @@ export default class Lobby extends Phaser.State {
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();
-        this.game.state.start('lobbyselection', true, false, this.client_player_name);
+        this.game.state.start('mainmenu', true, false, this.client_player_name);
     }
 
     /*
