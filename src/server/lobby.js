@@ -49,16 +49,30 @@ module.exports = class Lobby {
         });
 
         socket.on('blue_team_change', (tile) => {
-            console.log('moved ' + this.players[id].name);
+            // console.log('blue moved ' + this.players[id].name + ' ' + BLUE);
+            if (this.players[id].team === RED) {
+                // if player was in red team
+                delete this.red[id]
+                this.redcount--;
+                this.blue[id] = this.players[id];
+            }
             this.players[id].team = BLUE;
             this.players[id].tile = tile;
+            // this.print();            
             this.io.emit('player_moved', this.players[id]);
         });
 
         socket.on('red_team_change', (tile) => {
-            console.log('moved ' + this.players[id].name);
+            // console.log('red moved ' + this.players[id].name + ' ' + RED);
+            if (this.players[id].team === BLUE) {
+                // if player was in blue team
+                delete this.blue[id]
+                this.bluecount--;
+                this.red[id] = this.players[id];
+            }
             this.players[id].team = RED;
             this.players[id].tile = tile;
+            // this.print();
             this.io.emit('player_moved', this.players[id]);
         });
 

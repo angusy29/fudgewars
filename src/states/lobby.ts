@@ -39,11 +39,10 @@ export default class Lobby extends Phaser.State {
 
     public init(playername: string): void {
         this.client_player_name = playername;
+        this.socket = io.connect();
         this.players = {};  // need to reset these, otherwise
         this.blueTiles = {};
         this.redTiles = {};
-
-        this.socket = io.connect();
 
         this.socket.on('lobby_update', (data: any) => {
             for (let player of data) {
@@ -129,14 +128,13 @@ export default class Lobby extends Phaser.State {
         // start the game because everyone is ready
         this.socket.on('lobby_start', () => {
             console.log('lobby start');
-            this.unsubscribeAll();
-            this.socket.emit('prepare_world');
-            this.game.state.start('game', true, false, this.socket);
+            this.loadGame();
         });
 
         this.socket.on('lobby_player_left', (id: any) => {
             console.log('lobby player left');
             this.players[id].name.destroy();
+            this.players[id].sprite.destroy();
             if (this.players[id].readyImg !== null) this.players[id].readyImg.destroy();
 
             if (this.players[id].team === Lobby.BLUE) {
@@ -308,15 +306,26 @@ export default class Lobby extends Phaser.State {
      * Goes back to the main menu
      */
     private loadBack(): void {
-        this.socket.disconnect();
-        this.unsubscribeAll();
+        this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
-        this.game.state.start('mainmenu', true, false);
+        this.unsubscribeAll();
+        this.game.state.start('lobbyselection', true, false, this.client_player_name);
+    }
+
+    /*
+     * This is called when server tells client that all
+     * players are ready
+     */
+    private loadGame(): void {
+        this.unsubscribeAll();
+        this.socket.emit('prepare_world');
+        this.game.state.start('game', true, false, this.socket);
     }
 
     private unsubscribeAll() {
         this.socket.off('lobby_start');
         this.socket.off('lobby_update');
         this.socket.off('lobby_player_left');
+        this.socket.off('player_moved');
     }
 }
