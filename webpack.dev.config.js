@@ -50,7 +50,9 @@ module.exports = {
         })
     ],
     devServer: {
-        proxy: {"*": "http://localhost:8081"},
+        proxy: {
+            "/socket.io/*": {target: "ws://localhost:8081", ws: true}
+        },
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
         port: 9000,
