@@ -296,7 +296,7 @@ class World {
 }
 
 lobby = new Lobby(io);
-world = new World(768, 640, 64);
+world = new World(768*2, 640*2, 64);
 
 io.on('connection',function(socket){
     socket.on('join_lobby', function(name) {

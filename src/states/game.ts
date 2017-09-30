@@ -152,6 +152,7 @@ export default class Game extends Phaser.State {
         // if this is the client's player, set the colour to be limegreen
         if (player.id === this.client_id) {
             name.addColor('#32CD32', 0);
+            this.game.camera.follow(sprite);
         }
 
         let healthBar = this.createPlayerHealthBar(player);
@@ -282,10 +283,10 @@ export default class Game extends Phaser.State {
         this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
         this.map = this.game.add.tilemap('world', 64, 64);
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+        this.game.world.setBounds(0, 0, 768 * 2, 640 * 2);
 
         let layer: Phaser.TilemapLayer = this.map.createLayer(0);
         this.mapLayer = layer;
-
         layer.inputEnabled = true;
 
         // layer.events.onInputUp.add(this.getCoordinates);
