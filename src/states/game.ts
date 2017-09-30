@@ -326,14 +326,12 @@ export default class Game extends Phaser.State {
             skillImg.width = width;
             skillImg.height = height;
             skillImg.anchor.setTo(0.5);
-            skillImg.fixedToCamera = true;
 
             let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, 'skill_cooldown_overlay');
             overlayImg.width = width;
             overlayImg.height = height;
             overlayImg.alpha = 0.5;
             overlayImg.anchor.setTo(0.5, 1);
-            overlayImg.fixedToCamera = true;
             overlayImg.visible = false;
 
             let text: Phaser.Text = this.game.add.text(centerX, centerY, '', {
@@ -365,8 +363,9 @@ export default class Game extends Phaser.State {
             this.uiGroup.add(buttonText);
         }
 
-        this.uiGroup.x = this.game.width / 2 - this.uiGroup.width / 2 + width / 2;
-        this.uiGroup.y = this.game.height - (height / 2);
+        this.uiGroup.fixedToCamera = true;
+        this.uiGroup.cameraOffset = new Phaser.Point(this.game.width / 2 - this.uiGroup.width / 2 + width / 2,
+                                                     this.game.height - (height / 2));
     }
 
     private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
