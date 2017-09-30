@@ -369,16 +369,20 @@ export default class Game extends Phaser.State {
     }
 
     private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
+        let id = this.socket.id;
+        let me: Player = this.players[id];
+        if (!me) return;
+
+        let camera: Phaser.Camera = this.game.camera;
+        let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
+        let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
+
         if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_hook', angle);
         }
         if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_sword', angle);
         }
     }
