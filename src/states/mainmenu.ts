@@ -113,6 +113,6 @@ export default class MainMenu extends Phaser.State {
 
     private loadOptions(): void {
         this.game.sound.play('click1');
-        // TODO
+        this.game.state.start('options');
     }
 }

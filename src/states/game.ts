@@ -373,12 +373,14 @@ export default class Game extends Phaser.State {
             let id = this.socket.id;
             let me: Player = this.players[id];
             let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            this.game.sound.play('hook');       // play hook sound
             this.socket.emit('attack_hook', angle);
         }
         if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
             let id = this.socket.id;
             let me: Player = this.players[id];
             let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
+            this.game.sound.play('sword');
             this.socket.emit('attack_sword', angle);
         }
     }
