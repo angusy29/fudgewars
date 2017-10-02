@@ -2,6 +2,8 @@ import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
 import Flag from './flag';
+import ButtonUtil from './buttonutil';
+import CustomButton from './custombutton';
 
 // TODO have a single file for both server/client constants?
 const COOLDOWNS = {
@@ -45,10 +47,18 @@ export default class Game extends Phaser.State {
         },
     };
 
-    static readonly PLAYER_NAME_Y_OFFSET = 24;
+    /* Escape menu */
+    private isShowMenu: boolean = false;    // current state of showing or hiding menu
+    private menuGroup: Phaser.Group = null;
+    private buttonUtil: ButtonUtil;     // object used to create buttons
+    private soundGroup: Phaser.Group;
+    private quitGame: CustomButton;
 
     // used to render own client's name green
     private client_id: string;
+
+    /* Static variables */
+    static readonly PLAYER_NAME_Y_OFFSET = 24;
 
     static readonly BLUE = 0;
     static readonly RED = 1;
@@ -60,8 +70,14 @@ export default class Game extends Phaser.State {
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
         this.healthBarGroup = this.game.add.group();
+        this.soundGroup = this.game.add.group();
         this.client_id = socket.id;
 
+        /* Initialise menu stuff */
+        this.buttonUtil = new ButtonUtil(this.game);
+        this.initMenu();
+
+        /* Initialise socket and set up listeners */
         this.socket = socket;
 
         this.socket.on('loaded', (data: any) => {
@@ -102,6 +118,8 @@ export default class Game extends Phaser.State {
             this.game.world.bringToTop(this.weaponGroup);
             this.game.world.bringToTop(this.healthBarGroup);
             this.game.world.bringToTop(this.uiGroup);
+            this.game.world.bringToTop(this.menuGroup);
+            this.game.world.bringToTop(this.soundGroup);
 
             this.drawUI();
         });
@@ -202,6 +220,7 @@ export default class Game extends Phaser.State {
      * Callback for when key is pressed down
      */
     private onDown(e: KeyboardEvent): void {
+        console.log(e.keyCode);
         if (this.isDown[e.keyCode]) {
             return;
         }
@@ -218,6 +237,13 @@ export default class Game extends Phaser.State {
                 break;
             case 68:    // d
                 this.socket.emit('keydown', 'right');
+                break;
+            case 27:    // escape
+                if (this.isShowMenu === false) {
+                    this.showMenu(true);
+                } else {
+                    this.showMenu(false);
+                }
                 break;
             default:
                 break;
@@ -413,6 +439,41 @@ export default class Game extends Phaser.State {
             }
         }
         return data;
+    }
+
+    /*
+     * Show or hide escape menu
+     */
+    private showMenu(show: boolean): void {
+        this.isShowMenu = show;
+        if (this.isShowMenu === true) {
+            this.soundGroup.visible = true;
+            this.quitGame.setVisible();
+        }
+
+        if (this.isShowMenu === false) {
+            this.soundGroup.visible = false;
+            this.quitGame.hide();
+        }
+    }
+
+    private initMenu(): void {
+        this.soundGroup = this.buttonUtil.createSoundBar();
+        this.soundGroup.visible = false;
+        let button = this.buttonUtil.createButton(this.game.camera.width / 2, this.game.camera.height / 2 + 64, this, this.quit);
+        let text = this.buttonUtil.createText(button.x, button.y, 'Quit game');
+        this.quitGame = new CustomButton(button, text);
+        this.quitGame.hide();
+        this.quitGame.fixToCamera();
+
+        this.menuGroup = this.game.add.group();
+        this.menuGroup.add(button);
+        this.menuGroup.add(text);
+    }
+
+    private quit(): void {
+        this.socket.disconnect();
+        this.game.state.start('mainmenu');
     }
 
     public create(): void {
