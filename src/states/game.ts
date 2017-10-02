@@ -152,6 +152,7 @@ export default class Game extends Phaser.State {
         // if this is the client's player, set the colour to be limegreen
         if (player.id === this.client_id) {
             name.addColor('#32CD32', 0);
+            this.game.camera.follow(sprite);
         }
 
         let healthBar = this.createPlayerHealthBar(player);
@@ -282,10 +283,10 @@ export default class Game extends Phaser.State {
         this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
         this.map = this.game.add.tilemap('world', 64, 64);
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+        this.game.world.setBounds(0, 0, 768 * 2, 640 * 2);
 
         let layer: Phaser.TilemapLayer = this.map.createLayer(0);
         this.mapLayer = layer;
-
         layer.inputEnabled = true;
 
         // layer.events.onInputUp.add(this.getCoordinates);
@@ -325,14 +326,12 @@ export default class Game extends Phaser.State {
             skillImg.width = width;
             skillImg.height = height;
             skillImg.anchor.setTo(0.5);
-            skillImg.fixedToCamera = true;
 
             let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, 'skill_cooldown_overlay');
             overlayImg.width = width;
             overlayImg.height = height;
             overlayImg.alpha = 0.5;
             overlayImg.anchor.setTo(0.5, 1);
-            overlayImg.fixedToCamera = true;
             overlayImg.visible = false;
 
             let text: Phaser.Text = this.game.add.text(centerX, centerY, '', {
@@ -364,23 +363,26 @@ export default class Game extends Phaser.State {
             this.uiGroup.add(buttonText);
         }
 
-        this.uiGroup.x = this.game.width / 2 - this.uiGroup.width / 2 + width / 2;
-        this.uiGroup.y = this.game.height - (height / 2);
+        this.uiGroup.fixedToCamera = true;
+        this.uiGroup.cameraOffset = new Phaser.Point(this.game.width / 2 - this.uiGroup.width / 2 + width / 2,
+                                                     this.game.height - (height / 2));
     }
 
     private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
+        let id = this.socket.id;
+        let me: Player = this.players[id];
+        if (!me) return;
+
+        let camera: Phaser.Camera = this.game.camera;
+        let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
+        let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
+
         if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
-            this.game.sound.play('hook');       // play hook sound
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_hook', angle);
         }
         if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
-            this.game.sound.play('sword');
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_sword', angle);
         }
     }
