@@ -11,6 +11,16 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/attack_sword.png'); }
     }
+    export class ImagesDemo {
+        static getName(): string { return 'demo'; }
+
+        static getPNG(): string { return require('assets/images/demo.png'); }
+    }
+    export class ImagesMouse {
+        static getName(): string { return 'mouse'; }
+
+        static getPNG(): string { return require('assets/images/mouse.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 
@@ -20,6 +30,11 @@ export namespace Images {
         static getName(): string { return 'titlescreen'; }
 
         static getPNG(): string { return require('assets/images/titlescreen.png'); }
+    }
+    export class ImagesWasd {
+        static getName(): string { return 'wasd'; }
+
+        static getPNG(): string { return require('assets/images/wasd.png'); }
     }
 }
 
@@ -352,25 +367,40 @@ export namespace Atlases {
 }
 
 export namespace Audio {
-    export class SoundsClick1 {
+    export class AdventureMeme {
+        static getName(): string { return 'adventureMeme'; }
+
+        static getMP3(): string { return require('assets/adventureMeme.mp3'); }
+    }
+    export class MenusoundsClick1 {
         static getName(): string { return 'click1'; }
 
-        static getMP3(): string { return require('assets/sounds/click1.mp3'); }
+        static getMP3(): string { return require('assets/menusounds/click1.mp3'); }
     }
-    export class SoundsRollover1 {
+    export class MenusoundsRollover1 {
         static getName(): string { return 'rollover1'; }
 
-        static getMP3(): string { return require('assets/sounds/rollover1.mp3'); }
+        static getMP3(): string { return require('assets/menusounds/rollover1.mp3'); }
     }
-    export class SoundsSwitch2 {
+    export class MenusoundsSwitch2 {
         static getName(): string { return 'switch2'; }
 
-        static getMP3(): string { return require('assets/sounds/switch2.mp3'); }
+        static getMP3(): string { return require('assets/menusounds/switch2.mp3'); }
     }
-    export class SoundsSwitch3 {
+    export class MenusoundsSwitch3 {
         static getName(): string { return 'switch3'; }
 
-        static getMP3(): string { return require('assets/sounds/switch3.mp3'); }
+        static getMP3(): string { return require('assets/menusounds/switch3.mp3'); }
+    }
+    export class PlayersoundsHook {
+        static getName(): string { return 'hook'; }
+
+        static getMP3(): string { return require('assets/playersounds/hook.mp3'); }
+    }
+    export class PlayersoundsSword {
+        static getName(): string { return 'sword'; }
+
+        static getM4A(): string { return require('assets/playersounds/sword.m4a'); }
     }
 }
 

@@ -10,6 +10,7 @@ import MainMenu from './states/mainmenu';
 import Lobby from './states/lobby';
 import LobbyPlayer from './states/lobbyplayer';
 import HowToPlay from './states/howtoplay';
+import Options from './states/options';
 import Game from './states/game';
 import ButtonUtil from './states/buttonutil';
 import * as Utils from './utils/utils';
@@ -24,6 +25,7 @@ class App extends Phaser.Game {
         this.state.add('mainmenu', MainMenu);
         this.state.add('lobby', Lobby);
         this.state.add('howtoplay', HowToPlay);
+        this.state.add('options', Options);
         this.state.add('game', Game);
 
         this.state.start('boot');

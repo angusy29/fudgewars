@@ -20,7 +20,13 @@ export default class CustomButton {
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton04,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton05,
         Assets.Atlases.ButtonsGreenSheet.Frames.GreenButton00,
-        Assets.Atlases.ButtonsYellowSheet.Frames.YellowButton00
+        Assets.Atlases.ButtonsYellowSheet.Frames.YellowButton00,
+    ];
+
+    static soundButtons: any = [
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton10,
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton11,
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton12,
     ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {

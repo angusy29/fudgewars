@@ -120,6 +120,14 @@ module.exports = class Lobby {
             this.print();
         });
 
+        // If player clicks on back
+        socket.on('lobby_player_back', () => {
+            console.log('lobby disconnected');
+            this.removePlayer(id, player.tile);
+            this.io.emit('lobby_player_left', id);
+            this.print();
+        });
+
         this.update();
 
         // Start updates

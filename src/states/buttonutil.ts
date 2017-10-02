@@ -34,11 +34,23 @@ export default class ButtonUtil {
      */
     public createText(x, y, label): Phaser.Text {
         let text = this.game.add.text(x, y, label, {
-            font: '24px ' + Assets.GoogleWebFonts.Roboto
+            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3
         });
         text.addColor(CustomButton.TEXT_COLOR, 0);
         text.anchor.setTo(0.5, 0.4);
         return text;
+    }
+
+    public createSoundButton(x, y, context, callback): Phaser.Button {
+        let button: Phaser.Button = this.game.add.button(x, y,
+            Assets.Atlases.ButtonsBlueSheet.getName(), callback,
+            context, CustomButton.soundButtons[1], CustomButton.soundButtons[2], CustomButton.soundButtons[0], CustomButton.soundButtons[1]);
+        button.alpha = 0.9;
+        button.anchor.setTo(0.5, 0.5);
+        return button;
     }
 
     /*

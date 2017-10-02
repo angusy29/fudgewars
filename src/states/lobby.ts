@@ -192,7 +192,10 @@ export default class Lobby extends Phaser.State {
 
         // set up label of the player
         let name = this.game.add.text(namePosX, namePosY, player.name, {
-            font: '14px ' + Assets.GoogleWebFonts.Roboto
+            font: '14px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
         });
         name.anchor.setTo(0.5, 0.5);
 
@@ -215,7 +218,10 @@ export default class Lobby extends Phaser.State {
 
     private initBlueTeamPanels(): void {
         let label = this.game.add.text(this.game.world.centerX, this.game.world.centerY, 'Team Blue', {
-            font: '32px ' + Assets.GoogleWebFonts.Roboto
+            font: '32px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
         });
         label.anchor.setTo(1.25, 4.0);
 
@@ -236,7 +242,10 @@ export default class Lobby extends Phaser.State {
 
     private initRedTeamPanels(): void {
         let label = this.game.add.text(this.game.world.centerX, this.game.world.centerY, 'Team Red', {
-            font: '32px ' + Assets.GoogleWebFonts.Roboto
+            font: '32px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
         });
         label.anchor.setTo(-0.32, 4.0);
 
