@@ -13,6 +13,9 @@ const COOLDOWNS = {
  * The actual game client
  */
 export default class Game extends Phaser.State {
+    private pingText: Phaser.Text;
+    private pingTime: number = 0;
+    private pingStartTime: number;
     private map: Phaser.Tilemap;
     public socket: any;
     private players: any = {};
@@ -118,6 +121,17 @@ export default class Game extends Phaser.State {
             console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
+
+        this.socket.on('pongcheck', () => {
+            this.pingTime = Math.round(Date.now() - this.pingStartTime);
+        });
+
+        this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+    }
+
+    private ping(): void {
+        this.pingStartTime = Date.now();
+        this.socket.emit('pingcheck');
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
@@ -293,6 +307,10 @@ export default class Game extends Phaser.State {
     }
 
     private drawUI(): void {
+        // Ping
+        this.pingText.text = `Ping: ${this.pingTime}ms`;
+
+        // Skills
         for (let skillIndex in this.skillList) {
             let skillName: string = this.skillList[skillIndex];
             let skill = this.skills[skillName];
@@ -311,6 +329,16 @@ export default class Game extends Phaser.State {
     }
 
     private loadUI(): void {
+        // Ping
+        this.pingText = this.game.add.text(0, 0, '', {
+            font: '8px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.pingText.fixedToCamera = true;
+
+        // Skills
         let width: number = 45;
         let height: number = 45;
 

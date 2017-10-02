@@ -184,9 +184,13 @@ class World {
             player.keydown(direction);
         });
 
+        socket.on('pingcheck', function(nothing) {
+            socket.emit('pongcheck');
+        });
+
+
         socket.on('keyup', function(direction) {
             player.keyup(direction);
-            io.emit('player_stop', id);
         });
 
         socket.on('attack_hook', function(angle) {
