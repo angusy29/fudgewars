@@ -2,6 +2,8 @@ import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
 import Flag from './flag';
+import ButtonUtil from './buttonutil';
+import CustomButton from './custombutton';
 
 // TODO have a single file for both server/client constants?
 const COOLDOWNS = {
@@ -13,6 +15,9 @@ const COOLDOWNS = {
  * The actual game client
  */
 export default class Game extends Phaser.State {
+    private pingText: Phaser.Text;
+    private pingTime: number = 0;
+    private pingStartTime: number;
     private map: Phaser.Tilemap;
     public socket: any;
     private players: any = {};
@@ -45,10 +50,18 @@ export default class Game extends Phaser.State {
         },
     };
 
-    static readonly PLAYER_NAME_Y_OFFSET = 24;
+    /* Escape menu */
+    private isShowMenu: boolean = false;    // current state of showing or hiding menu
+    private menuGroup: Phaser.Group = null;
+    private buttonUtil: ButtonUtil;     // object used to create buttons
+    private soundGroup: Phaser.Group;
+    private quitGame: CustomButton;
 
     // used to render own client's name green
     private client_id: string;
+
+    /* Static variables */
+    static readonly PLAYER_NAME_Y_OFFSET = 24;
 
     static readonly BLUE = 0;
     static readonly RED = 1;
@@ -60,8 +73,14 @@ export default class Game extends Phaser.State {
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
         this.healthBarGroup = this.game.add.group();
+        this.soundGroup = this.game.add.group();
         this.client_id = socket.id;
 
+        /* Initialise menu stuff */
+        this.buttonUtil = new ButtonUtil(this.game);
+        this.initMenu();
+
+        /* Initialise socket and set up listeners */
         this.socket = socket;
 
         this.socket.on('loaded', (data: any) => {
@@ -102,6 +121,8 @@ export default class Game extends Phaser.State {
             this.game.world.bringToTop(this.weaponGroup);
             this.game.world.bringToTop(this.healthBarGroup);
             this.game.world.bringToTop(this.uiGroup);
+            this.game.world.bringToTop(this.menuGroup);
+            this.game.world.bringToTop(this.soundGroup);
 
             this.drawUI();
         });
@@ -118,6 +139,17 @@ export default class Game extends Phaser.State {
             console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
+
+        this.socket.on('pongcheck', () => {
+            this.pingTime = Math.round(Date.now() - this.pingStartTime);
+        });
+
+        this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+    }
+
+    private ping(): void {
+        this.pingStartTime = Date.now();
+        this.socket.emit('pingcheck');
     }
 
     private getCoordinates(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
@@ -152,6 +184,7 @@ export default class Game extends Phaser.State {
         // if this is the client's player, set the colour to be limegreen
         if (player.id === this.client_id) {
             name.addColor('#32CD32', 0);
+            this.game.camera.follow(sprite);
         }
 
         let healthBar = this.createPlayerHealthBar(player);
@@ -201,6 +234,7 @@ export default class Game extends Phaser.State {
      * Callback for when key is pressed down
      */
     private onDown(e: KeyboardEvent): void {
+        console.log(e.keyCode);
         if (this.isDown[e.keyCode]) {
             return;
         }
@@ -217,6 +251,13 @@ export default class Game extends Phaser.State {
                 break;
             case 68:    // d
                 this.socket.emit('keydown', 'right');
+                break;
+            case 27:    // escape
+                if (this.isShowMenu === false) {
+                    this.showMenu(true);
+                } else {
+                    this.showMenu(false);
+                }
                 break;
             default:
                 break;
@@ -282,10 +323,10 @@ export default class Game extends Phaser.State {
         this.game.load.tilemap('world', null, data, Phaser.Tilemap.CSV);
         this.map = this.game.add.tilemap('world', 64, 64);
         this.map.addTilesetImage('tilesheet', 'world.[64,64]');
+        this.game.world.setBounds(0, 0, 768 * 2, 640 * 2);
 
         let layer: Phaser.TilemapLayer = this.map.createLayer(0);
         this.mapLayer = layer;
-
         layer.inputEnabled = true;
 
         // layer.events.onInputUp.add(this.getCoordinates);
@@ -293,6 +334,10 @@ export default class Game extends Phaser.State {
     }
 
     private drawUI(): void {
+        // Ping
+        this.pingText.text = `Ping: ${this.pingTime}ms`;
+
+        // Skills
         for (let skillIndex in this.skillList) {
             let skillName: string = this.skillList[skillIndex];
             let skill = this.skills[skillName];
@@ -311,6 +356,16 @@ export default class Game extends Phaser.State {
     }
 
     private loadUI(): void {
+        // Ping
+        this.pingText = this.game.add.text(0, 0, '', {
+            font: '8px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.pingText.fixedToCamera = true;
+
+        // Skills
         let width: number = 45;
         let height: number = 45;
 
@@ -325,14 +380,12 @@ export default class Game extends Phaser.State {
             skillImg.width = width;
             skillImg.height = height;
             skillImg.anchor.setTo(0.5);
-            skillImg.fixedToCamera = true;
 
             let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, 'skill_cooldown_overlay');
             overlayImg.width = width;
             overlayImg.height = height;
             overlayImg.alpha = 0.5;
             overlayImg.anchor.setTo(0.5, 1);
-            overlayImg.fixedToCamera = true;
             overlayImg.visible = false;
 
             let text: Phaser.Text = this.game.add.text(centerX, centerY, '', {
@@ -364,23 +417,26 @@ export default class Game extends Phaser.State {
             this.uiGroup.add(buttonText);
         }
 
-        this.uiGroup.x = this.game.width / 2 - this.uiGroup.width / 2 + width / 2;
-        this.uiGroup.y = this.game.height - (height / 2);
+        this.uiGroup.fixedToCamera = true;
+        this.uiGroup.cameraOffset = new Phaser.Point(this.game.width / 2 - this.uiGroup.width / 2 + width / 2,
+                                                     this.game.height - (height / 2));
     }
 
     private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
+        let id = this.socket.id;
+        let me: Player = this.players[id];
+        if (!me) return;
+
+        let camera: Phaser.Camera = this.game.camera;
+        let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
+        let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
+
         if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
-            this.game.sound.play('hook');       // play hook sound
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_hook', angle);
         }
         if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
-            let id = this.socket.id;
-            let me: Player = this.players[id];
-            let angle = Math.atan2(pointer.y - me.sprite.y, pointer.x - me.sprite.x);
-            this.game.sound.play('sword');
+            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
             this.socket.emit('attack_sword', angle);
         }
     }
@@ -411,6 +467,41 @@ export default class Game extends Phaser.State {
             }
         }
         return data;
+    }
+
+    /*
+     * Show or hide escape menu
+     */
+    private showMenu(show: boolean): void {
+        this.isShowMenu = show;
+        if (this.isShowMenu === true) {
+            this.soundGroup.visible = true;
+            this.quitGame.setVisible();
+        }
+
+        if (this.isShowMenu === false) {
+            this.soundGroup.visible = false;
+            this.quitGame.hide();
+        }
+    }
+
+    private initMenu(): void {
+        this.soundGroup = this.buttonUtil.createSoundBar();
+        this.soundGroup.visible = false;
+        let button = this.buttonUtil.createButton(this.game.camera.width / 2, this.game.camera.height / 2 + 64, this, this.quit);
+        let text = this.buttonUtil.createText(button.x, button.y, 'Quit game');
+        this.quitGame = new CustomButton(button, text);
+        this.quitGame.hide();
+        this.quitGame.fixToCamera();
+
+        this.menuGroup = this.game.add.group();
+        this.menuGroup.add(button);
+        this.menuGroup.add(text);
+    }
+
+    private quit(): void {
+        this.socket.disconnect();
+        this.game.state.start('mainmenu');
     }
 
     public create(): void {

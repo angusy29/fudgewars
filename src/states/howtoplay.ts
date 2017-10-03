@@ -27,7 +27,7 @@ export default class HowToPlay extends Phaser.State {
     }
 
     private initInstructions(): void {
-        let instructions: Phaser.Text = this.game.add.text(this.game.world.centerX, this.game.world.centerY - 248, 'How to play', {
+        let instructions: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'How to play', {
             font: '36px ' + Assets.GoogleWebFonts.Roboto,
             fill: '#ffffff',
             stroke: '#000000',
@@ -35,21 +35,21 @@ export default class HowToPlay extends Phaser.State {
         });
         instructions.anchor.setTo(0.5, 0.5);
 
-        let wasd = this.game.add.image(this.game.world.centerX, this.game.world.centerY - 128, 'wasd');
+        let wasd = this.game.add.image(this.game.canvas.width / 2, this.game.canvas.height / 2 - 128, 'wasd');
         wasd.anchor.setTo(1.5, 0.5);
 
         let label = 'W - Move up\nA - Move left\nS - Move down\nD - Move right';
-        let text: Phaser.Text = this.buttonUtil.createText(this.game.world.centerX, this.game.world.centerY - 128, label);
+        let text: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 128, label);
         text.anchor.setTo(0, 0.5);
 
-        let mouse = this.game.add.image(this.game.world.centerX, this.game.world.centerY + 8, 'mouse');
+        let mouse = this.game.add.image(this.game.canvas.width / 2, this.game.canvas.height / 2 + 8, 'mouse');
         mouse.anchor.setTo(1.5, 0.5);
 
         label = 'Left click - Hook\nRight click - Attack';
-        let attackInstructions: Phaser.Text = this.buttonUtil.createText(this.game.world.centerX, this.game.world.centerY + 8, label);
+        let attackInstructions: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 + 8, label);
         attackInstructions.anchor.setTo(0, 0.5);
 
-        let demoImage = this.game.add.image(this.game.world.centerX, this.game.world.centerY + 138, 'demo');
+        let demoImage = this.game.add.image(this.game.canvas.width / 2, this.game.canvas.height / 2 + 138, 'demo');
         demoImage.anchor.setTo(0.5, 0.5);
         demoImage.scale.setTo(0.8);
     }
@@ -60,7 +60,7 @@ export default class HowToPlay extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX, this.game.world.centerY + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2 + 248, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.back = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.back), this);

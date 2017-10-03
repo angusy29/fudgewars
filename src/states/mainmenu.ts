@@ -35,7 +35,7 @@ export default class MainMenu extends Phaser.State {
         // using ['inputField'] is shit style, if anyone knows how to properly set up plugins please fix
         // this is using PhaserInput plugin, phaser doesn't have build in inputFields, have to use plugin
         // can't use anchor.setTo, because placeholder and input text isn't anchored
-        this.nicknameInput = this.game.add['inputField'](this.game.world.centerX - 108, this.game.world.centerY - 92, {
+        this.nicknameInput = this.game.add['inputField'](this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 - 92, {
             font: '24px Roboto',
             width: 200,
             padding: 8,
@@ -61,9 +61,11 @@ export default class MainMenu extends Phaser.State {
      */
     private initStartGameButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX, this.game.world.centerY, this, this.loadGame);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2, this, this.loadGame);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Play online');
         this.startGame = new CustomButton(button, text);
+        button.fixedToCamera = true;
+        text.fixedToCamera = true;
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.startGame), this);
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.startGame), this);
         this.allButtons.push(this.startGame);

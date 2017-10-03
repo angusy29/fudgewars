@@ -27,6 +27,7 @@ export default class CustomButton {
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton10,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton11,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton12,
+        Assets.Atlases.ButtonsBlueSheet.Frames.BlueSliderDown
     ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {
@@ -53,5 +54,20 @@ export default class CustomButton {
 
     public getIsEnter(): boolean {
         return this.isEnter;
+    }
+
+    public setVisible(): void {
+        this.button.visible = true;
+        this.text.visible = true;
+    }
+
+    public hide(): void {
+        this.button.visible = false;
+        this.text.visible = false;
+    }
+
+    public fixToCamera(): void {
+        this.button.fixedToCamera = true;
+        this.text.fixedToCamera = true;
     }
 }

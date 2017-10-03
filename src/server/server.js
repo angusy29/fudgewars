@@ -184,9 +184,13 @@ class World {
             player.keydown(direction);
         });
 
+        socket.on('pingcheck', function(nothing) {
+            socket.emit('pongcheck');
+        });
+
+
         socket.on('keyup', function(direction) {
             player.keyup(direction);
-            io.emit('player_stop', id);
         });
 
         socket.on('attack_hook', function(angle) {
@@ -296,7 +300,7 @@ class World {
 }
 
 lobby = new Lobby(io);
-world = new World(768, 640, 64);
+world = new World(768*2, 640*2, 64);
 
 io.on('connection',function(socket){
     socket.on('join_lobby', function(name) {
