@@ -217,7 +217,7 @@ export default class Lobby extends Phaser.State {
     }
 
     private initBlueTeamPanels(): void {
-        let label = this.game.add.text(this.game.world.centerX, this.game.world.centerY, 'Team Blue', {
+        let label = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Blue', {
             font: '32px ' + Assets.GoogleWebFonts.Roboto,
             fill: '#ffffff',
             stroke: '#000000',
@@ -241,7 +241,7 @@ export default class Lobby extends Phaser.State {
     }
 
     private initRedTeamPanels(): void {
-        let label = this.game.add.text(this.game.world.centerX, this.game.world.centerY, 'Team Red', {
+        let label = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Red', {
             font: '32px ' + Assets.GoogleWebFonts.Roboto,
             fill: '#ffffff',
             stroke: '#000000',
@@ -266,7 +266,7 @@ export default class Lobby extends Phaser.State {
 
     private initReadyButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX - 108, this.game.world.centerY + 248, this, this.readyOnClick);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 + 248, this, this.readyOnClick);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Ready');
         this.ready = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.ready), this);
@@ -279,7 +279,7 @@ export default class Lobby extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.world.centerX + 108, this.game.world.centerY + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height / 2 + 248, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.back = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.back), this);
