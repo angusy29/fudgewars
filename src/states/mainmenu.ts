@@ -1,12 +1,15 @@
 import * as Assets from '../assets';
 import CustomButton from './custombutton';
 import ButtonUtil from './buttonutil';
+import * as io from 'socket.io-client';
 
 /*
  *  Welcome screen when user arrives at Fudge Wars website
  */
 export default class MainMenu extends Phaser.State {
+    private socket: any;
     private background: Phaser.Image;
+    private client_player_name: string;
 
     // input field
     private nicknameInput: PhaserInput.InputField;
@@ -23,6 +26,11 @@ export default class MainMenu extends Phaser.State {
     public preload(): void {
         // Load any assets you need for your preloader state here.
         this.game.plugins.add(PhaserInput.Plugin);
+    }
+
+    public init(playername: string, socket: any): void {
+        this.socket = socket;
+        this.client_player_name = playername;
     }
 
     public create(): void {
@@ -47,6 +55,8 @@ export default class MainMenu extends Phaser.State {
             max: 15,
             type: PhaserInput.InputType.text
         });
+
+        this.nicknameInput.setText(this.client_player_name);
 
         // must be called in this order
         // as subsequent buttons depend on previous button position
@@ -102,7 +112,7 @@ export default class MainMenu extends Phaser.State {
      */
     private loadGame(): void {
         this.game.sound.play('click1');
-        this.game.state.start('lobby', true, false, this.nicknameInput.value);
+        this.game.state.start('lobby', true, false, this.nicknameInput.value, this.socket);
     }
 
     /*
@@ -110,11 +120,11 @@ export default class MainMenu extends Phaser.State {
      */
     private loadHowToPlay(): void {
         this.game.sound.play('click1');
-        this.game.state.start('howtoplay');
+        this.game.state.start('howtoplay', true, false, this.nicknameInput.value, this.socket);
     }
 
     private loadOptions(): void {
         this.game.sound.play('click1');
-        this.game.state.start('options');
+        this.game.state.start('options', true, false, this.nicknameInput.value, this.socket);
     }
 }

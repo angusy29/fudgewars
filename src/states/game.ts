@@ -234,7 +234,6 @@ export default class Game extends Phaser.State {
      * Callback for when key is pressed down
      */
     private onDown(e: KeyboardEvent): void {
-        console.log(e.keyCode);
         if (this.isDown[e.keyCode]) {
             return;
         }
@@ -501,6 +500,15 @@ export default class Game extends Phaser.State {
 
     private quit(): void {
         this.socket.disconnect();
+
+        // destroy all players before we leave game
+        for (let id in this.players) {
+            this.playerGroup.remove(this.players[id].sprite);
+            this.weaponGroup.remove(this.players[id].weaponGroup);
+            this.players[id].destroy();
+            delete this.players[id];
+        }
+
         this.game.state.start('mainmenu');
     }
 
