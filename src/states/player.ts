@@ -1,10 +1,13 @@
+import * as Assets from '../assets';
+import Game from './game';
 import Hook from './hook';
 import Sword from './sword';
 
 export default class Player {
     id: any;
-    world: Phaser.State;
-    name: Phaser.Text;         // child of sprite
+    team: number;
+    world: Game;
+    nameText: Phaser.Text;         // child of sprite
     private health: number;    // Note: Use the getter and setter to keep alive status accurate
     healthBar: Phaser.Group;   // health bar of the sprite
     sprite: Phaser.Sprite;
@@ -26,15 +29,15 @@ export default class Player {
     static readonly HEALTH_GREEN_COLOUR = '#32CD32';
     static readonly HEALTH_RED_COLOUR = '#FF0000';
 
-    constructor(world: any, id: any, name: Phaser.Text, healthBar: Phaser.Group, sprite: Phaser.Sprite) {
+    constructor(world: Game, x: number, y: number, id: any, name: string, team: number) {
         this.world = world;
         this.id = id;
-        this.name = name;
-        this.healthBar = healthBar;
-        this.sprite = sprite;
+        this.team = team;
         this.isFaceRight = true;
         this.health = 0;
         this.alive = false;
+        this.sprite = this.createSprite(x, y, name);
+        this.healthBar = this.createHealthBar();
 
         this.hook = new Hook(world, this);
         this.sword = new Sword(world, this);
@@ -44,14 +47,70 @@ export default class Player {
         this.weaponGroup.addAt(this.hook.sprite, 0);
     }
 
+    private createSprite(x: number, y: number, name: string): Phaser.Sprite {
+        let frame;
+        if (this.team === Game.BLUE) frame = 'p2_walk';
+        if (this.team === Game.RED) frame = 'p3_walk';
+
+        // set up sprite
+        let sprite = this.world.add.sprite(x, y, frame);
+        sprite.anchor.setTo(0.5, 0.5);
+        sprite.scale.setTo(0.5);
+        sprite.animations.add('walk');
+        this.world.physics.enable(sprite, Phaser.Physics.ARCADE);
+
+        // set up label of the player
+        this.nameText = this.world.game.add.text(x, y - Player.PLAYER_NAME_Y_OFFSET, name, {
+            font: '14px ' + Assets.GoogleWebFonts.Roboto
+        });
+        this.nameText.anchor.setTo(0.5, 0.5);
+
+        return sprite;
+    }
+
+    /*
+     * Creates the canvas for player health bar
+     * player: Player to create health bar for
+     *
+     * return: A group containing the health bar foreground (green part)
+     * and the health bar background (red part), they are indexes 0 and 1
+     * respectively
+     */
+    private createHealthBar(): Phaser.Group {
+        // create health bar canvas
+        let healthBMP = this.world.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.beginPath();
+        healthBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBMP.ctx.fillStyle = Player.HEALTH_GREEN_COLOUR;
+        healthBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        let healthBgBMP = this.world.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.beginPath();
+        healthBgBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+        healthBgBMP.ctx.fillStyle = Player.HEALTH_RED_COLOUR;
+        healthBgBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
+
+        // health bar green part
+        let healthBarFg = this.world.add.sprite(this.sprite.x - Player.HEALTH_BAR_X_OFFSET, this.sprite.y - Player.HEALTH_BAR_Y_OFFSET, healthBMP);
+
+        // health bar red part
+        let healthBarBg = this.world.add.sprite(this.sprite.x - Player.HEALTH_BAR_X_OFFSET, this.sprite.y - Player.HEALTH_BAR_Y_OFFSET, healthBgBMP);
+
+        let healthBar = new Phaser.Group(this.world.game);
+        healthBar.addAt(healthBarBg, 0);
+        healthBar.addAt(healthBarFg, 1);
+
+        return healthBar;
+    }
+
     public update(update: any): void {
         this.setHealth(update.health);
 
         // update sprite position
         this.sprite.x = update.x;
         this.sprite.y = update.y;
-        this.name.x = update.x;
-        this.name.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
+        this.nameText.x = update.x;
+        this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
 
         // group items are relative to the group object, so we
         // loop through and set each one instead
@@ -75,7 +134,7 @@ export default class Player {
 
     public destroy(): void {
         this.sprite.destroy();
-        this.name.destroy();
+        this.nameText.destroy();
         this.healthBar.destroy();
         this.hook.destroy();
         this.sword.destroy();
@@ -106,7 +165,7 @@ export default class Player {
 
     public changeVisiblity(visible: boolean): void {
         this.sprite.visible = visible;
-        this.name.visible = visible;
+        this.nameText.visible = visible;
         this.healthBar.visible = visible;
 
         this.sword.changeVisiblity(visible);

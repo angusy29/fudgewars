@@ -58,6 +58,7 @@ export default class Lobby extends Phaser.State {
         this.socket.on('lobby_player_ready', (player: any) => {
             // create tick ready image
             if (player.isReady) {
+                if (!this.players[player.id]) return;
                 if (this.players[player.id].readyImg !== null) return;
 
                 let obj;
