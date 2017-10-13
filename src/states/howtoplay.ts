@@ -19,9 +19,9 @@ export default class HowToPlay extends Phaser.State {
     private socket: any;
     private client_player_name: string;
 
-    public init(nickname: string, socket: any) {
+    public init(socket: any, playername: string) {
         this.socket = socket;
-        this.client_player_name = nickname;
+        this.client_player_name = playername;
     }
 
     public create(): void {
@@ -81,6 +81,6 @@ export default class HowToPlay extends Phaser.State {
      */
     private loadBack(): void {
         this.game.sound.play('click1');
-        this.game.state.start('mainmenu', true, false, this.client_player_name, this.socket);
+        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
     }
 }

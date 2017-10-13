@@ -46,6 +46,6 @@ export default class Preloader extends Phaser.State {
     }
 
     private loadMainMenu(): void {
-        this.game.state.start('mainmenu', true, false, '', io.connect());
+        this.game.state.start('mainmenu', true, false, io.connect());
     }
 }

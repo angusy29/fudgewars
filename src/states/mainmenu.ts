@@ -28,7 +28,7 @@ export default class MainMenu extends Phaser.State {
         this.game.plugins.add(PhaserInput.Plugin);
     }
 
-    public init(playername: string, socket: any): void {
+    public init(socket: any, playername: string): void {
         this.socket = socket;
         this.client_player_name = playername;
     }
@@ -112,7 +112,7 @@ export default class MainMenu extends Phaser.State {
      */
     private loadGame(): void {
         this.game.sound.play('click1');
-        this.game.state.start('lobby', true, false, this.nicknameInput.value, this.socket);
+        this.game.state.start('lobby', true, false, this.socket, this.nicknameInput.value);
     }
 
     /*
@@ -120,11 +120,11 @@ export default class MainMenu extends Phaser.State {
      */
     private loadHowToPlay(): void {
         this.game.sound.play('click1');
-        this.game.state.start('howtoplay', true, false, this.nicknameInput.value, this.socket);
+        this.game.state.start('howtoplay', true, false, this.socket, this.nicknameInput.value);
     }
 
     private loadOptions(): void {
         this.game.sound.play('click1');
-        this.game.state.start('options', true, false, this.nicknameInput.value, this.socket);
+        this.game.state.start('options', true, false, this.socket, this.nicknameInput.value);
     }
 }
