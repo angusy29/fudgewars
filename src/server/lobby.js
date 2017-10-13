@@ -1,8 +1,9 @@
 let LobbyPlayer = require('./lobbyplayer');
 
 module.exports = class Lobby {
-    constructor(io) {
+    constructor(io, room) {
         this.io = io;
+        this.room = room;
         this.max_players_in_each_team = 6;
         this.players = {};      // all the players
         this.playercount = 0;
@@ -59,8 +60,10 @@ module.exports = class Lobby {
 
         // toggle player ready
         socket.on('player_ready', () => {
-            this.players[id].isReady = !this.players[id].isReady;
-            this.io.emit('lobby_player_ready', this.players[id]);
+            player.isReady = !player.isReady;
+            //this.io.emit('lobby_player_ready', player);
+            this.update();
+
             let startGame = true;
             for (let id in this.players) {
                 let player = this.players[id];
@@ -70,7 +73,7 @@ module.exports = class Lobby {
             if (startGame === true) {
                 clearInterval(this.timeout);
                 this.timeout = null;
-                this.io.emit('lobby_start');
+                this.io.sockets.in(this.room).emit('lobby_start');
             }
         });
 
@@ -90,7 +93,7 @@ module.exports = class Lobby {
             this.players[id].team = BLUE;
             this.players[id].tile = tile;
             this.print();            
-            this.io.emit('player_moved', this.players[id]);
+            this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
         // when player clicks on red panel this gets called
@@ -109,22 +112,22 @@ module.exports = class Lobby {
             this.players[id].team = RED;
             this.players[id].tile = tile;
             this.print();
-            this.io.emit('player_moved', this.players[id]);
+            this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
         // If player control q's out or quits browser
         socket.on('disconnect', () => {
             console.log('lobby disconnected');
-            this.removePlayer(id, player.tile);
-            this.io.emit('lobby_player_left', id);
+            this.removePlayer(player.id, player.tile);
+            this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
         });
 
         // If player clicks on back
         socket.on('lobby_player_back', () => {
             console.log('lobby disconnected');
-            this.removePlayer(id, player.tile);
-            this.io.emit('lobby_player_left', id);
+            this.removePlayer(player.id, player.tile);
+            this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
         });
 
@@ -167,7 +170,7 @@ module.exports = class Lobby {
             let player = this.players[id];
             all.push(player);
         }
-        this.io.emit('lobby_update', all)
+        this.io.sockets.in(this.room).emit('lobby_update', all)
     }
 
     /*
