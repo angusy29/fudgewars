@@ -1,5 +1,4 @@
 let Collidable = require('./collidable');
-
 let utils = require('./utils');
 
 const COOLDOWN = 5;
@@ -17,7 +16,6 @@ const BOUNDS = {
 module.exports = class Hook extends Collidable {
     constructor(world, player) {
         super(world, 0, 0, BOUNDS);
-
         this.player = player;
         this.playerPrevX = 0;
         this.playerPrevY = 0;
@@ -59,7 +57,6 @@ module.exports = class Hook extends Collidable {
         }
 
         if (this.active) {
-
             // If the player moves, add that to the hook path
             while (utils.distance(this.player.x, this.player.y, this.playerPrevX, this.playerPrevY) > SPEED) {
                 let angle = Math.atan2(this.player.y - this.playerPrevY, this.player.x - this.playerPrevX);

@@ -12,6 +12,7 @@ const BOUNDS = {
     bottom: 24,
     left: 10
 };
+const RESPAWN_TIME = 5; // Seconds
 
 module.exports = class Player extends Collidable {
     constructor(world, id, name, team, x, y) {
@@ -31,6 +32,7 @@ module.exports = class Player extends Collidable {
         this.carryingFlag = null;
         this._health = Player.MAX_HEALTH; // Note: Use the getter and setter to keep alive status accurate
         this.alive = true;
+        this.respawnTime = 0;
 
         this.hook = new Hook(world, this);
         this.hookedBy = null;
@@ -40,10 +42,6 @@ module.exports = class Player extends Collidable {
 
     static get MAX_HEALTH() {
         return 100;
-    }
-
-    static get RESPAWN_TIME() {
-        return 5000;
     }
 
     getFullTopLeft() {
@@ -60,6 +58,18 @@ module.exports = class Player extends Collidable {
         };
     }
 
+    setSpawnPosition() {
+        // Find spawn point that isnt colliding with anything
+        let spawnPointCollides = false;
+        do {
+            let x = utils.randomInt(this.world.left, this.world.right);
+            let y = utils.randomInt(this.world.top, this.world.bottom);
+            this.x = x;
+            this.y = y;
+            spawnPointCollides = this.world.collides(this.id);
+        } while (spawnPointCollides);
+    }
+
     getHealth() {
         return this._health;
     }
@@ -69,7 +79,7 @@ module.exports = class Player extends Collidable {
 
         // Set respawn if they just died
         if (this.alive && this._health <= 0) {
-            this.world.setRespawnTimer(this.id);
+            this.respawnTime = RESPAWN_TIME;
         }
 
         // Set alive status
@@ -82,6 +92,16 @@ module.exports = class Player extends Collidable {
     }
 
     update(delta) {
+        // Respawn
+        if (!this.alive) {
+            this.respawnTime -= delta;
+            if (this.respawnTime <= 0) {
+                this.respawnTime = 0;
+                this.setHealth(Player.MAX_HEALTH);
+                this.world.io.emit('respawn', this.id);
+            }
+        }
+
         if (this.hookedBy !== null) {
             // Note: Hook will handle movement
             this.vx = 0;
@@ -211,6 +231,7 @@ module.exports = class Player extends Collidable {
             health: this.getHealth(),
             hook: this.hook.getRep(toId),
             sword: this.sword.getRep(toId),
+            respawnTime: this.respawnTime,
         }
 
         return rep;

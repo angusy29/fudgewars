@@ -60,6 +60,7 @@ export default class Game extends Phaser.State {
 
     // used to render own client's name green
     public client_id: string;
+    private room: string;
 
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -67,7 +68,7 @@ export default class Game extends Phaser.State {
     static readonly BLUE = 0;
     static readonly RED = 1;
 
-    public init(socket: any): void {
+    public init(socket: any, room: string): void {
         // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
@@ -84,6 +85,8 @@ export default class Game extends Phaser.State {
         /* Initialise socket and set up listeners */
         this.socket = socket;
         this.registerSocketEvents(socket);
+
+        this.room = room;
     }
 
     private registerSocketEvents(socket: any): void {
@@ -481,7 +484,7 @@ export default class Game extends Phaser.State {
         this.game.input.mouse.capture = true;
         this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
-        this.socket.emit('join_game');
+        this.socket.emit('join_game', this.room);
     }
 
     public preload(): void {

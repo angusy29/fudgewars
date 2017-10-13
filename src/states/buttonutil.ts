@@ -134,7 +134,7 @@ export default class ButtonUtil {
         item.setIsEnter(false);
         item.getText().anchor.setTo(0.5, 0.4);
     }
-    
+
     private onDragUpdate(sprite: Phaser.Sprite, pointer: Phaser.Pointer): void {
         let normalizedVolume = (sprite.x - ButtonUtil.SOUNDBAR_MIN) / (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN);
         this.game.sound.volume = normalizedVolume;
