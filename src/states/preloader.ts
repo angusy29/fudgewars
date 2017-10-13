@@ -1,5 +1,6 @@
 import * as Assets from '../assets';
 import * as AssetUtils from '../utils/assetUtils';
+import * as io from 'socket.io-client';
 
 /*
  * After loading assets, this will start game.ts
@@ -46,6 +47,6 @@ export default class Preloader extends Phaser.State {
     }
 
     private loadMainMenu(): void {
-        this.game.state.start('mainmenu');
+        this.game.state.start('mainmenu', true, false, io.connect());
     }
 }

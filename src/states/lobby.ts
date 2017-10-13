@@ -37,9 +37,9 @@ export default class Lobby extends Phaser.State {
         Assets.Atlases.ButtonsGreenSheet.Frames.GreenCheckmark
     ];
 
-    public init(playername: string): void {
+    public init(socket: any, playername: string): void {
+        this.socket = socket;        
         this.client_player_name = playername;
-        this.socket = io.connect();
         this.players = {};  // need to reset these, otherwise
         this.blueTiles = {};
         this.redTiles = {};
@@ -323,7 +323,7 @@ export default class Lobby extends Phaser.State {
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();
-        this.game.state.start('mainmenu', true, false, this.client_player_name);
+        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
     }
 
     /*

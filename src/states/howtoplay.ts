@@ -15,6 +15,15 @@ export default class HowToPlay extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
+
+    private socket: any;
+    private client_player_name: string;
+
+    public init(socket: any, playername: string) {
+        this.socket = socket;
+        this.client_player_name = playername;
+    }
+
     public create(): void {
         this.background = this.game.add.image(0, 0, 'titlescreen');
         this.background.height = this.game.height;
@@ -72,6 +81,6 @@ export default class HowToPlay extends Phaser.State {
      */
     private loadBack(): void {
         this.game.sound.play('click1');
-        this.game.state.start('mainmenu');
+        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
     }
 }
