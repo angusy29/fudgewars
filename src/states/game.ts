@@ -18,8 +18,9 @@ export default class Game extends Phaser.State {
     private pingText: Phaser.Text;
     private pingTime: number = 0;
     private pingStartTime: number;
-    private map: Phaser.Tilemap;
+
     public socket: any;
+    private map: Phaser.Tilemap;
     private players: any = {};
     private flags: Flag[] = [];
     private flagGroup: Phaser.Group = null;
@@ -58,7 +59,7 @@ export default class Game extends Phaser.State {
     private quitGame: CustomButton;
 
     // used to render own client's name green
-    private client_id: string;
+    public client_id: string;
 
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -82,69 +83,83 @@ export default class Game extends Phaser.State {
 
         /* Initialise socket and set up listeners */
         this.socket = socket;
+        this.registerSocketEvents(socket);
+    }
 
-        this.socket.on('loaded', (data: any) => {
-            this.loadUI();
-            this.loadWorld(data.world);
-            this.loadTerrain(data.terrain);
-            this.loadFlags(data.flags);
-
-            // Sprite ordering
-            this.game.world.sendToBack(this.flagGroup);
-            this.game.world.sendToBack(this.terrainLayer);
-            this.game.world.sendToBack(this.mapLayer);
+    private registerSocketEvents(socket: any): void {
+        socket.on('loaded', (data: any) => {
+            this.onLoaded(data);
         });
 
-        this.socket.on('update', (data: any) => {
-            for (let playerUpdate of data.players) {
-                if (!this.players[playerUpdate.id]) {
-                    this.addNewPlayer(playerUpdate);
-                }
-
-                let player = this.players[playerUpdate.id];
-                player.update(playerUpdate);
-            }
-
-            // update the position of the flags
-            for (let f of data.flags) {
-                if (typeof this.flags[f.colorIdx] !== 'undefined') {
-                    this.flags[f.colorIdx].sprite.x = f.x;
-                    this.flags[f.colorIdx].sprite.y = f.y;
-                    if (f.isCaptured)
-                        this.flags[f.colorIdx].setFlagDown();
-                    else
-                        this.flags[f.colorIdx].setFlagUp();
-                }
-            }
-
-            this.game.world.bringToTop(this.playerGroup);
-            this.game.world.bringToTop(this.weaponGroup);
-            this.game.world.bringToTop(this.healthBarGroup);
-            this.game.world.bringToTop(this.uiGroup);
-            this.game.world.bringToTop(this.menuGroup);
-            this.game.world.bringToTop(this.soundGroup);
-
-            this.drawUI();
+        socket.on('update', (data: any) => {
+            this.onTick(data);
         });
 
-        this.socket.on('player_left', (id: number) => {
-            console.log('player left');
-            this.playerGroup.remove(this.players[id].sprite);
-            this.weaponGroup.remove(this.players[id].weaponGroup);
-            this.players[id].destroy();
-            delete this.players[id];
+        socket.on('player_join', (data: any) => {
+            this.addPlayer(data);
         });
 
-        this.socket.on('capture_flag', (flagId) => {
+        socket.on('player_left', (id: number) => {
+            this.removePlayer(id);
+        });
+
+        socket.on('capture_flag', (flagId) => {
             console.log('capture_flag');
             this.flags[flagId].setFlagDown();
         });
 
-        this.socket.on('pongcheck', () => {
+        socket.on('pongcheck', () => {
             this.pingTime = Math.round(Date.now() - this.pingStartTime);
         });
-
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+    }
+
+    private removePlayer(id: number): void {
+        let player = this.players[id];
+        if (!player) return;
+
+        console.log('player left');
+        this.playerGroup.remove(player.sprite);
+        this.weaponGroup.remove(player.weaponGroup);
+        player.destroy();
+        delete this.players[id];
+    }
+
+    private onLoaded(data: any): void {
+        this.loadUI();
+        this.loadPlayers(data.players);
+        this.loadWorld(data.world);
+        this.loadTerrain(data.terrain);
+        this.loadFlags(data.flags);
+
+        // Sprite ordering
+        this.game.world.sendToBack(this.flagGroup);
+        this.game.world.sendToBack(this.terrainLayer);
+        this.game.world.sendToBack(this.mapLayer);
+    }
+
+    private onTick(data: any): void {
+        for (let update of data.players) {
+            let player = this.players[update.id];
+            if (!player) continue;
+            player.update(update);
+        }
+
+        // update the position of the flags
+        for (let update of data.flags) {
+            let flag = this.flags[update.colorIdx];
+            if (!flag) continue;
+            flag.update(update);
+        }
+
+        this.game.world.bringToTop(this.playerGroup);
+        this.game.world.bringToTop(this.weaponGroup);
+        this.game.world.bringToTop(this.healthBarGroup);
+        this.game.world.bringToTop(this.uiGroup);
+        this.game.world.bringToTop(this.menuGroup);
+        this.game.world.bringToTop(this.soundGroup);
+
+        this.drawUI();
     }
 
     private ping(): void {
@@ -163,78 +178,27 @@ export default class Game extends Phaser.State {
      *
      * player: A player object from the server
      */
-    private addNewPlayer(player: any): void {
-        let frame;
-        if (player.team === Game.BLUE) frame = 'p2_walk';
-        if (player.team === Game.RED) frame = 'p3_walk';
+    private addPlayer(data: any): void {
+        if (this.players[data.id]) return;
 
-        // set up sprite
-        let sprite = this.game.add.sprite(player.x, player.y, frame);
-        sprite.anchor.setTo(0.5, 0.5);
-        sprite.scale.setTo(0.5);
-        sprite.animations.add('walk');
-        this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-
-        // set up label of the player
-        let name = this.game.add.text(player.x, player.y - Player.PLAYER_NAME_Y_OFFSET, player.name, {
-            font: '14px ' + Assets.GoogleWebFonts.Roboto
-        });
-        name.anchor.setTo(0.5, 0.5);
+        let player = new Player(this, data.x, data.y, data.id, name, data.team);
+        this.players[data.id] = player;
 
         // if this is the client's player, set the colour to be limegreen
         if (player.id === this.client_id) {
-            name.addColor('#32CD32', 0);
-            this.game.camera.follow(sprite);
+            player.nameText.addColor('#32CD32', 0);
+            this.world.camera.follow(player.sprite);
         }
 
-        let healthBar = this.createPlayerHealthBar(player);
-        this.players[player.id] = new Player(this, player.id, name, healthBar, sprite);
-
-        this.playerGroup.add(this.players[player.id].sprite);
-        this.weaponGroup.add(this.players[player.id].weaponGroup);
-        this.healthBarGroup.add(healthBar);
-    }
-
-    /*
-     * Creates the canvas for player health bar
-     * player: Player to create health bar for
-     *
-     * return: A group containing the health bar foreground (green part)
-     * and the health bar background (red part), they are indexes 0 and 1
-     * respectively
-     */
-    private createPlayerHealthBar(player: any): Phaser.Group {
-        // create health bar canvas
-        let healthBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
-        healthBMP.ctx.beginPath();
-        healthBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
-        healthBMP.ctx.fillStyle = Player.HEALTH_GREEN_COLOUR;
-        healthBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
-
-        let healthBgBMP = this.game.add.bitmapData(Player.HEALTHBAR_WIDTH, 5);
-        healthBgBMP.ctx.beginPath();
-        healthBgBMP.ctx.rect(0, 0, Player.HEALTHBAR_WIDTH, 5);
-        healthBgBMP.ctx.fillStyle = Player.HEALTH_RED_COLOUR;
-        healthBgBMP.ctx.fillRect(0, 0, Player.HEALTHBAR_WIDTH, 5);
-
-        // health bar green part
-        let healthBarFg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBMP);
-
-        // health bar red part
-        let healthBarBg = this.game.add.sprite(player.x - Player.HEALTH_BAR_X_OFFSET, player.y - Player.HEALTH_BAR_Y_OFFSET, healthBgBMP);
-
-        let healthBar = new Phaser.Group(this.game);
-        healthBar.addAt(healthBarBg, 0);
-        healthBar.addAt(healthBarFg, 1);
-
-        return healthBar;
+        this.playerGroup.add(player.sprite);
+        this.weaponGroup.add(player.weaponGroup);
+        this.healthBarGroup.add(player.healthBar);
     }
 
     /*
      * Callback for when key is pressed down
      */
     private onDown(e: KeyboardEvent): void {
-        console.log(e.keyCode);
         if (this.isDown[e.keyCode]) {
             return;
         }
@@ -316,6 +280,12 @@ export default class Game extends Phaser.State {
 
     //     this.terrainLayer = terrainMap.createLayer(0);
     // }
+
+    private loadPlayers(players: any): void {
+        for (let player of players) {
+            this.addPlayer(player);
+        }
+    }
 
     private loadWorld(world: number[][]): void {
         let data: string = this.parseLayer(world);

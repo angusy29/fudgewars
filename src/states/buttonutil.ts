@@ -77,13 +77,13 @@ export default class ButtonUtil {
         let soundBgBMP = this.game.add.bitmapData(ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
         soundBgBMP.ctx.beginPath();
         soundBgBMP.ctx.rect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
-        soundBgBMP.ctx.fillStyle = '#2554C7'
+        soundBgBMP.ctx.fillStyle = '#2554C7';
         soundBgBMP.ctx.fillRect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
 
         // sound bar foreground
         let soundBarFg = this.game.add.sprite(this.game.canvas.width / 2, this.game.canvas.height / 2 - 8, soundBMP);
         soundBarFg.anchor.setTo(0.5, 0.5);
-        
+
         // sound bar background
         let soundBarBg = this.game.add.sprite(this.game.canvas.width / 2, this.game.canvas.height / 2 - 8, soundBgBMP);
         soundBarBg.anchor.setTo(0.5, 0.5);
@@ -128,7 +128,7 @@ export default class ButtonUtil {
         item.setIsEnter(false);
         item.getText().anchor.setTo(0.5, 0.4);
     }
-    
+
     private onDragUpdate(sprite: Phaser.Sprite, pointer: Phaser.Pointer): void {
         let normalizedVolume = (sprite.x - ButtonUtil.SOUNDBAR_MIN) / (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN);
         this.game.sound.volume = normalizedVolume;
