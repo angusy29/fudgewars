@@ -198,12 +198,29 @@ module.exports = class World {
             }
 
             console.log('=====world discon=====');
-            this.removePlayer(player.id)
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
             this.io.sockets.in(this.room).emit('player_left', player.id);
+        });
+
+        socket.on('game_quit', () => {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag !== null) {
+                let flag = this.flags[player.carryingFlag];
+                flag.carryingBy = null;
+                flag.isCaptured = false;
+            }
+
+            console.log('=====world discon=====');
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
+            this.io.sockets.in(this.room).emit('player_left', player.id);
+
+            this.lobby.print();
         });
     }
 
-    removePlayer(id) {
+    removePlayer(socket, id) {
         if (!this.players[id]) return;
 
         socket.removeAllListeners(['keydown']);
@@ -220,6 +237,10 @@ module.exports = class World {
             clearInterval(this.timeout);
             this.timeout = null;
         }
+    }
+
+    isEmpty() {
+        return this.playerCount === 0;
     }
 
     update() {

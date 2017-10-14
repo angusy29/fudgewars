@@ -48,14 +48,19 @@ io.on('connection', function(socket) {
         console.log(allRooms);
     });
 
+    // obviously this isn't called all the time
+    // so if a room is deleted, and a player was still on lobby screen, it won't update
     socket.on('get_lobbies', () => {
         let all = {};
         for (room in allRooms) {
+            // clean up lobbies which have no players
+            if (allRooms[room].lobby.isEmpty()) {
+                console.log('lobby destroyed!');
+                delete allRooms[room];
+                continue;
+            }
             all[room] = allRooms[room].lobby.playerCount;
-            console.log(allRooms[room].lobby);
         }
-        console.log('emit!!!');
-        console.log(all);
         socket.emit('lobby_selection_update', all);
     });
 

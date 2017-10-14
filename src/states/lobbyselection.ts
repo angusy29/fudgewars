@@ -22,7 +22,8 @@ export default class LobbySelection extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
-    private lobbyFullText: Phaser.Text;
+    private noLobbyText: Phaser.Text;       // displays when there are no lobbies
+    private lobbyFullText: Phaser.Text;     // displays if lobby is full
 
     public init(socket: any, playername: string): void {
         this.socket = socket;
@@ -48,6 +49,15 @@ export default class LobbySelection extends Phaser.State {
         });
         title.anchor.setTo(0.5, 0.5);
 
+        this.noLobbyText = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'There are currently no lobbies.', {
+            font: '36px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.noLobbyText.anchor.setTo(0.5, 0.5);
+        this.noLobbyText.visible = false;
+
         this.initLobbies();
         this.initCreateLobbyButton();
         this.initBackButton();
@@ -61,30 +71,44 @@ export default class LobbySelection extends Phaser.State {
 
     private initLobbies(): void {
         let boundsWidth: number = 500;
-        let boundsHeight: number = 400;
-        let bounds = new Phaser.Rectangle(this.game.world.centerX - (boundsWidth / 2), this.game.world.centerY - (boundsHeight / 2), boundsWidth, boundsHeight);
+        let boundsHeight: number = 380;
+        let bounds = new Phaser.Rectangle((this.game.canvas.width / 2) - (boundsWidth / 2), (this.game.canvas.height / 2) - (boundsHeight / 2), boundsWidth, boundsHeight);
         let options = { direction: 'y', overflow: 100, padding: 10, searchForClicks: true };
 
         let listView = new ListView(this.game, this.game.world, bounds, options);
 
         let boxW: number = 500;
-        let boxH: number = 100;
+        let boxH: number = 120;
 
         this.socket.emit('get_lobbies');
 
         this.socket.on('lobby_selection_update', (allRooms: any) => {
-            console.log(allRooms);
-            for (let room in allRooms) {
-                let color = Phaser.Color.getRandomColor();
-                let group = this.game.make.group(null);
-                let g = this.game.add.graphics(0, 0, group);
-                g.beginFill(color).drawRect(0, 0, boxW, boxH);
+            if (Object.keys(allRooms).length === 0) {
+                this.noLobbyText.visible = true;
+                return;
+            }
 
-                let txt = this.game.add.text(boxW / 2, boxH / 2, room, { font: '40px Arial', fill: '#000' }, group);
+            this.noLobbyText.visible = false;
+
+            for (let room in allRooms) {
+                let group = this.game.make.group(null);
+                let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
+                button.alpha = 0.9;
+                button.width = boxW;
+                button.height = boxH;
+
+                let txt = this.game.add.text(button.width / 2, button.height / 2, room, {
+                    font: '24px ' + Assets.GoogleWebFonts.Roboto,
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 3,
+                }, group);
                 txt.anchor.set(.5);
+
                 let img = this.game.add.image(0, 0, group.generateTexture());
                 img.inputEnabled = true;
                 img.events.onInputUp.add(this.joinLobby.bind(this, room), this);
+
                 listView.add(img);
             }
         });
@@ -120,7 +144,7 @@ export default class LobbySelection extends Phaser.State {
         this.socket.once('room_created', (data: any) => {
             if (!data.joinable) {
                 if (this.lobbyFullText) this.lobbyFullText.destroy();
-                this.lobbyFullText = this.game.add.text(this.game.world.centerX, 100, room + ' is full!', { font: '24px Arial', fill: '#ff0000' });
+                this.lobbyFullText = this.game.add.text(this.game.world.centerX, this.game.world.centerY + 208, room + ' is full!', { font: '24px Arial', fill: '#ff0000' });
                 this.lobbyFullText.anchor.setTo(0.5);
             } else {
                 this.game.state.start('lobby', true, false, this.socket, this.client_player_name, room);

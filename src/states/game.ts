@@ -102,7 +102,8 @@ export default class Game extends Phaser.State {
             this.addPlayer(data);
         });
 
-        socket.on('player_left', (id: number) => {
+        socket.on('player_left', (id: string) => {
+            console.log(id);
             this.removePlayer(id);
         });
 
@@ -117,7 +118,7 @@ export default class Game extends Phaser.State {
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
     }
 
-    private removePlayer(id: number): void {
+    private removePlayer(id: string): void {
         let player = this.players[id];
         if (!player) return;
 
@@ -473,8 +474,10 @@ export default class Game extends Phaser.State {
     }
 
     private quit(): void {
+        this.socket.emit('game_quit');
         this.unsubscribeAll();
-        this.game.state.start('mainmenu');
+        this.removePlayer(this.client_id);
+        this.game.state.start('mainmenu', false, false, this.socket);
     }
 
     private unsubscribeAll(): void {

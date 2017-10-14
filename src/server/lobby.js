@@ -1,4 +1,5 @@
 let LobbyPlayer = require('./lobbyplayer');
+let Server = require('./server');
 
 const BLUE = 0;
 const RED = 1;
@@ -146,6 +147,27 @@ module.exports = class Lobby {
      * id: id of player to remove
      */
     removePlayer(socket, id, tile) {
+        if (!this.players[id]) return;
+        
+        console.log('remove');
+        console.log(id);
+        console.log(tile);
+        // if tile wasn't passed as an argument, find the tile
+        if (tile === undefined) {
+            let teamTile;
+            if (this.players[id].team === RED) teamTile = this.red;
+            if (this.players[id].team === BLUE) teamTile = this.blue;
+
+            console.log(teamTile);
+
+            for (let tempTile in teamTile) {
+                if (teamTile[tempTile].id === id) {
+                    tile = tempTile;
+                    break;
+                }
+            }
+        }
+
         if (this.blue[tile] !== null && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
@@ -187,6 +209,10 @@ module.exports = class Lobby {
      */
     isFull() {
         return this.playerCount === (this.max_players_in_each_team * 2);
+    }
+
+    isEmpty() {
+        return this.playerCount === 0;
     }
 
     /*

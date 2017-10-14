@@ -21,6 +21,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/mouse.png'); }
     }
+    export class ImagesRoom {
+        static getName(): string { return 'room'; }
+
+        static getPNG(): string { return require('assets/images/room.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 
