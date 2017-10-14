@@ -28,6 +28,7 @@ export default class Game extends Phaser.State {
     private playerGroup: Phaser.Group = null;
     private weaponGroup: Phaser.Group = null;
     private healthBarGroup: Phaser.Group = null;
+    private particleGroup: Phaser.Group = null;
     private isDown: any = {};
     private nextFrame = 0;
     private mapLayer: Phaser.TilemapLayer;
@@ -74,6 +75,7 @@ export default class Game extends Phaser.State {
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
         this.healthBarGroup = this.game.add.group();
+        this.particleGroup = this.game.add.group();
         this.soundGroup = this.game.add.group();
         this.client_id = socket.id;
 
@@ -154,6 +156,7 @@ export default class Game extends Phaser.State {
 
         this.game.world.bringToTop(this.playerGroup);
         this.game.world.bringToTop(this.weaponGroup);
+        this.game.world.bringToTop(this.particleGroup);
         this.game.world.bringToTop(this.healthBarGroup);
         this.game.world.bringToTop(this.uiGroup);
         this.game.world.bringToTop(this.menuGroup);
@@ -181,7 +184,7 @@ export default class Game extends Phaser.State {
     private addPlayer(data: any): void {
         if (this.players[data.id]) return;
 
-        let player = new Player(this, data.x, data.y, data.id, name, data.team);
+        let player = new Player(this, data.x, data.y, data.id, data.name, data.team);
         this.players[data.id] = player;
 
         // if this is the client's player, set the colour to be limegreen
@@ -193,6 +196,7 @@ export default class Game extends Phaser.State {
         this.playerGroup.add(player.sprite);
         this.weaponGroup.add(player.weaponGroup);
         this.healthBarGroup.add(player.healthBar);
+        this.particleGroup.add(player.bloodEmitter);
     }
 
     /*

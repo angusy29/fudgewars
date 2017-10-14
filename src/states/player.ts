@@ -2,6 +2,7 @@ import * as Assets from '../assets';
 import Game from './game';
 import Hook from './hook';
 import Sword from './sword';
+import { Images } from '../assets';
 
 export default class Player {
     id: any;
@@ -16,6 +17,8 @@ export default class Player {
     weaponGroup: Phaser.Group; // weapon sprites of the player
     hook: Hook;
     sword: Sword;
+    trailEmitter: any;
+    bloodEmitter: any;
 
     // width of healthbar is 40
     static readonly HEALTHBAR_WIDTH = 40;
@@ -45,6 +48,72 @@ export default class Player {
         this.weaponGroup = this.world.game.add.group();
         this.weaponGroup.addAt(this.sword.sprite, 0);
         this.weaponGroup.addAt(this.hook.sprite, 0);
+
+        this.trailEmitter = this.world.game.add.emitter(0, 0, 100);
+        this.trailEmitter.makeParticles(Images.ImagesParticleWalkTrail.getName());
+        this.trailEmitter.minParticleScale = 0.05;
+        this.trailEmitter.maxParticleScale = 0.2;
+        this.trailEmitter.setYSpeed(-100, -50);
+        this.trailEmitter.setXSpeed(-5, 5);
+        this.trailEmitter.gravity = 200;
+        this.trailEmitter.on = false;
+        this.trailEmitter.start(false, 1000, 100, 1);
+
+        this.bloodEmitter = this.world.game.add.emitter(0, 0, 200);
+        this.bloodEmitter.makeParticles(Images.ImagesParticleBlood.getName());
+        this.bloodEmitter.minParticleScale = 0.05;
+        this.bloodEmitter.maxParticleScale = 0.2;
+        this.bloodEmitter.setYSpeed(-100, 0);
+        this.bloodEmitter.setXSpeed(-60, 60);
+        this.bloodEmitter.gravity = 200;
+    }
+
+    public update(update: any): void {
+        this.setHealth(update.health);
+
+        // walk particles
+        if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
+            this.trailEmitter.on = true;
+            this.trailEmitter.x = update.x;
+            this.trailEmitter.y = update.y + this.sprite.height / 2;
+            this.trailEmitter.forEach((particle) => {
+                if (!particle.exists) {
+                    if (Math.random() > 0.2) {
+                        particle.alpha = 1;
+                    } else {
+                        particle.kill();
+                    }
+                }
+                this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
+            }, this);
+        } else {
+            this.trailEmitter.on = false;
+        }
+
+        // update sprite position
+        this.sprite.x = update.x;
+        this.sprite.y = update.y;
+        this.nameText.x = update.x;
+        this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
+
+        // group items are relative to the group object, so we
+        // loop through and set each one instead
+        this.healthBar.forEach(element => {
+            element.x = update.x - Player.HEALTH_BAR_X_OFFSET;
+            element.y = update.y - Player.HEALTH_BAR_Y_OFFSET;
+        }, this);
+
+        this.updateSpriteDirection(update);
+
+        // update player animation, if they are walking
+        if (update.vx || update.vy) {
+            this.sprite.animations.play('walk', 20, true);
+        } else {
+            this.sprite.animations.stop(null, true);
+        }
+
+        this.hook.update(update.hook);
+        this.sword.update(update.sword);
     }
 
     private createSprite(x: number, y: number, name: string): Phaser.Sprite {
@@ -103,35 +172,6 @@ export default class Player {
         return healthBar;
     }
 
-    public update(update: any): void {
-        this.setHealth(update.health);
-
-        // update sprite position
-        this.sprite.x = update.x;
-        this.sprite.y = update.y;
-        this.nameText.x = update.x;
-        this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
-
-        // group items are relative to the group object, so we
-        // loop through and set each one instead
-        this.healthBar.forEach(element => {
-            element.x = update.x - Player.HEALTH_BAR_X_OFFSET;
-            element.y = update.y - Player.HEALTH_BAR_Y_OFFSET;
-        }, this);
-
-        this.updateSpriteDirection(update);
-
-        // update player animation, if they are walking
-        if (update.vx || update.vy) {
-            this.sprite.animations.play('walk', 20, true);
-        } else {
-            this.sprite.animations.stop(null, true);
-        }
-
-        this.hook.update(update.hook);
-        this.sword.update(update.sword);
-    }
-
     public destroy(): void {
         this.sprite.destroy();
         this.nameText.destroy();
@@ -178,7 +218,22 @@ export default class Player {
     }
 
     public setHealth(health: number): void {
-        if (this.health === health) return;
+        if (this.health === health) {
+            return;
+        }
+
+        // Damage particles
+        if (health < this.health) {
+            this.bloodEmitter.x = this.sprite.x;
+            this.bloodEmitter.y = this.sprite.y;
+            this.bloodEmitter.start(true, 1000, 1, 25);
+            this.bloodEmitter.forEach((particle) => {
+                if (!particle.exists) {
+                    particle.alpha = 1;
+                }
+                this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
+            }, this);
+        }
 
         this.health = health;
         let healthFg: Phaser.Sprite = <Phaser.Sprite> this.healthBar.getChildAt(1);

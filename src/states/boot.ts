@@ -60,6 +60,9 @@ export default class Boot extends Phaser.State {
            \nSOUND_EXTENSIONS_PREFERENCE. ${SOUND_EXTENSIONS_PREFERENCE}`
         );
 
+        // Keep the game running in the background
+        this.game.stage.disableVisibilityChange = true;
+
         this.game.state.start('preloader');
     }
 }

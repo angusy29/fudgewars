@@ -21,6 +21,16 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/mouse.png'); }
     }
+    export class ImagesParticleBlood {
+        static getName(): string { return 'particle_blood'; }
+
+        static getPNG(): string { return require('assets/images/particle_blood.png'); }
+    }
+    export class ImagesParticleWalkTrail {
+        static getName(): string { return 'particle_walk_trail'; }
+
+        static getPNG(): string { return require('assets/images/particle_walk_trail.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 
