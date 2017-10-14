@@ -112,13 +112,7 @@ export default class MainMenu extends Phaser.State {
      */
     private loadLobby(): void {
         this.game.sound.play('click1');
-
-        let room = Math.floor(Math.random() * 2);
-        this.socket.emit('room', 'room-' + room);
-
-        this.socket.once('room_created', () => {
-            this.game.state.start('lobby', true, false, this.socket, this.nicknameInput.value, 'room-' + room);
-        });
+        this.game.state.start('lobbyselection', true, false, this.socket, this.nicknameInput.value);
     }
 
     /*

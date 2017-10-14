@@ -88,7 +88,7 @@ export default class ButtonUtil {
 
         // sound bar foreground, centre in middle of screen without using anchor, because anchor causes problems
         this.soundBarFg = this.game.add.sprite((this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2), this.game.canvas.height / 2 - 8, soundFgBMP);
-        
+
         // sound bar background
         let soundBarBg = this.game.add.sprite((this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2), this.game.canvas.height / 2 - 8, soundBgBMP);
 

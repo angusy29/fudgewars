@@ -24,6 +24,7 @@ class App extends Phaser.Game {
         this.state.add('boot', Boot);
         this.state.add('preloader', Preloader);
         this.state.add('mainmenu', MainMenu);
+        this.state.add('lobbyselection', LobbySelection);
         this.state.add('lobby', Lobby);
         this.state.add('howtoplay', HowToPlay);
         this.state.add('options', Options);

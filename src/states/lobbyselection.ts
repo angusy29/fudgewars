@@ -3,6 +3,7 @@ import * as io from 'socket.io-client';
 import CustomButton from './custombutton';
 import ButtonUtil from './buttonutil';
 import LobbyPlayer from './lobbyplayer';
+import { ListView } from 'phaser-list-view';
 
 /**
  * Lobby selection screen, where players can pick an existing lobby
@@ -36,12 +37,47 @@ export default class LobbySelection extends Phaser.State {
         this.background = this.game.add.image(0, 0, 'titlescreen');
         this.background.height = this.game.height;
         this.background.width = this.game.width;
+
+        this.initLobbies();
+        this.initCreateLobbyButton();
+        this.initBackButton();
     }
 
     private registerSocketEvents(socket: any): void {
         // get number of lobbies
 
         // join lobby
+    }
+
+    private initLobbies(): void {
+        let boundsWidth: number = 500;
+        let boundsHeight: number = 400;
+        let parent = this.game.world;
+        let bounds = new Phaser.Rectangle(this.game.world.centerX - (boundsWidth / 2), this.game.world.centerY - (boundsHeight / 2), boundsWidth, boundsHeight);
+        let options = { direction: 'y', overflow: 100, padding: 10, searchForClicks: true };
+
+        let listView = new ListView(this.game, parent, bounds, options);
+
+        let boxW: number = 500;
+        let boxH: number = 100;
+
+        // let's just create 5 lobbies for now (client side dictating how many lobbies there are)
+        // eventually we'll have to create a lobby
+        // tell the server we created a lobby
+        // server keeps track of all the lobbies, and tells client to render X number of lobbies
+        for (let i = 0; i < 5; i++) {
+            let color = Phaser.Color.getRandomColor();
+            let group = this.game.make.group(null);
+            let g = this.game.add.graphics(0, 0, group);
+            g.beginFill(color).drawRect(0, 0, boxW, boxH);
+
+            let txt = this.game.add.text(boxW / 2, boxH / 2, 'NewtonRoom-' + i, { font: '40px Arial', fill: '#000' }, group);
+            txt.anchor.set(.5);
+            let img = this.game.add.image(0, 0, group.generateTexture());
+            img.inputEnabled = true;
+            img.events.onInputUp.add(this.joinLobby.bind(this, 'NewtonRoom-' + i), this);
+            listView.add(img);
+        }
     }
 
     /*
@@ -66,6 +102,13 @@ export default class LobbySelection extends Phaser.State {
         this.backButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.backButton), this);
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.backButton), this);
+    }
+
+    private joinLobby(room: string, context: any): void {
+        this.socket.emit('room', room);
+        this.socket.once('room_created', () => {
+            this.game.state.start('lobby', true, false, this.socket, this.client_player_name, room);
+        });
     }
 
     private createLobby(): void {

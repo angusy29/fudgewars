@@ -5,7 +5,7 @@ import ButtonUtil from './buttonutil';
 import LobbyPlayer from './lobbyplayer';
 
 /*
- * Lobby where player selects their team 
+ * Lobby where player selects their team
  */
 export default class Lobby extends Phaser.State {
     private background: Phaser.Image;
@@ -322,7 +322,7 @@ export default class Lobby extends Phaser.State {
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();
-        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
+        this.game.state.start('lobbyselection', true, false, this.socket, this.client_player_name);
     }
 
     /*

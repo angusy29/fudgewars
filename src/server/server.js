@@ -49,8 +49,8 @@ io.on('connection', function(socket) {
     });
 
     socket.on('join_lobby', function(room, name) {
-        console.log(room);
-        console.log(allRooms);
+        // console.log(room);
+        // console.log(allRooms);
         if (!(room in allRooms)) {
             console.log('Room does not exist!');
             return;
