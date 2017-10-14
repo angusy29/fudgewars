@@ -473,8 +473,17 @@ export default class Game extends Phaser.State {
     }
 
     private quit(): void {
-        this.socket.disconnect();
+        this.unsubscribeAll();
         this.game.state.start('mainmenu');
+    }
+
+    private unsubscribeAll(): void {
+        this.socket.off('loaded');
+        this.socket.off('update');
+        this.socket.off('player_join');
+        this.socket.off('player_left');
+        this.socket.off('capture_flag');
+        this.socket.off('pongcheck');
     }
 
     public create(): void {

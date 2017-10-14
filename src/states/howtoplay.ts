@@ -36,13 +36,13 @@ export default class HowToPlay extends Phaser.State {
     }
 
     private initInstructions(): void {
-        let instructions: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'How to play', {
-            font: '36px ' + Assets.GoogleWebFonts.Roboto,
+        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'How to play', {
+            font: '48px ' + Assets.GoogleWebFonts.Roboto,
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
         });
-        instructions.anchor.setTo(0.5, 0.5);
+        title.anchor.setTo(0.5, 0.5);
 
         let wasd = this.game.add.image(this.game.canvas.width / 2, this.game.canvas.height / 2 - 128, 'wasd');
         wasd.anchor.setTo(1.5, 0.5);

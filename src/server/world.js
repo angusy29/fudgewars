@@ -206,6 +206,12 @@ module.exports = class World {
     removePlayer(id) {
         if (!this.players[id]) return;
 
+        socket.removeAllListeners(['keydown']);
+        socket.removeAllListeners(['pingcheck']);
+        socket.removeAllListeners(['keyup']);
+        socket.removeAllListeners(['attack_hook']);
+        socket.removeAllListeners(['attack_sword']);
+        socket.removeAllListeners(['disconnect']);
         delete this.players[id];
         this.playerCount--;
 

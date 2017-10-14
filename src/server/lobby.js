@@ -42,6 +42,7 @@ module.exports = class Lobby {
             this.redCount++;
         }
         this.playerCount++;
+        console.log(this.playerCount);
 
         let tileIndex = this[team.name].indexOf(null);
         let player = new LobbyPlayer(id, name, tileIndex, team.color);
@@ -83,6 +84,7 @@ module.exports = class Lobby {
 
         // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
+            console.log('change blue team');
             // if the tile we want to move to is not empty, return
             if (this.blue[tile] != null) return;
             let oldTile = player.tile;
@@ -102,6 +104,7 @@ module.exports = class Lobby {
 
         // when player clicks on red panel this gets called
         socket.on('red_team_change', (tile) => {
+            console.log('change red team');
             // if the tile we want to move to is not empty, return
             if (this.red[tile] != null) return;
             let oldTile = player.tile;            
@@ -122,17 +125,18 @@ module.exports = class Lobby {
         // If player control q's out or quits browser
         socket.on('disconnect', () => {
             console.log('lobby disconnected');
-            this.removePlayer(player.id, player.tile);
+            this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
         });
 
         // If player clicks on back
         socket.on('lobby_player_back', () => {
-            console.log('lobby disconnected');
-            this.removePlayer(player.id, player.tile);
+            console.log('lobby player back');
+            this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
+            // socket.leave(this.room); // doesn't seem to do anything
         });
 
     }
@@ -141,7 +145,7 @@ module.exports = class Lobby {
      * Removes a player from the lobby
      * id: id of player to remove
      */
-    removePlayer(id, tile) {
+    removePlayer(socket, id, tile) {
         if (this.blue[tile] !== null && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
@@ -152,6 +156,12 @@ module.exports = class Lobby {
             this.redCount--;
         }
 
+        // can't seem to just chuck it all in 1 array...
+        socket.removeAllListeners(['lobby_player_back']);
+        socket.removeAllListeners(['player_ready']); 
+        socket.removeAllListeners(['blue_team_change']);
+        socket.removeAllListeners(['red_team_change']);
+        socket.removeAllListeners(['disconnect']);
         delete this.players[id];
         this.playerCount--;
 

@@ -157,6 +157,14 @@ export default class Lobby extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
+        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, this.room, {
+            font: '48px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        title.anchor.setTo(0.5, 0.5);
+
         this.initBlueTeamPanels();
         this.initRedTeamPanels();
         this.initReadyButton();
@@ -319,6 +327,7 @@ export default class Lobby extends Phaser.State {
      * Goes back to the main menu
      */
     private loadBack(): void {
+        console.log('press back');
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();

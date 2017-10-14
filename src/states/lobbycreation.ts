@@ -9,11 +9,12 @@ import { ListView } from 'phaser-list-view';
  * Lobby selection screen, where players can pick an existing lobby
  * or create their own lobby
  */
-export default class LobbySelection extends Phaser.State {
+export default class LobbyCreation extends Phaser.State {
     private background: Phaser.Image;
     private socket: any;
 
     // form input fields
+    static readonly INPUTFIELD_WIDTH = 400;
     private lobbyNameInput: PhaserInput.InputField;
 
     // buttons at bottom of page
@@ -42,10 +43,18 @@ export default class LobbySelection extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
+        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 192, 'Create lobby', {
+            font: '48px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        title.anchor.setTo(0.5, 0.5);
+
         // create form
-        this.lobbyNameInput = this.game.add['inputField'](this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 - 92, {
+        this.lobbyNameInput = this.game.add['inputField']((this.game.canvas.width / 2) - (LobbyCreation.INPUTFIELD_WIDTH / 2), this.game.canvas.height / 2 - 100, {
             font: '24px Roboto',
-            width: 300,
+            width: LobbyCreation.INPUTFIELD_WIDTH,
             padding: 8,
             borderWidth: 1,
             borderColor: '#000',
@@ -91,8 +100,10 @@ export default class LobbySelection extends Phaser.State {
     }
 
     private createLobby(): void {
-        this.socket.emit('lobby_selection_create');
         this.game.sound.play('click1');
+        this.socket.emit('room', this.lobbyNameInput.value);
+        // we need to check if this lobby already exists
+        this.game.state.start('lobby', true, false, this.socket, this.client_player_name, this.lobbyNameInput.value);
     }
 
     /*

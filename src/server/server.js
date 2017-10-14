@@ -48,6 +48,17 @@ io.on('connection', function(socket) {
         console.log(allRooms);
     });
 
+    socket.on('get_lobbies', () => {
+        let all = {};
+        for (room in allRooms) {
+            all[room] = allRooms[room].lobby.playerCount;
+            console.log(allRooms[room].lobby);
+        }
+        console.log('emit!!!');
+        console.log(all);
+        socket.emit('lobby_selection_update', all);
+    });
+
     socket.on('join_lobby', function(room, name) {
         // console.log(room);
         // console.log(allRooms);
