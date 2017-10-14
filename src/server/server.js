@@ -43,7 +43,7 @@ io.on('connection', function(socket) {
         }
         socket.join(room);
 
-        socket.emit('room_created');
+        socket.emit('room_created', { 'joinable': !allRooms[room].lobby.isFull() });
 
         console.log(allRooms);
     });

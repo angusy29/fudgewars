@@ -22,6 +22,8 @@ export default class LobbySelection extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
+    private lobbyFullText: Phaser.Text;
+
     public init(socket: any, playername: string): void {
         this.socket = socket;
         this.client_player_name = playername;
@@ -52,11 +54,10 @@ export default class LobbySelection extends Phaser.State {
     private initLobbies(): void {
         let boundsWidth: number = 500;
         let boundsHeight: number = 400;
-        let parent = this.game.world;
         let bounds = new Phaser.Rectangle(this.game.world.centerX - (boundsWidth / 2), this.game.world.centerY - (boundsHeight / 2), boundsWidth, boundsHeight);
         let options = { direction: 'y', overflow: 100, padding: 10, searchForClicks: true };
 
-        let listView = new ListView(this.game, parent, bounds, options);
+        let listView = new ListView(this.game, this.game.world, bounds, options);
 
         let boxW: number = 500;
         let boxH: number = 100;
@@ -86,7 +87,7 @@ export default class LobbySelection extends Phaser.State {
     private initCreateLobbyButton(): void {
         // pick the first button in the array to use as the asset
         let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 + 248, this, this.createLobby);
-        let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Create Lobby');
+        let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Create lobby');
         this.createLobbyButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.createLobbyButton), this);
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.createLobbyButton), this);
@@ -105,15 +106,23 @@ export default class LobbySelection extends Phaser.State {
     }
 
     private joinLobby(room: string, context: any): void {
+        // "create" this room, server will just let player join if it exists and not create the room
         this.socket.emit('room', room);
-        this.socket.once('room_created', () => {
-            this.game.state.start('lobby', true, false, this.socket, this.client_player_name, room);
+        this.socket.once('room_created', (data: any) => {
+            if (!data.joinable) {
+                if (this.lobbyFullText) this.lobbyFullText.destroy();
+                this.lobbyFullText = this.game.add.text(this.game.world.centerX, 100, room + ' is full!', { font: '24px Arial', fill: '#ff0000' });
+                this.lobbyFullText.anchor.setTo(0.5);
+            } else {
+                this.game.state.start('lobby', true, false, this.socket, this.client_player_name, room);
+            }
         });
     }
 
     private createLobby(): void {
-        this.socket.emit('lobby_selection_create');
         this.game.sound.play('click1');
+        this.unsubscribeAll();
+        this.game.state.start('lobbycreation', true, false, this.socket, this.client_player_name);
     }
 
     /*
