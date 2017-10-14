@@ -476,7 +476,10 @@ export default class Game extends Phaser.State {
     private quit(): void {
         this.socket.emit('game_quit');
         this.unsubscribeAll();
-        this.removePlayer(this.client_id);
+
+        for (let player in this.players) {
+            this.removePlayer(this.players[player].id);
+        }
         this.game.state.start('mainmenu', false, false, this.socket);
     }
 

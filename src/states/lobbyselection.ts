@@ -97,7 +97,7 @@ export default class LobbySelection extends Phaser.State {
 
         this.refreshLobbyList();
 
-        this.socket.on('lobby_selection_update', (allRooms: any) => {            
+        this.socket.on('lobby_selection_update', (allRooms: any) => {
             if (Object.keys(allRooms).length === 0) {
                 this.noLobbyText.visible = true;
                 return;
@@ -139,7 +139,7 @@ export default class LobbySelection extends Phaser.State {
                 for (let i = 0; i < allRooms[room].blueCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 4, 'Blue', group);
                 }
-                
+
                 for (let i = 0; i < allRooms[room].redCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 38, 'Red', group);
                 }

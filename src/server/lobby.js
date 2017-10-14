@@ -22,6 +22,10 @@ module.exports = class Lobby {
             this.blue[i] = null;
             this.red[i] = null;
         }
+
+        // spectators
+        this.spectators = {};
+        this.spectatorCount = 0;
     }
 
     /*
@@ -177,20 +181,21 @@ module.exports = class Lobby {
             this.redCount--;
         }
 
-        // can't seem to just chuck it all in 1 array...
-        socket.removeAllListeners(['player_ready']); 
-        socket.removeAllListeners(['blue_team_change']);
-        socket.removeAllListeners(['red_team_change']);
-        socket.removeAllListeners(['disconnect']);
-        socket.removeAllListeners(['lobby_player_back']);
+        this.unsubscribeAll(socket);
         delete this.players[id];
         this.playerCount--;
+    }
 
-        // Stop updates if no more players
-        // if (this.playerCount === 0) {
-        //     clearInterval(this.timeout);
-        //     this.timeout = null;
-        // }
+    addSpectator(socket, name) {
+        let id = socket.id;
+        this.spectatorCount++;
+        this.spectators[id] = { 'name': name };
+    } 
+
+    removeSpectator(socket, id) {
+        this.unsubscribeAll(socket);
+        this.spectatorCount--;
+        delete this.spectators[id];
     }
 
     update() {
@@ -200,6 +205,18 @@ module.exports = class Lobby {
             all.push(player);
         }
         this.io.sockets.in(this.room).emit('lobby_update', all)
+    }
+
+    /**
+     * Unsubscribe from all events
+     */
+    unsubscribeAll(socket) {
+        // can't seem to just chuck it all in 1 array...
+        socket.removeAllListeners(['player_ready']); 
+        socket.removeAllListeners(['blue_team_change']);
+        socket.removeAllListeners(['red_team_change']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['lobby_player_back']);
     }
 
     /*
