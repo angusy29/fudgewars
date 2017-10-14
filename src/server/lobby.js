@@ -13,6 +13,7 @@ module.exports = class Lobby {
         this.playerCount = 0;
         this.redCount = 0;
         this.blueCount = 0;
+        this.isPlaying = false;     // is true if players playing in game world
 
         // initialise blue and red teams, tiles
         this.blue = [];
@@ -79,6 +80,7 @@ module.exports = class Lobby {
             if (startGame === true) {
                 clearInterval(this.timeout);
                 this.timeout = null;
+                this.isPlaying = true;
                 this.io.sockets.in(this.room).emit('lobby_start');
             }
         });
@@ -93,6 +95,7 @@ module.exports = class Lobby {
                 // if player was in red team
                 this.red[oldTile] = null;
                 this.redCount--;
+                this.blueCount++;
             } else {
                 this.blue[oldTile] = null;
                 this.blue[tile] = player;
@@ -113,6 +116,7 @@ module.exports = class Lobby {
                 // if player was in blue team
                 this.blue[oldTile] = null;
                 this.blueCount--;
+                this.redCount++;
             } else {
                 this.red[oldTile] = null;
                 this.red[tile] = player;
@@ -147,11 +151,6 @@ module.exports = class Lobby {
      * id: id of player to remove
      */
     removePlayer(socket, id, tile) {
-        if (!this.players[id]) return;
-        
-        console.log('remove');
-        console.log(id);
-        console.log(tile);
         // if tile wasn't passed as an argument, find the tile
         if (tile === undefined) {
             let teamTile;
@@ -161,7 +160,7 @@ module.exports = class Lobby {
             console.log(teamTile);
 
             for (let tempTile in teamTile) {
-                if (teamTile[tempTile].id === id) {
+                if (teamTile[tempTile] !== null && teamTile[tempTile].id === id) {
                     tile = tempTile;
                     break;
                 }

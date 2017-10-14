@@ -203,6 +203,7 @@ module.exports = class World {
             this.io.sockets.in(this.room).emit('player_left', player.id);
         });
 
+        // in case the player clicks on quit game, instead of quitting game
         socket.on('game_quit', () => {
             // release the flag that is being carry by the player
             if (player.carryingFlag !== null) {

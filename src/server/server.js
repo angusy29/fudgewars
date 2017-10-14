@@ -29,6 +29,9 @@ try {
 
 }
 
+// let lob = new Lobby(io, 'Newton');
+// let allRooms = { 'Newton': { 'lobby': lob, 'world': new World(io, 'Newton', lob, 786 * 2, 640 * 2, 64) } };
+
 let allRooms = {};
 
 io.on('connection', function(socket) {
@@ -59,7 +62,8 @@ io.on('connection', function(socket) {
                 delete allRooms[room];
                 continue;
             }
-            all[room] = allRooms[room].lobby.playerCount;
+            all[room] = { 'playerCount': allRooms[room].lobby.playerCount, 'blueCount': allRooms[room].lobby.blueCount, 'redCount': allRooms[room].lobby.redCount,
+                            'isPlaying': allRooms[room].lobby.isPlaying };
         }
         socket.emit('lobby_selection_update', all);
     });

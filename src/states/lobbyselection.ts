@@ -97,13 +97,36 @@ export default class LobbySelection extends Phaser.State {
                 button.width = boxW;
                 button.height = boxH;
 
-                let txt = this.game.add.text(button.width / 2, button.height / 2, room, {
+                let roomName = this.game.add.text(button.x + 14, button.y + 10, room, {
                     font: '24px ' + Assets.GoogleWebFonts.Roboto,
                     fill: '#ffffff',
                     stroke: '#000000',
                     strokeThickness: 3,
                 }, group);
-                txt.anchor.set(.5);
+
+                let roomCapacity = this.game.add.text(roomName.x, roomName.y + 32, allRooms[room].playerCount + ' / 12 players', {
+                    font: '16px ' + Assets.GoogleWebFonts.Roboto,
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 3,
+                }, group);
+
+                let progressText = allRooms[room].isPlaying === true ? 'In progress' : 'In lobby';
+                let roomProgress = this.game.add.text(roomCapacity.x, roomCapacity.y + 42, progressText, {
+                    font: '16px ' + Assets.GoogleWebFonts.Roboto,
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 3,
+                }, group);
+
+                let spriteX = 200;
+                for (let i = 0; i < allRooms[room].blueCount; i++) {
+                    this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 4, 'Blue', group);
+                }
+                
+                for (let i = 0; i < allRooms[room].redCount; i++) {
+                    this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 38, 'Red', group);
+                }
 
                 let img = this.game.add.image(0, 0, group.generateTexture());
                 img.inputEnabled = true;
@@ -112,6 +135,18 @@ export default class LobbySelection extends Phaser.State {
                 listView.add(img);
             }
         });
+    }
+
+    private createSprite(x: number, y: number, team: string, group: Phaser.Group): Phaser.Sprite {
+        let frame;
+        if (team === 'Blue') frame = 'p2_walk';
+        if (team === 'Red') frame = 'p3_walk';
+
+        // set up sprite
+        let sprite = this.game.add.sprite(x, y, frame, null, group);
+        sprite.scale.setTo(0.5);
+
+        return sprite;
     }
 
     /*
