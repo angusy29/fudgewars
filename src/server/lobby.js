@@ -151,13 +151,13 @@ module.exports = class Lobby {
      * id: id of player to remove
      */
     removePlayer(socket, id, tile) {
+        if (!this.players[id]) return;
+        
         // if tile wasn't passed as an argument, find the tile
         if (tile === undefined) {
             let teamTile;
             if (this.players[id].team === RED) teamTile = this.red;
             if (this.players[id].team === BLUE) teamTile = this.blue;
-
-            console.log(teamTile);
 
             for (let tempTile in teamTile) {
                 if (teamTile[tempTile] !== null && teamTile[tempTile].id === id) {
@@ -178,11 +178,11 @@ module.exports = class Lobby {
         }
 
         // can't seem to just chuck it all in 1 array...
-        socket.removeAllListeners(['lobby_player_back']);
         socket.removeAllListeners(['player_ready']); 
         socket.removeAllListeners(['blue_team_change']);
         socket.removeAllListeners(['red_team_change']);
         socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['lobby_player_back']);
         delete this.players[id];
         this.playerCount--;
 

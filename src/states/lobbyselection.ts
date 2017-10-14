@@ -13,6 +13,8 @@ export default class LobbySelection extends Phaser.State {
     private background: Phaser.Image;
     private socket: any;
 
+    // buttons
+    private refreshListButton: CustomButton;
     private createLobbyButton: CustomButton;
     private backButton: CustomButton;
 
@@ -24,6 +26,9 @@ export default class LobbySelection extends Phaser.State {
 
     private noLobbyText: Phaser.Text;       // displays when there are no lobbies
     private lobbyFullText: Phaser.Text;     // displays if lobby is full
+
+    static readonly BOUND_WIDTH = 500;
+    static readonly BOUND_HEIGHT = 380;
 
     public init(socket: any, playername: string): void {
         this.socket = socket;
@@ -58,6 +63,7 @@ export default class LobbySelection extends Phaser.State {
         this.noLobbyText.anchor.setTo(0.5, 0.5);
         this.noLobbyText.visible = false;
 
+        this.initRefreshListButton();
         this.initLobbies();
         this.initCreateLobbyButton();
         this.initBackButton();
@@ -69,10 +75,19 @@ export default class LobbySelection extends Phaser.State {
         // join lobby
     }
 
+    private initRefreshListButton(): void {
+        // -49, because 49 is width of the refresh button
+        let button: Phaser.Button = this.game.add.button((this.game.canvas.width / 2) + (LobbySelection.BOUND_WIDTH / 2) - 49, (this.game.canvas.height / 2) - (LobbySelection.BOUND_HEIGHT / 2) - 50,
+                                        Assets.Atlases.ButtonsBlueSheet.getName(), this.refreshLobbyList, this,
+                                        CustomButton.iconButton[1], CustomButton.iconButton[2], CustomButton.iconButton[0], CustomButton.iconButton[1]);
+        let icon: Phaser.Sprite = this.game.add.sprite(button.x - 1, button.y - 5, Assets.Atlases.ButtonsSheetWhite2x.getName(), CustomButton.icons[0]);
+        icon.scale.setTo(0.5, 0.5);
+        icon.bringToTop();
+    }
+
     private initLobbies(): void {
-        let boundsWidth: number = 500;
-        let boundsHeight: number = 380;
-        let bounds = new Phaser.Rectangle((this.game.canvas.width / 2) - (boundsWidth / 2), (this.game.canvas.height / 2) - (boundsHeight / 2), boundsWidth, boundsHeight);
+        let bounds = new Phaser.Rectangle((this.game.canvas.width / 2) - (LobbySelection.BOUND_WIDTH / 2), (this.game.canvas.height / 2) - (LobbySelection.BOUND_HEIGHT / 2),
+                                            LobbySelection.BOUND_WIDTH, LobbySelection.BOUND_HEIGHT);
         let options = { direction: 'y', overflow: 100, padding: 10, searchForClicks: true };
 
         let listView = new ListView(this.game, this.game.world, bounds, options);
@@ -80,15 +95,16 @@ export default class LobbySelection extends Phaser.State {
         let boxW: number = 500;
         let boxH: number = 120;
 
-        this.socket.emit('get_lobbies');
+        this.refreshLobbyList();
 
-        this.socket.on('lobby_selection_update', (allRooms: any) => {
+        this.socket.on('lobby_selection_update', (allRooms: any) => {            
             if (Object.keys(allRooms).length === 0) {
                 this.noLobbyText.visible = true;
                 return;
             }
 
             this.noLobbyText.visible = false;
+            listView.removeAll();
 
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
@@ -171,6 +187,10 @@ export default class LobbySelection extends Phaser.State {
         this.backButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.backButton), this);
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.backButton), this);
+    }
+
+    private refreshLobbyList(): void {
+        this.socket.emit('get_lobbies');        
     }
 
     private joinLobby(room: string, context: any): void {
