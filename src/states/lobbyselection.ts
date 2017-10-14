@@ -98,13 +98,13 @@ export default class LobbySelection extends Phaser.State {
         this.refreshLobbyList();
 
         this.socket.on('lobby_selection_update', (allRooms: any) => {
+            listView.removeAll();
             if (Object.keys(allRooms).length === 0) {
                 this.noLobbyText.visible = true;
                 return;
             }
 
             this.noLobbyText.visible = false;
-            listView.removeAll();
 
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
