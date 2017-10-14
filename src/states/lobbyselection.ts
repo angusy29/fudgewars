@@ -195,8 +195,8 @@ export default class LobbySelection extends Phaser.State {
 
     private joinLobby(room: string, context: any): void {
         // "create" this room, server will just let player join if it exists and not create the room
-        this.socket.emit('room', room);
-        this.socket.once('room_created', (data: any) => {
+        this.socket.emit('room', { 'room': room, 'isCreating': false });
+        this.socket.once('room_join', (data: any) => {
             if (!data.joinable) {
                 if (this.lobbyFullText) this.lobbyFullText.destroy();
                 this.lobbyFullText = this.game.add.text(this.game.world.centerX, this.game.world.centerY + 208, room + ' is full!', { font: '24px Arial', fill: '#ff0000' });

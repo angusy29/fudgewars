@@ -20,6 +20,7 @@ export default class LobbyCreation extends Phaser.State {
     // buttons at bottom of page
     private createButton: CustomButton;
     private backButton: CustomButton;
+    private roomExistText: Phaser.Text;
 
     // pass around client player name so it saves
     private client_player_name: string;
@@ -65,14 +66,23 @@ export default class LobbyCreation extends Phaser.State {
             type: PhaserInput.InputType.text
         });
 
+        this.roomExistText = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 + 192, 'Lobby with this name already exists!', {
+            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ff0000',
+            strokeThickness: 3,
+        });
+        this.roomExistText.anchor.setTo(0.5, 0.5);
+        this.roomExistText.visible = false;
+
         this.initCreateButton();
         this.initBackButton();
     }
 
     private registerSocketEvents(socket: any): void {
         // get number of lobbies
-
-        // join lobby
+        this.socket.on('room_already_exists', () => {
+            this.roomExistText.visible = true;
+        });
     }
 
     /*
@@ -101,9 +111,12 @@ export default class LobbyCreation extends Phaser.State {
 
     private createLobby(): void {
         this.game.sound.play('click1');
-        this.socket.emit('room', this.lobbyNameInput.value);
+        this.socket.emit('room', { 'room': this.lobbyNameInput.value, 'isCreating': true });
+
         // we need to check if this lobby already exists
-        this.game.state.start('lobby', true, false, this.socket, this.client_player_name, this.lobbyNameInput.value);
+        this.socket.on('room_join', () => {
+            this.game.state.start('lobby', true, false, this.socket, this.client_player_name, this.lobbyNameInput.value);
+        });
     }
 
     /*
@@ -117,6 +130,6 @@ export default class LobbyCreation extends Phaser.State {
     }
 
     private unsubscribeAll() {
-        this.socket.off('');
+        this.socket.off('room_already_exists');
     }
 }

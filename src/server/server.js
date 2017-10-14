@@ -35,18 +35,22 @@ try {
 let allRooms = {};
 
 io.on('connection', function(socket) {
-    socket.on('room', function(room) {
+    socket.on('room', function(data) {
         // if the room doesn't exist, add it to the bunch of rooms
-        if (!(room in allRooms)) {
+        if (!(data.room in allRooms)) {
             // still inefficient because we're creating the world even if the game hasn't started :/
             // agile gods pls fix... jk.
-            let lobby = new Lobby(io, room);
-            let world = new World(io, room, lobby, 786 * 2, 640 * 2, 64);
-            allRooms[room] = { 'lobby': lobby, 'world': world };
+            let lobby = new Lobby(io, data.room);
+            let world = new World(io, data.room, lobby, 786 * 2, 640 * 2, 64);
+            allRooms[data.room] = { 'lobby': lobby, 'world': world };
+        } else if (data.room in allRooms && data.isCreating) {
+            // room already exists
+            socket.emit('room_already_exists');
+            return;
         }
-        socket.join(room);
+        socket.join(data.room);
 
-        socket.emit('room_created', { 'joinable': !allRooms[room].lobby.isFull() });
+        socket.emit('room_join', { 'joinable': !allRooms[data.room].lobby.isFull() });
 
         console.log(allRooms);
     });
