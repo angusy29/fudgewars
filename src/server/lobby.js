@@ -1,16 +1,19 @@
 let LobbyPlayer = require('./lobbyplayer');
+let Server = require('./server');
 
 const BLUE = 0;
 const RED = 1;
 
 module.exports = class Lobby {
-    constructor(io) {
+    constructor(io, room) {
         this.io = io;
+        this.room = room;
         this.max_players_in_each_team = 6;
         this.players = {};      // all the players
         this.playerCount = 0;
         this.redCount = 0;
         this.blueCount = 0;
+        this.isPlaying = false;     // is true if players playing in game world
 
         // initialise blue and red teams, tiles
         this.blue = [];
@@ -19,6 +22,10 @@ module.exports = class Lobby {
             this.blue[i] = null;
             this.red[i] = null;
         }
+
+        // spectators
+        this.spectators = {};
+        this.spectatorCount = 0;
     }
 
     /*
@@ -41,6 +48,7 @@ module.exports = class Lobby {
             this.redCount++;
         }
         this.playerCount++;
+        console.log(this.playerCount);
 
         let tileIndex = this[team.name].indexOf(null);
         let player = new LobbyPlayer(id, name, tileIndex, team.color);
@@ -61,7 +69,8 @@ module.exports = class Lobby {
         // toggle player ready
         socket.on('player_ready', () => {
             player.isReady = !player.isReady;
-            this.io.emit('lobby_player_ready', player);
+            //this.io.emit('lobby_player_ready', player);
+            this.update();
 
             let startGame = true;
             for (let id in this.players) {
@@ -75,12 +84,14 @@ module.exports = class Lobby {
             if (startGame === true) {
                 clearInterval(this.timeout);
                 this.timeout = null;
-                this.io.emit('lobby_start');
+                this.isPlaying = true;
+                this.io.sockets.in(this.room).emit('lobby_start');
             }
         });
 
         // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
+            console.log('change blue team');
             // if the tile we want to move to is not empty, return
             if (this.blue[tile] != null) return;
             let oldTile = player.tile;
@@ -88,6 +99,7 @@ module.exports = class Lobby {
                 // if player was in red team
                 this.red[oldTile] = null;
                 this.redCount--;
+                this.blueCount++;
             } else {
                 this.blue[oldTile] = null;
                 this.blue[tile] = player;
@@ -95,11 +107,12 @@ module.exports = class Lobby {
             player.team = BLUE;
             player.tile = tile;
             this.print();            
-            this.io.emit('player_moved', player);
+            this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
         // when player clicks on red panel this gets called
         socket.on('red_team_change', (tile) => {
+            console.log('change red team');
             // if the tile we want to move to is not empty, return
             if (this.red[tile] != null) return;
             let oldTile = player.tile;            
@@ -107,6 +120,7 @@ module.exports = class Lobby {
                 // if player was in blue team
                 this.blue[oldTile] = null;
                 this.blueCount--;
+                this.redCount++;
             } else {
                 this.red[oldTile] = null;
                 this.red[tile] = player;
@@ -114,23 +128,24 @@ module.exports = class Lobby {
             player.team = RED;
             player.tile = tile;
             this.print();
-            this.io.emit('player_moved', player);
+            this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
         // If player control q's out or quits browser
         socket.on('disconnect', () => {
             console.log('lobby disconnected');
-            this.removePlayer(player.id, player.tile);
-            this.io.emit('lobby_player_left', player.id);
+            this.removePlayer(socket, player.id, player.tile);
+            this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
         });
 
         // If player clicks on back
         socket.on('lobby_player_back', () => {
-            console.log('lobby disconnected');
-            this.removePlayer(player.id, player.tile);
-            this.io.emit('lobby_player_left', player.id);
+            console.log('lobby player back');
+            this.removePlayer(socket, player.id, player.tile);
+            this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
+            // socket.leave(this.room); // doesn't seem to do anything
         });
 
     }
@@ -139,7 +154,23 @@ module.exports = class Lobby {
      * Removes a player from the lobby
      * id: id of player to remove
      */
-    removePlayer(id, tile) {
+    removePlayer(socket, id, tile) {
+        if (!this.players[id]) return;
+        
+        // if tile wasn't passed as an argument, find the tile
+        if (tile === undefined) {
+            let teamTile;
+            if (this.players[id].team === RED) teamTile = this.red;
+            if (this.players[id].team === BLUE) teamTile = this.blue;
+
+            for (let tempTile in teamTile) {
+                if (teamTile[tempTile] !== null && teamTile[tempTile].id === id) {
+                    tile = tempTile;
+                    break;
+                }
+            }
+        }
+
         if (this.blue[tile] !== null && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
@@ -150,14 +181,21 @@ module.exports = class Lobby {
             this.redCount--;
         }
 
+        this.unsubscribeAll(socket);
         delete this.players[id];
         this.playerCount--;
+    }
 
-        // Stop updates if no more players
-        // if (this.playerCount === 0) {
-        //     clearInterval(this.timeout);
-        //     this.timeout = null;
-        // }
+    addSpectator(socket, name) {
+        let id = socket.id;
+        this.spectatorCount++;
+        this.spectators[id] = { 'name': name };
+    } 
+
+    removeSpectator(socket, id) {
+        this.unsubscribeAll(socket);
+        this.spectatorCount--;
+        delete this.spectators[id];
     }
 
     update() {
@@ -166,7 +204,19 @@ module.exports = class Lobby {
             let player = this.players[id];
             all.push(player);
         }
-        this.io.emit('lobby_update', all)
+        this.io.sockets.in(this.room).emit('lobby_update', all)
+    }
+
+    /**
+     * Unsubscribe from all events
+     */
+    unsubscribeAll(socket) {
+        // can't seem to just chuck it all in 1 array...
+        socket.removeAllListeners(['player_ready']); 
+        socket.removeAllListeners(['blue_team_change']);
+        socket.removeAllListeners(['red_team_change']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['lobby_player_back']);
     }
 
     /*
@@ -175,6 +225,10 @@ module.exports = class Lobby {
      */
     isFull() {
         return this.playerCount === (this.max_players_in_each_team * 2);
+    }
+
+    isEmpty() {
+        return this.playerCount === 0;
     }
 
     /*

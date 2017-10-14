@@ -32,6 +32,15 @@ export default class Options extends Phaser.State {
         this.background.width = this.game.width;
 
         this.buttonUtil = new ButtonUtil(this.game);
+
+        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 192, 'Options', {
+            font: '48px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        title.anchor.setTo(0.5, 0.5);
+
         this.soundGroup = this.game.add.group();
 
         this.soundGroup = this.buttonUtil.createSoundBar();

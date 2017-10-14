@@ -29,28 +29,52 @@ try {
 
 }
 
+// let lob = new Lobby(io, 'Newton');
+// let allRooms = { 'Newton': { 'lobby': lob, 'world': new World(io, 'Newton', lob, 786 * 2, 640 * 2, 64) } };
+
 let allRooms = {};
 
 io.on('connection', function(socket) {
-    socket.on('room', function(room) {
+    socket.on('room', function(data) {
         // if the room doesn't exist, add it to the bunch of rooms
-        if (!(room in allRooms)) {
+        if (!(data.room in allRooms)) {
             // still inefficient because we're creating the world even if the game hasn't started :/
             // agile gods pls fix... jk.
-            let lobby = new Lobby(io, room);
-            let world = new World(io, room, lobby, 786 * 2, 640 * 2, 64);
-            allRooms[room] = { 'lobby': lobby, 'world': world };
+            let lobby = new Lobby(io, data.room);
+            let world = new World(io, data.room, lobby, 786 * 2, 640 * 2, 64);
+            allRooms[data.room] = { 'lobby': lobby, 'world': world };
+        } else if (data.room in allRooms && data.isCreating) {
+            // room already exists
+            socket.emit('room_already_exists');
+            return;
         }
-        socket.join(room);
+        socket.join(data.room);
 
-        socket.emit('room_created');
+        socket.emit('room_join', { 'joinable': !allRooms[data.room].lobby.isFull() });
 
         console.log(allRooms);
     });
 
+    // obviously this isn't called all the time
+    // so if a room is deleted, and a player was still on lobby screen, it won't update
+    socket.on('get_lobbies', () => {
+        let all = {};
+        for (room in allRooms) {
+            // clean up lobbies which have no players
+            if (allRooms[room].lobby.isEmpty()) {
+                console.log('lobby destroyed!');
+                delete allRooms[room];
+                continue;
+            }
+            all[room] = { 'playerCount': allRooms[room].lobby.playerCount, 'blueCount': allRooms[room].lobby.blueCount, 'redCount': allRooms[room].lobby.redCount,
+                            'isPlaying': allRooms[room].lobby.isPlaying };
+        }
+        socket.emit('lobby_selection_update', all);
+    });
+
     socket.on('join_lobby', function(room, name) {
-        console.log(room);
-        console.log(allRooms);
+        // console.log(room);
+        // console.log(allRooms);
         if (!(room in allRooms)) {
             console.log('Room does not exist!');
             return;

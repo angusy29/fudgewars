@@ -5,7 +5,7 @@ import ButtonUtil from './buttonutil';
 import LobbyPlayer from './lobbyplayer';
 
 /*
- *  Welcome screen when user arrives at Fudge Wars website
+ * Lobby where player selects their team
  */
 export default class Lobby extends Phaser.State {
     private background: Phaser.Image;
@@ -31,15 +31,18 @@ export default class Lobby extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
+    private room: string;
+
     static team_sheets: any = [
         Assets.Atlases.ButtonsBlueSheet.Frames.BluePanel,
         Assets.Atlases.ButtonsRedSheet.Frames.RedPanel,
         Assets.Atlases.ButtonsGreenSheet.Frames.GreenCheckmark
     ];
 
-    public init(socket: any, playername: string): void {
-        this.socket = socket;        
+    public init(socket: any, playername: string, room: string): void {
+        this.socket = socket;
         this.client_player_name = playername;
+        this.room = room;
         this.players = {};  // need to reset these, otherwise
         this.blueTiles = {};
         this.redTiles = {};
@@ -50,36 +53,32 @@ export default class Lobby extends Phaser.State {
                 if (!this.players[player.id]) {
                     this.addNewPlayer(player);
                 }
-            }
-        });
 
-        // server acknowledges that we clicked ready, and sends a message back
-        // and client renders or destroys the tick image
-        this.socket.on('lobby_player_ready', (player: any) => {
-            // create tick ready image
-            if (player.isReady) {
-                if (!this.players[player.id]) return;
-                if (this.players[player.id].readyImg !== null) return;
+                // render the tick image next to the player if they are ready
+                if (player.isReady) {
+                    if (!this.players[player.id]) return;
+                    if (this.players[player.id].readyImg !== null) return;
 
-                let obj;
-                if (player.team === Lobby.BLUE) obj = this.blueTiles;
-                else obj = this.redTiles;
+                    let obj;
+                    if (player.team === Lobby.BLUE) obj = this.blueTiles;
+                    else obj = this.redTiles;
 
-                let tile = this.players[player.id].tile;
-                let posX = obj[tile].image.centerX + 16;
-                let posY = obj[tile].image.centerY + 16;
+                    let tile = this.players[player.id].tile;
+                    let posX = obj[tile].image.centerX + 16;
+                    let posY = obj[tile].image.centerY + 16;
 
-                let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
-                                    Lobby.team_sheets[2]);
+                    let readyTick = this.game.add.image(posX, posY, Assets.Atlases.ButtonsGreenSheet.getName(),
+                                        Lobby.team_sheets[2]);
 
-                this.players[player.id].readyImg = readyTick;
+                    this.players[player.id].readyImg = readyTick;
 
-                this.players[player.id].sprite.animations.play('walk', 20, true);
-            } else if (!player.isReady && this.players[player.id].readyImg !== null) {
-                // destroy tick ready image
-                this.players[player.id].readyImg.destroy();
-                this.players[player.id].readyImg = null;
-                this.players[player.id].sprite.animations.stop(null, true);
+                    this.players[player.id].sprite.animations.play('walk', 20, true);
+                } else if (!player.isReady && this.players[player.id].readyImg !== null) {
+                    // destroy tick ready image
+                    this.players[player.id].readyImg.destroy();
+                    this.players[player.id].readyImg = null;
+                    this.players[player.id].sprite.animations.stop(null, true);
+                }
             }
         });
 
@@ -158,12 +157,20 @@ export default class Lobby extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
+        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, this.room, {
+            font: '48px ' + Assets.GoogleWebFonts.Roboto,
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        title.anchor.setTo(0.5, 0.5);
+
         this.initBlueTeamPanels();
         this.initRedTeamPanels();
         this.initReadyButton();
         this.initBackButton();
 
-        this.socket.emit('join_lobby', this.client_player_name);
+        this.socket.emit('join_lobby', this.room, this.client_player_name);
     }
 
     /*
@@ -320,10 +327,11 @@ export default class Lobby extends Phaser.State {
      * Goes back to the main menu
      */
     private loadBack(): void {
+        console.log('press back');
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();
-        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
+        this.game.state.start('lobbyselection', true, false, this.socket, this.client_player_name);
     }
 
     /*
@@ -332,8 +340,7 @@ export default class Lobby extends Phaser.State {
      */
     private loadGame(): void {
         this.unsubscribeAll();
-        this.socket.emit('prepare_world');
-        this.game.state.start('game', true, false, this.socket);
+        this.game.state.start('game', true, false, this.socket, this.room);
     }
 
     private unsubscribeAll() {

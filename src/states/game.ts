@@ -61,6 +61,7 @@ export default class Game extends Phaser.State {
 
     // used to render own client's name green
     public client_id: string;
+    private room: string;
 
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -68,7 +69,7 @@ export default class Game extends Phaser.State {
     static readonly BLUE = 0;
     static readonly RED = 1;
 
-    public init(socket: any): void {
+    public init(socket: any, room: string): void {
         // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
@@ -86,6 +87,8 @@ export default class Game extends Phaser.State {
         /* Initialise socket and set up listeners */
         this.socket = socket;
         this.registerSocketEvents(socket);
+
+        this.room = room;
     }
 
     private registerSocketEvents(socket: any): void {
@@ -101,7 +104,8 @@ export default class Game extends Phaser.State {
             this.addPlayer(data);
         });
 
-        socket.on('player_left', (id: number) => {
+        socket.on('player_left', (id: string) => {
+            console.log(id);
             this.removePlayer(id);
         });
 
@@ -116,7 +120,7 @@ export default class Game extends Phaser.State {
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
     }
 
-    private removePlayer(id: number): void {
+    private removePlayer(id: string): void {
         let player = this.players[id];
         if (!player) return;
 
@@ -474,17 +478,22 @@ export default class Game extends Phaser.State {
     }
 
     private quit(): void {
-        this.socket.disconnect();
+        this.socket.emit('game_quit');
+        this.unsubscribeAll();
 
-        // destroy all players before we leave game
-        for (let id in this.players) {
-            this.playerGroup.remove(this.players[id].sprite);
-            this.weaponGroup.remove(this.players[id].weaponGroup);
-            this.players[id].destroy();
-            delete this.players[id];
+        for (let player in this.players) {
+            this.removePlayer(this.players[player].id);
         }
+        this.game.state.start('mainmenu', false, false, this.socket);
+    }
 
-        this.game.state.start('mainmenu');
+    private unsubscribeAll(): void {
+        this.socket.off('loaded');
+        this.socket.off('update');
+        this.socket.off('player_join');
+        this.socket.off('player_left');
+        this.socket.off('capture_flag');
+        this.socket.off('pongcheck');
     }
 
     public create(): void {
@@ -494,7 +503,7 @@ export default class Game extends Phaser.State {
         this.game.input.mouse.capture = true;
         this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
-        this.socket.emit('join_game');
+        this.socket.emit('join_game', this.room);
     }
 
     public preload(): void {

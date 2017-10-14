@@ -9,8 +9,10 @@ const TILE_SIZE = 64;
 
 
 module.exports = class World {
-    constructor(io, width, height, tilesize) {
+    constructor(io, room, lobby, width, height, tilesize) {
         this.io = io;
+        this.room = room;   // room id
+        this.lobby = lobby;     // lobby object
         this.width = width;
         this.height = height;
         this.tilesize = tilesize;
@@ -139,7 +141,7 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
-        socket.emit('loaded', {
+        this.io.sockets.in(this.room).emit('loaded', {
             world: this.world,
             terrain: this.terrain,
             players: playerReps,
@@ -149,16 +151,15 @@ module.exports = class World {
 
     addPlayer(socket) {
         let id = socket.id;
-
-        let name = lobby.getPlayers()[id].name;
-        let team = lobby.getPlayers()[id].team;
+        let name = this.lobby.getPlayers()[id].name;
+        let team = this.lobby.getPlayers()[id].team;
 
         let player = new Player(this, id, name, team, 0, 0);
         this.players[id] = player;
         this.playerCount++;
         player.setSpawnPosition();
 
-        this.io.emit('player_join', player.getRep());
+        this.io.sockets.in(this.room).emit('player_join', player.getRep());
         this.registerSocketEvents(socket, player);
 
         // Start updates
@@ -168,23 +169,23 @@ module.exports = class World {
     }
 
     registerSocketEvents(socket, player) {
-        socket.on('keydown', function(direction) {
+        socket.on('keydown', (direction) => {
             player.keydown(direction);
         });
 
-        socket.on('pingcheck', function(nothing) {
-            socket.emit('pongcheck');
+        socket.on('pingcheck', () => {
+            this.io.sockets.in(this.room).emit('pongcheck');
         });
 
-        socket.on('keyup', function(direction) {
+        socket.on('keyup', (direction) => {
             player.keyup(direction);
         });
 
-        socket.on('attack_hook', function(angle) {
+        socket.on('attack_hook', (angle) => {
             player.useHook(angle);
         });
 
-        socket.on('attack_sword', function(angle) {
+        socket.on('attack_sword', (angle) => {
             player.useSword(angle);
         });
 
@@ -197,14 +198,39 @@ module.exports = class World {
             }
 
             console.log('=====world discon=====');
-            this.removePlayer(player.id)
-            this.io.emit('player_left', player.id);
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
+            this.io.sockets.in(this.room).emit('player_left', player.id);
+        });
+
+        // in case the player clicks on quit game, instead of quitting game
+        socket.on('game_quit', () => {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag !== null) {
+                let flag = this.flags[player.carryingFlag];
+                flag.carryingBy = null;
+                flag.isCaptured = false;
+            }
+
+            console.log('=====world discon=====');
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
+            this.io.sockets.in(this.room).emit('player_left', player.id);
+
+            this.lobby.print();
         });
     }
 
-    removePlayer(id) {
+    removePlayer(socket, id) {
         if (!this.players[id]) return;
 
+        socket.removeAllListeners(['keydown']);
+        socket.removeAllListeners(['pingcheck']);
+        socket.removeAllListeners(['keyup']);
+        socket.removeAllListeners(['attack_hook']);
+        socket.removeAllListeners(['attack_sword']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['game_quit']);
         delete this.players[id];
         this.playerCount--;
 
@@ -213,6 +239,10 @@ module.exports = class World {
             clearInterval(this.timeout);
             this.timeout = null;
         }
+    }
+
+    isEmpty() {
+        return this.playerCount === 0;
     }
 
     update() {
@@ -231,7 +261,7 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
-        this.io.emit('update', {
+        this.io.sockets.in(this.room).emit('update', {
             'players': playerReps,
             'flags':   flagReps
         });
