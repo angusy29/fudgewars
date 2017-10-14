@@ -5,7 +5,7 @@ import ButtonUtil from './buttonutil';
 import LobbyPlayer from './lobbyplayer';
 
 /*
- *  Welcome screen when user arrives at Fudge Wars website
+ * Lobby where player selects their team 
  */
 export default class Lobby extends Phaser.State {
     private background: Phaser.Image;

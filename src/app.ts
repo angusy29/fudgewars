@@ -7,6 +7,7 @@ import * as WebFontLoader from 'webfontloader';
 import Boot from './states/boot';
 import Preloader from './states/preloader';
 import MainMenu from './states/mainmenu';
+import LobbySelection from './states/lobbyselection';
 import Lobby from './states/lobby';
 import LobbyPlayer from './states/lobbyplayer';
 import HowToPlay from './states/howtoplay';

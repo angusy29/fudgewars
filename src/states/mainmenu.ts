@@ -71,7 +71,7 @@ export default class MainMenu extends Phaser.State {
      */
     private initStartGameButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2, this, this.loadGame);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2, this, this.loadLobby);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Play online');
         this.startGame = new CustomButton(button, text);
         button.fixedToCamera = true;
@@ -110,7 +110,7 @@ export default class MainMenu extends Phaser.State {
     /*
      * Callback function for when startGame is pressed
      */
-    private loadGame(): void {
+    private loadLobby(): void {
         this.game.sound.play('click1');
 
         let room = Math.floor(Math.random() * 2);
