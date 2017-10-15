@@ -19,6 +19,14 @@ export default class Game extends Phaser.State {
     private pingTime: number = 0;
     private pingStartTime: number;
 
+    private gameTimeText: Phaser.Text;
+    private gameTime: number;
+
+    private numCaptures: number[];
+
+    private alertText: Phaser.Text;
+    private alertQueue: string[] = [];
+
     public socket: any;
     private map: Phaser.Tilemap;
     private players: any = {};
@@ -62,7 +70,6 @@ export default class Game extends Phaser.State {
     // used to render own client's name green
     public client_id: string;
     private room: string;
-    private numCaptures: number[];
 
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -92,6 +99,14 @@ export default class Game extends Phaser.State {
         this.room = room;
     }
 
+    private getTeamName(team: number): string {
+        if (team === Game.BLUE) {
+            return 'Blue';
+        } else {
+            return 'Red';
+        }
+    }
+
     private registerSocketEvents(socket: any): void {
         socket.on('loaded', (data: any) => {
             this.onLoaded(data);
@@ -110,20 +125,72 @@ export default class Game extends Phaser.State {
             this.removePlayer(id);
         });
 
-        socket.on('capture_flag', (flagId) => {
-            console.log('capture_flag');
-            this.flags[flagId].setFlagDown();
+        socket.on('captured_flag', (team) => {
+            let teamName = this.getTeamName(team);
+            this.addAndPlayAlert(`${teamName} team's flag has been captured!`);
+        });
+
+        socket.on('dropped_flag', (team) => {
+            let teamName = this.getTeamName(team);
+            this.addAndPlayAlert(`${teamName} team's flag has been dropped!`);
+        });
+
+        socket.on('returned_flag', (team) => {
+            let teamName = this.getTeamName(team);
+            this.addAndPlayAlert(`${teamName} team's flag has been returned to their base!`);
         });
 
         socket.on('score', (team) => {
             this.numCaptures[team]++;
-            console.log(this.numCaptures);
+            let teamName = this.getTeamName(team);
+            this.addAndPlayAlert(`${teamName} team has secured the enemy flag back to their base!`);
+        });
+
+        socket.on('game_end', (data) => {
+            for (let id in this.players) {
+                let player = this.players[id];
+                if (!player) continue;
+                player.sprite.animations.stop(null, true);
+            }
+            this.gameTime = 0;
+            this.addAndPlayAlert('Game Over!');
+            // this.showEndScreen(data);
         });
 
         socket.on('pongcheck', () => {
             this.pingTime = Math.round(Date.now() - this.pingStartTime);
         });
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+    }
+
+    private addAndPlayAlert(text: string) {
+        this.alertQueue.push(text);
+        this.playNextAlert();
+    }
+
+    private playNextAlert() {
+        let alertText = this.alertText;
+
+        if (alertText.visible || this.alertQueue.length === 0) {
+            return;
+        }
+
+        alertText.visible = true;
+        let message: string = this.alertQueue.shift();
+
+        alertText.alpha = 0;
+        alertText.text = message;
+
+        let tween1 = this.game.add.tween(alertText).to({ alpha: 1 }, 1000, "Linear", true);
+        tween1.start();
+
+        tween1.onComplete.add(() => {
+            let tween2 = this.game.add.tween(alertText).to({ alpha: 0 }, 2000, "Linear", true, 2000);
+            tween2.onComplete.add(() => {
+                alertText.visible = false;
+                this.playNextAlert();
+            }, this);
+        }, this);
     }
 
     private removePlayer(id: string): void {
@@ -144,6 +211,7 @@ export default class Game extends Phaser.State {
         this.loadTerrain(data.terrain);
         this.loadFlags(data.flags);
         this.numCaptures = data.scores;
+        this.gameTime = data.gameTime;
 
         // Sprite ordering
         this.game.world.sendToBack(this.flagGroup);
@@ -152,6 +220,8 @@ export default class Game extends Phaser.State {
     }
 
     private onTick(data: any): void {
+        this.gameTime = data.time;
+
         for (let update of data.players) {
             let player = this.players[update.id];
             if (!player) continue;
@@ -278,7 +348,7 @@ export default class Game extends Phaser.State {
 
     private loadFlags(flags: any): void {
         for (let f of flags) {
-            let newFlag = new Flag(this.game, f.x, f.y, f.colorIdx, f.captured);
+            let newFlag = new Flag(this, f.x, f.y, f.colorIdx, f.captured);
             this.flags[f.colorIdx] = newFlag;
             this.flagGroup.add(newFlag.sprite);
         }
@@ -322,6 +392,13 @@ export default class Game extends Phaser.State {
         // Ping
         this.pingText.text = `Ping: ${this.pingTime}ms`;
 
+        // Game time
+        let minutes: string = (Math.floor(this.gameTime / 60)).toString();
+        let seconds: string = (Math.round(this.gameTime) % 60).toString();
+        if (parseInt(minutes) < 10)  minutes = '0' + minutes;
+        if (parseInt(seconds) < 10)  seconds = '0' + seconds;
+        this.gameTimeText.text = `${minutes}:${seconds}`;
+
         // Skills
         for (let skillIndex in this.skillList) {
             let skillName: string = this.skillList[skillIndex];
@@ -349,6 +426,27 @@ export default class Game extends Phaser.State {
             strokeThickness: 3,
         });
         this.pingText.fixedToCamera = true;
+
+        // Game time
+        this.gameTimeText = this.game.add.text(this.game.width / 2, 0, '', {
+            font: '14px Arial',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.gameTimeText.anchor.setTo(0.5, 0);
+        this.gameTimeText.fixedToCamera = true;
+
+        // Alert text
+        this.alertText = this.game.add.text(this.game.width / 2, this.game.height / 6, '', {
+            font: '26px Arial',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.alertText.anchor.setTo(0.5, 0);
+        this.alertText.fixedToCamera = true;
+        this.alertText.visible = false;
 
         // Skills
         let width: number = 45;
@@ -499,9 +597,11 @@ export default class Game extends Phaser.State {
         this.socket.off('update');
         this.socket.off('player_join');
         this.socket.off('player_left');
-        this.socket.off('capture_flag');
         this.socket.off('pongcheck');
         this.socket.off('score');
+        this.socket.off('captured_flag');
+        this.socket.off('dropped_flag');
+        this.socket.off('game_end');
     }
 
     public create(): void {

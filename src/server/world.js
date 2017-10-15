@@ -10,6 +10,8 @@ const TILE_SIZE = 64;
 const BLUE = 0;
 const RED = 1;
 
+const GAME_LENGTH = 300; // Seconds
+
 module.exports = class World {
     constructor(io, room, lobby, width, height, tilesize) {
         this.io = io;
@@ -26,6 +28,7 @@ module.exports = class World {
         this.playerCount = 0;
         this.timeout = null;
         this.numCaptures = [0, 0];
+        this.gameTime = GAME_LENGTH;
 
         let data = require(maps + '/map.test.json');
 
@@ -155,6 +158,7 @@ module.exports = class World {
             players: playerReps,
             flags: flagReps,
             scores: this.numCaptures,
+            gameTime: this.gameTime,
         });
     }
 
@@ -237,8 +241,7 @@ module.exports = class World {
 
         // Stop updates if no more players
         if (this.playerCount === 0) {
-            clearInterval(this.timeout);
-            this.timeout = null;
+            this.stopGame();
         }
     }
 
@@ -246,8 +249,31 @@ module.exports = class World {
         return this.playerCount === 0;
     }
 
+    // All players left
+    stopGame() {
+        if (this.timeout) {
+            clearInterval(this.timeout);
+            this.timeout = null;
+        }
+    }
+
+    // End of game reached
+    finishGame() {
+        this.stopGame();
+        this.io.sockets.in(this.room).emit('game_end', {
+            scores: this.numCaptures,
+        });
+    }
+
     update() {
         let seconds = 30/1000;
+
+        this.gameTime -= seconds;
+        if (this.gameTime <= 0) {
+            // Game over
+            this.finishGame();
+            return;
+        }
 
         let playerReps = [];
         for (let id in this.players) {
@@ -263,6 +289,7 @@ module.exports = class World {
         }
 
         this.io.sockets.in(this.room).emit('update', {
+            time: this.gameTime,
             players: playerReps,
             flags:   flagReps
         });

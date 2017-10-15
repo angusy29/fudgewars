@@ -5,6 +5,7 @@ const FLAG_PLAYER_COLLISION_THRESHOLD = 38;
 const FLAG_CAPTURED_POS_X_OFFSET = 15;
 const FLAG_CAPTURED_POS_Y_OFFSET = 22;
 const PLAYER_ANCHOR_Y_OFFSET = 20;
+const RETURN_TIME = 45; // How long after being dropped should the flag stay before returning to base
 
 module.exports = class Flag {
     constructor(world, startX, startY, endX, endY, colorIdx) {
@@ -17,6 +18,8 @@ module.exports = class Flag {
         this.endY = endY;
         this.colorIdx = colorIdx;
         this.carriedBy = null;
+        this.isAtBase = true;
+        this.returnTime = RETURN_TIME;
     }
 
     updatePos(x, y) {
@@ -32,27 +35,44 @@ module.exports = class Flag {
     }
 
     capturedBy(player) {
+        this.isAtBase = false;
+        this.returnTime = RETURN_TIME;
         this.carriedBy = player;
         this.setPos(this.carriedBy.x, this.carriedBy.y+PLAYER_ANCHOR_Y_OFFSET);
         player.captureFlag(this);
+        this.world.io.sockets.in(this.world.room).emit("captured_flag", this.colorIdx);
     }
 
     drop() {
         this.setPos(this.carriedBy.x, this.carriedBy.y+PLAYER_ANCHOR_Y_OFFSET);
         this.carriedBy.dropFlag();
         this.carriedBy = null;
+        this.world.io.sockets.in(this.world.room).emit("dropped_flag", this.colorIdx);
     }
 
     score() {
         this.world.score(this.carriedBy.team);
-
         this.setPos(this.startX, this.startY);
         this.carriedBy.dropFlag();
         this.carriedBy = null;
+        this.isAtBase = true;
+    }
+
+    returnToBase() {
+        this.isAtBase = true;
+        this.setPos(this.startX, this.startY);
+        this.world.io.sockets.in(this.world.room).emit("returned_flag", this.colorIdx);
     }
 
     update(seconds) {
         if (this.carriedBy === null) {
+            if (!this.isAtBase) {
+                this.returnTime -= seconds;
+                if (this.returnTime <= 0) {
+                    this.returnToBase();
+                }
+            }
+
             for (let id in this.world.players) {
                 let player = this.world.players[id];
 
@@ -89,6 +109,8 @@ module.exports = class Flag {
             x: this.x,
             y: this.y,
             carriedBy: this.carriedBy !== null ? this.carriedBy.id : null,
+            isAtBase: this.isAtBase,
+            returnTime: this.returnTime,
         }
     }
 }
