@@ -24,6 +24,10 @@ export default class Game extends Phaser.State {
 
     private numCaptures: number[];
 
+    private scoreOverlay: Phaser.Image;
+    private blueScoreText: Phaser.Text;
+    private redScoreText: Phaser.Text;
+
     private alertText: Phaser.Text;
     private alertQueue: string[] = [];
 
@@ -33,12 +37,15 @@ export default class Game extends Phaser.State {
     private map: Phaser.Tilemap;
     private players: any = {};
     private flags: Flag[] = [];
+
     private flagGroup: Phaser.Group = null;
-    private uiGroup: Phaser.Group = null;
+    private skillGroup: Phaser.Group = null;
     private playerGroup: Phaser.Group = null;
     private weaponGroup: Phaser.Group = null;
     private healthBarGroup: Phaser.Group = null;
     private particleGroup: Phaser.Group = null;
+    private uiGroup: Phaser.Group = null;
+
     private isDown: any = {};
     private nextFrame = 0;
     private mapLayer: Phaser.TilemapLayer;
@@ -48,14 +55,14 @@ export default class Game extends Phaser.State {
     public skills: any = {
         hook: {
             name: 'hook',
-            img: 'attack_hook',
+            img: Assets.Images.ImagesAttackHook.getName(),
             button: 'LMB',
             cooldown: 0,
             ui: {},
         },
         sword: {
             name: 'sword',
-            img: 'attack_sword',
+            img: Assets.Images.ImagesAttackSword.getName(),
             button: 'RMB',
             cooldown: 0,
             ui: {},
@@ -82,12 +89,13 @@ export default class Game extends Phaser.State {
     public init(socket: any, room: string): void {
         // this.game.stage.disableVisibilityChange = true;
         this.flagGroup = this.game.add.group();
-        this.uiGroup = this.game.add.group();
+        this.skillGroup = this.game.add.group();
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
         this.healthBarGroup = this.game.add.group();
         this.particleGroup = this.game.add.group();
         this.soundGroup = this.game.add.group();
+        this.uiGroup = this.game.add.group();
         this.client_id = socket.id;
 
         /* Initialise menu stuff */
@@ -243,6 +251,7 @@ export default class Game extends Phaser.State {
         this.game.world.bringToTop(this.weaponGroup);
         this.game.world.bringToTop(this.particleGroup);
         this.game.world.bringToTop(this.healthBarGroup);
+        this.game.world.bringToTop(this.skillGroup);
         this.game.world.bringToTop(this.uiGroup);
         this.game.world.bringToTop(this.menuGroup);
         this.game.world.bringToTop(this.soundGroup);
@@ -406,6 +415,10 @@ export default class Game extends Phaser.State {
         if (parseInt(seconds) < 10)  seconds = '0' + seconds;
         this.gameTimeText.text = `${minutes}:${seconds}`;
 
+        // Score text
+        this.blueScoreText.text = this.numCaptures[Game.BLUE].toString();
+        this.redScoreText.text = this.numCaptures[Game.RED].toString();
+
         // Skills
         for (let skillIndex in this.skillList) {
             let skillName: string = this.skillList[skillIndex];
@@ -432,17 +445,6 @@ export default class Game extends Phaser.State {
             stroke: '#000000',
             strokeThickness: 3,
         });
-        this.pingText.fixedToCamera = true;
-
-        // Game time
-        this.gameTimeText = this.game.add.text(this.game.width / 2, 0, '', {
-            font: '14px Arial',
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
-        this.gameTimeText.anchor.setTo(0.5, 0);
-        this.gameTimeText.fixedToCamera = true;
 
         // Alert text
         this.alertText = this.game.add.text(this.game.width / 2, this.game.height / 6, '', {
@@ -455,8 +457,40 @@ export default class Game extends Phaser.State {
             align: 'center',
         });
         this.alertText.anchor.setTo(0.5, 0);
-        this.alertText.fixedToCamera = true;
         this.alertText.visible = false;
+
+        // Game time
+        this.gameTimeText = this.game.add.text(this.game.width / 2, 0, '', {
+            font: '12px Arial',
+            fill: '#333333',
+        });
+        this.gameTimeText.anchor.setTo(0.5, 0);
+
+        // Score text
+        this.blueScoreText = this.game.add.text(this.game.width / 2 + 47, 3, '', {
+            font: 'bold 26px Arial',
+            fill: '#0068bd',
+        });
+        this.blueScoreText.anchor.setTo(0.5, 0);
+
+        this.redScoreText = this.game.add.text(this.game.width / 2 - 47, 3, '', {
+            font: 'bold 26px Arial',
+            fill: '#bd0000',
+        });
+        this.redScoreText.anchor.setTo(0.5, 0);
+
+        // Score overlay
+        this.scoreOverlay = this.game.add.image(this.game.width / 2, 0, Assets.Images.ImagesScoreOverlay.getName());
+        this.scoreOverlay.anchor.setTo(0.5, 0);
+        this.scoreOverlay.scale.setTo(0.22);
+
+        this.uiGroup.fixedToCamera = true;
+        this.uiGroup.add(this.scoreOverlay);
+        this.uiGroup.add(this.redScoreText);
+        this.uiGroup.add(this.blueScoreText);
+        this.uiGroup.add(this.gameTimeText);
+        this.uiGroup.add(this.alertText);
+        this.uiGroup.add(this.pingText);
 
         // Skills
         let width: number = 45;
@@ -474,7 +508,7 @@ export default class Game extends Phaser.State {
             skillImg.height = height;
             skillImg.anchor.setTo(0.5);
 
-            let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, 'skill_cooldown_overlay');
+            let overlayImg: Phaser.Image = this.game.add.image(centerX, centerY + height / 2, Assets.Images.ImagesSkillCooldownOverlay.getName());
             overlayImg.width = width;
             overlayImg.height = height;
             overlayImg.alpha = 0.5;
@@ -504,14 +538,14 @@ export default class Game extends Phaser.State {
                 buttonText: buttonText,
             };
 
-            this.uiGroup.add(skillImg);
-            this.uiGroup.add(overlayImg);
-            this.uiGroup.add(text);
-            this.uiGroup.add(buttonText);
+            this.skillGroup.add(skillImg);
+            this.skillGroup.add(overlayImg);
+            this.skillGroup.add(text);
+            this.skillGroup.add(buttonText);
         }
 
-        this.uiGroup.fixedToCamera = true;
-        this.uiGroup.cameraOffset = new Phaser.Point(this.game.width / 2 - this.uiGroup.width / 2 + width / 2,
+        this.skillGroup.fixedToCamera = true;
+        this.skillGroup.cameraOffset = new Phaser.Point(this.game.width / 2 - this.skillGroup.width / 2 + width / 2,
                                                      this.game.height - (height / 2));
     }
 
