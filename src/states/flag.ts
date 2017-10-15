@@ -12,12 +12,12 @@ export default class Flag {
             Atlases.SpritesheetsItemsSpritesheet.Frames.FlagBlue2
         ],
         [
-            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen,
-            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen2,
-        ],
-        [
             Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRed,
             Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRed2,
+        ],
+        [
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen,
+            Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreen2,
         ],
         [
             Atlases.SpritesheetsItemsSpritesheet.Frames.FlagYellow,
@@ -27,8 +27,8 @@ export default class Flag {
 
     private static flagDownColors: any = [
         Atlases.SpritesheetsItemsSpritesheet.Frames.FlagBlueHanging,
-        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreenHanging,
         Atlases.SpritesheetsItemsSpritesheet.Frames.FlagRedHanging,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.FlagGreenHanging,
         Atlases.SpritesheetsItemsSpritesheet.Frames.FlagYellowHanging,
     ];
 
@@ -52,7 +52,7 @@ export default class Flag {
     public update(update: any): void {
         this.sprite.x = update.x;
         this.sprite.y = update.y;
-        if (update.isCaptured) {
+        if (update.carriedBy) {
             this.setFlagDown();
         } else {
             this.setFlagUp();

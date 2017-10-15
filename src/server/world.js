@@ -7,6 +7,8 @@ let utils = require('./utils');
 
 const TILE_SIZE = 64;
 
+const BLUE = 0;
+const RED = 1;
 
 module.exports = class World {
     constructor(io, room, lobby, width, height, tilesize) {
@@ -23,10 +25,7 @@ module.exports = class World {
         this.players = {};
         this.playerCount = 0;
         this.timeout = null;
-        this.basePos = {
-            y: 2 * TILE_SIZE + TILE_SIZE*0.32,
-            x: 8 * TILE_SIZE + TILE_SIZE*0.4
-        };
+        this.numCaptures = [0, 0];
 
         let data = require(maps + '/map.test.json');
 
@@ -58,11 +57,20 @@ module.exports = class World {
         let flags = [];
         for (let i = 0; i < data.length; i++) {
             let f = data[i];
-            let flag = new Flag(this, f.x * tilesize, f.y * tilesize, i);
+            let startX = f.startX * tilesize;
+            let startY = f.startY * tilesize;
+            let endX = f.endX * tilesize;
+            let endY = f.endY * tilesize;
+            let flag = new Flag(this, startX, startY, endX, endY, i);
             flags.push(flag);
         }
 
         return flags;
+    }
+
+    score(team) {
+        this.numCaptures[team]++;
+        this.io.sockets.in(this.room).emit('score', team);
     }
 
     /**
@@ -146,6 +154,7 @@ module.exports = class World {
             terrain: this.terrain,
             players: playerReps,
             flags: flagReps,
+            scores: this.numCaptures,
         });
     }
 
@@ -190,35 +199,27 @@ module.exports = class World {
         });
 
         socket.on('disconnect', () => {
-            // release the flag that is being carry by the player
-            if (player.carryingFlag !== null) {
-                let flag = this.flags[player.carryingFlag];
-                flag.carryingBy = null;
-                flag.isCaptured = false;
-            }
-
-            console.log('=====world discon=====');
-            this.removePlayer(socket, player.id);
-            this.lobby.removePlayer(socket, player.id);
-            this.io.sockets.in(this.room).emit('player_left', player.id);
+            this.disconnectPlayer(socket, player);
         });
 
         // in case the player clicks on quit game, instead of quitting game
         socket.on('game_quit', () => {
-            // release the flag that is being carry by the player
-            if (player.carryingFlag !== null) {
-                let flag = this.flags[player.carryingFlag];
-                flag.carryingBy = null;
-                flag.isCaptured = false;
-            }
-
-            console.log('=====world discon=====');
-            this.removePlayer(socket, player.id);
-            this.lobby.removePlayer(socket, player.id);
-            this.io.sockets.in(this.room).emit('player_left', player.id);
-
-            this.lobby.print();
+            this.disconnectPlayer(socket, player);
         });
+    }
+
+    disconnectPlayer(socket, player) {
+        // release the flag that is being carry by the player
+        if (player.carryingFlag !== null) {
+            player.carryingFlag.drop();
+        }
+
+        console.log('=====world discon=====');
+        this.removePlayer(socket, player.id);
+        this.lobby.removePlayer(socket, player.id);
+        this.io.sockets.in(this.room).emit('player_left', player.id);
+
+        // this.lobby.print();
     }
 
     removePlayer(socket, id) {
@@ -262,9 +263,8 @@ module.exports = class World {
         }
 
         this.io.sockets.in(this.room).emit('update', {
-            'players': playerReps,
-            'flags':   flagReps
+            players: playerReps,
+            flags:   flagReps
         });
     }
-
 }

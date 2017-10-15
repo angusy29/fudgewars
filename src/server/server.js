@@ -86,7 +86,7 @@ io.on('connection', function(socket) {
             io.sockets.in(room).emit('player_in');
             console.log('let player in');
         }
-        lobby.print();
+        // lobby.print();
     });
 
     socket.on('join_game', function(room) {

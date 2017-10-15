@@ -58,6 +58,14 @@ module.exports = class Player extends Collidable {
         };
     }
 
+    captureFlag(flag) {
+        this.carryingFlag = flag;
+    }
+
+    dropFlag() {
+        this.carryingFlag = null;
+    }
+
     setSpawnPosition() {
         // Find spawn point that isnt colliding with anything
         let spawnPointCollides = false;
@@ -96,6 +104,7 @@ module.exports = class Player extends Collidable {
         if (!this.alive) {
             this.respawnTime -= delta;
             if (this.respawnTime <= 0) {
+                this.setSpawnPosition();
                 this.respawnTime = 0;
                 this.setHealth(Player.MAX_HEALTH);
                 this.world.io.emit('respawn', this.id);

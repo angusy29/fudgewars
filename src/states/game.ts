@@ -62,6 +62,7 @@ export default class Game extends Phaser.State {
     // used to render own client's name green
     public client_id: string;
     private room: string;
+    private numCaptures: number[];
 
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
@@ -114,6 +115,11 @@ export default class Game extends Phaser.State {
             this.flags[flagId].setFlagDown();
         });
 
+        socket.on('score', (team) => {
+            this.numCaptures[team]++;
+            console.log(this.numCaptures);
+        });
+
         socket.on('pongcheck', () => {
             this.pingTime = Math.round(Date.now() - this.pingStartTime);
         });
@@ -137,6 +143,7 @@ export default class Game extends Phaser.State {
         this.loadWorld(data.world);
         this.loadTerrain(data.terrain);
         this.loadFlags(data.flags);
+        this.numCaptures = data.scores;
 
         // Sprite ordering
         this.game.world.sendToBack(this.flagGroup);
@@ -494,6 +501,7 @@ export default class Game extends Phaser.State {
         this.socket.off('player_left');
         this.socket.off('capture_flag');
         this.socket.off('pongcheck');
+        this.socket.off('score');
     }
 
     public create(): void {

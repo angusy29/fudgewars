@@ -7,17 +7,20 @@ const FLAG_CAPTURED_POS_Y_OFFSET = 22;
 const PLAYER_ANCHOR_Y_OFFSET = 20;
 
 module.exports = class Flag {
-    constructor(world, x, y, colorIdx) {
+    constructor(world, startX, startY, endX, endY, colorIdx) {
         this.world = world;
-        this.x = x;
-        this.y = y;
+        this.x = startX;
+        this.y = startY;
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
         this.colorIdx = colorIdx;
-        this.carryingBy = null;
-        this.isCaptured = false;
+        this.carriedBy = null;
     }
 
     updatePos(x, y) {
-        if (this.carryingBy != null) {
+        if (this.carriedBy !== null) {
             this.setPos(x + FLAG_CAPTURED_POS_X_OFFSET,
                         y + FLAG_CAPTURED_POS_Y_OFFSET);
         }
@@ -28,37 +31,55 @@ module.exports = class Flag {
         this.y = y;
     }
 
-    update(seconds) {
-        for (let id in this.world.players) {
-            let player = this.world.players[id];
+    capturedBy(player) {
+        this.carriedBy = player;
+        this.setPos(this.carriedBy.x, this.carriedBy.y+PLAYER_ANCHOR_Y_OFFSET);
+        player.captureFlag(this);
+    }
 
-            // only check if the flag is not captured by any player
-            // and the player is not carrying any flag
-            if (this.carryingBy === null && !this.isCaptured && player.carryingFlag === null) {
+    drop() {
+        this.setPos(this.carriedBy.x, this.carriedBy.y+PLAYER_ANCHOR_Y_OFFSET);
+        this.carriedBy.dropFlag();
+        this.carriedBy = null;
+    }
+
+    score() {
+        this.world.score(this.carriedBy.team);
+
+        this.setPos(this.startX, this.startY);
+        this.carriedBy.dropFlag();
+        this.carriedBy = null;
+    }
+
+    update(seconds) {
+        if (this.carriedBy === null) {
+            for (let id in this.world.players) {
+                let player = this.world.players[id];
+
+                // Skip players who are on the same team as the flag
+                if (player.team === this.colorIdx) continue;
+                if (!player.alive) continue;
+                if (player.carryingFlag) continue;
+
                 // check if the player is close enough to the flag
                 if (utils.distance(player.x, player.y, this.x, this.y) < FLAG_PLAYER_COLLISION_THRESHOLD) {
                     // if the player is close enough with the flag
                     // they can capture(carry) the flag
-                    this.carryingBy = player.id;
-                    this.isCaptured = true;
-                    player.carryingFlag = this.colorIdx;
+                    this.capturedBy(player);
+                    break;
                 }
-            } else if (this.carryingBy !== null && this.isCaptured &&
-                (player.x >= this.world.basePos.x-BASE_PLAYER_COLLISION_THRESHOLD &&
-                 player.x <= this.world.basePos.x+BASE_PLAYER_COLLISION_THRESHOLD &&
-                 player.y >= this.world.basePos.y-BASE_PLAYER_COLLISION_THRESHOLD &&
-                 player.y <= this.world.basePos.y+BASE_PLAYER_COLLISION_THRESHOLD)) {
-                // flag is with in the basePos area
-
-                this.setPos(player.x, player.y+PLAYER_ANCHOR_Y_OFFSET);
-                this.carryingBy = null;
-                player.carryingFlag = null;
             }
-
-            if (this.isCaptured && this.carryingBy === player.id) {
-                // sync the position of the flag the player if captured
-                this.updatePos(player.x, player.y);
-            }
+        } else if (!this.carriedBy.alive) {
+            this.drop();
+        } else if (this.carriedBy.x >= this.endX-BASE_PLAYER_COLLISION_THRESHOLD &&
+            this.carriedBy.x <= this.endX+BASE_PLAYER_COLLISION_THRESHOLD &&
+            this.carriedBy.y >= this.endY-BASE_PLAYER_COLLISION_THRESHOLD &&
+            this.carriedBy.y <= this.endY+BASE_PLAYER_COLLISION_THRESHOLD) {
+            // flag is with in the basePos area
+            this.score();
+        } else {
+            // sync the position of the flag the player if captured
+            this.updatePos(this.carriedBy.x, this.carriedBy.y);
         }
     }
 
@@ -67,8 +88,7 @@ module.exports = class Flag {
             colorIdx: this.colorIdx,
             x: this.x,
             y: this.y,
-            isCaptured: (this.isCaptured && this.carryingBy !== null),
-            carryingBy: this.carryingBy,
+            carriedBy: this.carriedBy !== null ? this.carriedBy.id : null,
         }
     }
 }
