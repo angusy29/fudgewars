@@ -16,7 +16,7 @@ const COOLDOWNS = {
  */
 export default class Game extends Phaser.State {
     private pingText: Phaser.Text;
-    private pingTime: number = 0;
+    private pingTime: number;
     private pingStartTime: number;
 
     private gameTimeText: Phaser.Text;
@@ -33,45 +33,30 @@ export default class Game extends Phaser.State {
 
     public socket: any;
     public me: Player;
-    private gameOver: boolean = false;
+    private gameOver: boolean;
     private map: Phaser.Tilemap;
-    private players: any = {};
-    private flags: Flag[] = [];
+    private players: any;
+    private flags: Flag[];
 
-    private flagGroup: Phaser.Group = null;
-    private skillGroup: Phaser.Group = null;
-    private playerGroup: Phaser.Group = null;
-    private weaponGroup: Phaser.Group = null;
-    private healthBarGroup: Phaser.Group = null;
-    private particleGroup: Phaser.Group = null;
-    private uiGroup: Phaser.Group = null;
+    private flagGroup: Phaser.Group;
+    private skillGroup: Phaser.Group;
+    private playerGroup: Phaser.Group;
+    private weaponGroup: Phaser.Group;
+    private healthBarGroup: Phaser.Group;
+    private particleGroup: Phaser.Group;
+    private uiGroup: Phaser.Group;
 
-    private isDown: any = {};
-    private nextFrame = 0;
+    private isDown: any;
+    private nextFrame;
     private mapLayer: Phaser.TilemapLayer;
     private terrainLayer: Phaser.TilemapLayer;
 
-    private skillList: string[] = ['hook', 'sword'];
-    public skills: any = {
-        hook: {
-            name: 'hook',
-            img: Assets.Images.ImagesAttackHook.getName(),
-            button: 'LMB',
-            cooldown: 0,
-            ui: {},
-        },
-        sword: {
-            name: 'sword',
-            img: Assets.Images.ImagesAttackSword.getName(),
-            button: 'RMB',
-            cooldown: 0,
-            ui: {},
-        },
-    };
+    private readonly skillList: string[] = ['hook', 'sword'];
+    public skills: any;
 
     /* Escape menu */
-    private isShowMenu: boolean = false;    // current state of showing or hiding menu
-    private menuGroup: Phaser.Group = null;
+    private isShowMenu: boolean;    // current state of showing or hiding menu
+    private menuGroup: Phaser.Group;
     private buttonUtil: ButtonUtil;     // object used to create buttons
     private soundGroup: Phaser.Group;
     private quitGame: CustomButton;
@@ -86,8 +71,42 @@ export default class Game extends Phaser.State {
     static readonly BLUE = 0;
     static readonly RED = 1;
 
-    public init(socket: any, room: string): void {
-        // this.game.stage.disableVisibilityChange = true;
+    public create(): void {
+        // on down keypress, call onDown function
+        // on up keypress, call the onUp function
+        this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
+        this.game.input.mouse.capture = true;
+        this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
+        this.gameOver = false;
+        this.pingTime = 0;
+        this.alertQueue = [];
+        this.players = {};
+        this.flags = [];
+        this.isDown = {};
+        this.nextFrame = 0;
+        this.isShowMenu = false;
+
+        this.skills = {
+            hook: {
+                name: 'hook',
+                img: Assets.Images.ImagesAttackHook.getName(),
+                button: 'LMB',
+                cooldown: 0,
+                ui: {},
+            },
+            sword: {
+                name: 'sword',
+                img: Assets.Images.ImagesAttackSword.getName(),
+                button: 'RMB',
+                cooldown: 0,
+                ui: {},
+            },
+        };
+
+        /* Initialise menu stuff */
+        this.buttonUtil = new ButtonUtil(this.game);
+
         this.flagGroup = this.game.add.group();
         this.skillGroup = this.game.add.group();
         this.playerGroup = this.game.add.group();
@@ -96,11 +115,14 @@ export default class Game extends Phaser.State {
         this.particleGroup = this.game.add.group();
         this.soundGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
-        this.client_id = socket.id;
-
-        /* Initialise menu stuff */
-        this.buttonUtil = new ButtonUtil(this.game);
         this.initMenu();
+
+        this.socket.emit('join_game', this.room);
+    }
+
+    public init(socket: any, room: string): void {
+        // this.game.stage.disableVisibilityChange = true;
+        this.client_id = socket.id;
 
         /* Initialise socket and set up listeners */
         this.socket = socket;
@@ -382,18 +404,6 @@ export default class Game extends Phaser.State {
         }
     }
 
-    // public create(): void {
-    //     // this is the tilesheet
-    //     this.map = this.game.add.tilemap('world');
-    //     this.map.addTilesetImage('tilesheet', 'world.[64,64]');
-
-    //     this.game.cache.addTilemap('terrain', null, data, Phaser.Tilemap.CSV);
-    //     let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
-    //     terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
-
-    //     this.terrainLayer = terrainMap.createLayer(0);
-    // }
-
     private loadPlayers(players: any): void {
         for (let player of players) {
             this.addPlayer(player);
@@ -645,7 +655,7 @@ export default class Game extends Phaser.State {
         for (let player in this.players) {
             this.removePlayer(this.players[player].id);
         }
-        this.game.state.start('mainmenu', false, false, this.socket);
+        this.game.state.start('mainmenu', true, false, this.socket);
     }
 
     private unsubscribeAll(): void {
@@ -658,16 +668,6 @@ export default class Game extends Phaser.State {
         this.socket.off('captured_flag');
         this.socket.off('dropped_flag');
         this.socket.off('game_end');
-    }
-
-    public create(): void {
-        // on down keypress, call onDown function
-        // on up keypress, call the onUp function
-        this.input.keyboard.addCallbacks(this, this.onDown, this.onUp);
-        this.game.input.mouse.capture = true;
-        this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
-
-        this.socket.emit('join_game', this.room);
     }
 
     public preload(): void {
