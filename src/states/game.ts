@@ -29,6 +29,7 @@ export default class Game extends Phaser.State {
 
     public socket: any;
     public me: Player;
+    private gameOver: boolean = false;
     private map: Phaser.Tilemap;
     private players: any = {};
     private flags: Flag[] = [];
@@ -148,6 +149,7 @@ export default class Game extends Phaser.State {
         });
 
         socket.on('game_end', (data) => {
+            this.gameOver = true;
             for (let id in this.players) {
                 let player = this.players[id];
                 if (!player) continue;
@@ -155,7 +157,8 @@ export default class Game extends Phaser.State {
             }
             this.gameTime = 0;
             this.addAndPlayAlert('Game Over!');
-            // this.showEndScreen(data);
+            // TODO replace menu with proper game over menu
+            this.showMenu(true);
         });
 
         socket.on('pongcheck', () => {
@@ -304,10 +307,12 @@ export default class Game extends Phaser.State {
                 this.socket.emit('keydown', 'right');
                 break;
             case 27:    // escape
-                if (this.isShowMenu === false) {
-                    this.showMenu(true);
-                } else {
-                    this.showMenu(false);
+                if (!this.gameOver) {
+                    if (this.isShowMenu === false) {
+                        this.showMenu(true);
+                    } else {
+                        this.showMenu(false);
+                    }
                 }
                 break;
             default:
