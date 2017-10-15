@@ -29,7 +29,7 @@ export default class Game extends Phaser.State {
     private redScoreText: Phaser.Text;
 
     private alertText: Phaser.Text;
-    private alertQueue: string[] = [];
+    private alertQueue: string[];
 
     public socket: any;
     public me: Player;
