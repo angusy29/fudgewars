@@ -164,9 +164,21 @@ export default class Game extends Phaser.State {
                 player.sprite.animations.stop(null, true);
             }
             this.gameTime = 0;
-            this.addAndPlayAlert('Game Over!');
+
+            let endText;
+            if (this.numCaptures[Game.BLUE] === this.numCaptures[Game.RED]) {
+                endText = 'DRAW!';
+            } else if (this.numCaptures[Game.BLUE] > this.numCaptures[Game.RED]) {
+                endText = 'BLUE WINS!';
+            } else {
+                endText = 'RED WINS!';
+            }
+            this.addAndPlayAlert(endText);
+
             // TODO replace menu with proper game over menu
-            this.showMenu(true);
+            this.game.time.events.add(2000, () => {
+                this.quitGame.setVisible();
+            });
         });
 
         socket.on('pongcheck', () => {
