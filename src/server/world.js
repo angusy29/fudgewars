@@ -141,7 +141,7 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
-        this.io.sockets.in(this.room).emit('loaded', {
+        socket.emit('loaded', {
             world: this.world,
             terrain: this.terrain,
             players: playerReps,
@@ -174,7 +174,7 @@ module.exports = class World {
         });
 
         socket.on('pingcheck', () => {
-            this.io.sockets.in(this.room).emit('pongcheck');
+            socket.emit('pongcheck');
         });
 
         socket.on('keyup', (direction) => {
