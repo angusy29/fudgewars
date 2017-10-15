@@ -445,6 +445,9 @@ export default class Game extends Phaser.State {
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
+            wordWrap: true,
+            wordWrapWidth: this.game.width,
+            align: 'center',
         });
         this.alertText.anchor.setTo(0.5, 0);
         this.alertText.fixedToCamera = true;
