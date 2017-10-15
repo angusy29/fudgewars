@@ -24,6 +24,7 @@ export default class LobbySelection extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
+    private numLobbyText: Phaser.Text;      // displays the number of lobbies in the game
     private noLobbyText: Phaser.Text;       // displays when there are no lobbies
     private lobbyFullText: Phaser.Text;     // displays if lobby is full
 
@@ -99,13 +100,14 @@ export default class LobbySelection extends Phaser.State {
 
         this.socket.on('lobby_selection_update', (allRooms: any) => {
             listView.removeAll();
-            if (Object.keys(allRooms).length === 0) {
+
+            let numLobbies: number = Object.keys(allRooms).length;
+            if (numLobbies === 0) {
                 this.noLobbyText.visible = true;
                 return;
             }
 
             this.noLobbyText.visible = false;
-
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
                 let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
@@ -150,6 +152,15 @@ export default class LobbySelection extends Phaser.State {
 
                 listView.add(img);
             }
+
+            if (this.numLobbyText) delete this.numLobbyText;
+            let numText = numLobbies === 1 ? numLobbies + ' lobby' : numLobbies + ' lobbies';
+            this.numLobbyText = this.game.add.text(bounds.x, bounds.y - 40, numText, {
+                font: '24px ' + Assets.GoogleWebFonts.Roboto,
+                fill: '#fff',
+                stroke: '#000',
+                strokeThickness: 3
+            });
         });
     }
 
