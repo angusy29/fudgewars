@@ -97,6 +97,7 @@ module.exports = class Hook extends Collidable {
                                     this.hookedPlayer = other;
                                 }
                                 this.returning = true;
+                                break;
                             }
                         }
                     }
