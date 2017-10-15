@@ -70,8 +70,10 @@ module.exports = class Player extends Collidable {
         // Find spawn point that isnt colliding with anything
         let spawnPointCollides = false;
         do {
-            let x = utils.randomInt(this.world.left, this.world.right);
-            let y = utils.randomInt(this.world.top, this.world.bottom);
+            let startX = this.world.flags[this.team].startX;
+            let startY = this.world.flags[this.team].startY;
+            let x = utils.randomInt(startX - 200, startX + 200);
+            let y = utils.randomInt(startY - 200, startY + 200);
             this.x = x;
             this.y = y;
             spawnPointCollides = this.world.collides(this.id);
