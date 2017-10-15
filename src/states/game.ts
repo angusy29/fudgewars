@@ -28,6 +28,7 @@ export default class Game extends Phaser.State {
     private alertQueue: string[] = [];
 
     public socket: any;
+    public me: Player;
     private map: Phaser.Tilemap;
     private players: any = {};
     private flags: Flag[] = [];
@@ -181,11 +182,11 @@ export default class Game extends Phaser.State {
         alertText.alpha = 0;
         alertText.text = message;
 
-        let tween1 = this.game.add.tween(alertText).to({ alpha: 1 }, 1000, "Linear", true);
+        let tween1 = this.game.add.tween(alertText).to({ alpha: 1 }, 1000, 'Linear', true);
         tween1.start();
 
         tween1.onComplete.add(() => {
-            let tween2 = this.game.add.tween(alertText).to({ alpha: 0 }, 2000, "Linear", true, 2000);
+            let tween2 = this.game.add.tween(alertText).to({ alpha: 0 }, 2000, 'Linear', true, 2000);
             tween2.onComplete.add(() => {
                 alertText.visible = false;
                 this.playNextAlert();
@@ -270,6 +271,7 @@ export default class Game extends Phaser.State {
 
         // if this is the client's player, set the colour to be limegreen
         if (player.id === this.client_id) {
+            this.me = player;
             player.nameText.addColor('#32CD32', 0);
             this.world.camera.follow(player.sprite);
         }
