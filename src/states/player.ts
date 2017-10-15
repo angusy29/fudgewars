@@ -72,23 +72,23 @@ export default class Player {
         this.setHealth(update.health);
 
         // walk particles
-        if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
-            this.trailEmitter.on = true;
-            this.trailEmitter.x = update.x;
-            this.trailEmitter.y = update.y + this.sprite.height / 2;
-            this.trailEmitter.forEach((particle) => {
-                if (!particle.exists) {
-                    if (Math.random() > 0.2) {
-                        particle.alpha = 1;
-                    } else {
-                        particle.kill();
-                    }
-                }
-                this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
-            }, this);
-        } else {
-            this.trailEmitter.on = false;
-        }
+        // if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
+        //     this.trailEmitter.on = true;
+        //     this.trailEmitter.x = update.x;
+        //     this.trailEmitter.y = update.y + this.sprite.height / 2;
+        //     this.trailEmitter.forEach((particle) => {
+        //         if (!particle.exists) {
+        //             if (Math.random() > 0.2) {
+        //                 particle.alpha = 1;
+        //             } else {
+        //                 particle.kill();
+        //             }
+        //         }
+        //         this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
+        //     }, this);
+        // } else {
+        //     this.trailEmitter.on = false;
+        // }
 
         // update sprite position
         this.sprite.x = update.x;
