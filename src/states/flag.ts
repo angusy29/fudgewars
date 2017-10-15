@@ -93,14 +93,21 @@ export default class Flag {
                         this.sprite.y >= screenTop && this.sprite.y <= screenBottom);
         if (!onScreen) {
             this.indicatorSprite.visible = true;
+            this.indicatorText.visible = true;
+
+            let xDist = Math.pow(this.sprite.x - me.sprite.x, 2);
+            let yDist = Math.pow(this.sprite.y - me.sprite.y, 2);
+            let distance = Math.round(Math.sqrt(xDist + yDist) / 10);
 
             if (!this.isAtBase) {
                 if (this.carriedBy) {
-                    this.indicatorText.text = 'CAPTURED';
+                    this.indicatorText.text = `CAPTURED (${distance}m)`;
                 } else {
-                    this.indicatorText.text = Math.round(this.returnTime).toString();
+                    let timeRemaining = Math.round(this.returnTime).toString();
+                    this.indicatorText.text = `${timeRemaining} (${distance}m)`;
                 }
-                this.indicatorText.visible = true;
+            } else {
+                this.indicatorText.text = `${distance}m`;
             }
 
             if (this.sprite.x < screenLeft) {
