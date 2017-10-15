@@ -95,8 +95,8 @@ export default class Flag {
             this.indicatorSprite.visible = true;
             this.indicatorText.visible = true;
 
-            let xDist = Math.pow(this.sprite.x - me.sprite.x, 2);
-            let yDist = Math.pow(this.sprite.y - me.sprite.y, 2);
+            let xDist = Math.pow(this.sprite.x - this.indicatorSprite.x, 2);
+            let yDist = Math.pow(this.sprite.y - this.indicatorSprite.y, 2);
             let distance = Math.round(Math.sqrt(xDist + yDist) / 10);
 
             if (!this.isAtBase) {
