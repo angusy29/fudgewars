@@ -93,7 +93,7 @@ module.exports = class Lobby {
         socket.on('blue_team_change', (tile) => {
             console.log('change blue team');
             // if the tile we want to move to is not empty, return
-            if (this.blue[tile] != null) return;
+            if (this.blue[tile]) return;
             let oldTile = player.tile;
             if (player.team === RED) {
                 // if player was in red team
@@ -114,7 +114,7 @@ module.exports = class Lobby {
         socket.on('red_team_change', (tile) => {
             console.log('change red team');
             // if the tile we want to move to is not empty, return
-            if (this.red[tile] != null) return;
+            if (this.red[tile]) return;
             let oldTile = player.tile;            
             if (player.team === BLUE) {     
                 // if player was in blue team
@@ -164,19 +164,19 @@ module.exports = class Lobby {
             if (this.players[id].team === BLUE) teamTile = this.blue;
 
             for (let tempTile in teamTile) {
-                if (teamTile[tempTile] !== null && teamTile[tempTile].id === id) {
+                if (teamTile[tempTile] && teamTile[tempTile].id === id) {
                     tile = tempTile;
                     break;
                 }
             }
         }
 
-        if (this.blue[tile] !== null && this.blue[tile].id === id) {
+        if (this.blue[tile] && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
         }
 
-        if (this.red[tile] !== null && this.red[tile].id === id) {
+        if (this.red[tile] && this.red[tile].id === id) {
             this.red[tile] = null;
             this.redCount--;
         }
