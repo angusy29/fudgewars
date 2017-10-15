@@ -3,8 +3,9 @@ let utils = require('./utils');
 let Hook = require('./hook');
 let Sword = require('./sword');
 
-const MAX_VELOCITY = 100;     // px/s
-const ACCELERATION = 600;     // px/s/s
+const CARRYING_FLAG_MAX_VELOCITY = 75;
+const MAX_VELOCITY = 110;     // px/s
+const ACCELERATION = 6000;     // px/s/s
 const DECELERATION = 1000;   // px/s/s
 const BOUNDS = {
     top: 0,
@@ -159,8 +160,14 @@ module.exports = class Player extends Collidable {
         }
 
         // Clamp velocity
-        this.vx = utils.clamp(-MAX_VELOCITY, MAX_VELOCITY, this.vx);
-        this.vy = utils.clamp(-MAX_VELOCITY, MAX_VELOCITY, this.vy);
+        let maxVelocity;
+        if (this.carryingFlag) {
+            maxVelocity = CARRYING_FLAG_MAX_VELOCITY;
+        } else {
+            maxVelocity = MAX_VELOCITY;
+        }
+        this.vx = utils.clamp(-maxVelocity, maxVelocity, this.vx);
+        this.vy = utils.clamp(-maxVelocity, maxVelocity, this.vy);
 
         let steps = 5;
         let collideX = false;
