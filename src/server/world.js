@@ -10,13 +10,14 @@ const TILE_SIZE = 64;
 const BLUE = 0;
 const RED = 1;
 
-const GAME_LENGTH = 300; // Seconds
-
 module.exports = class World {
-    constructor(io, room, lobby, width, height, tilesize) {
+    constructor(io, lobby, room, gameLength, mapSize, friendlyFire, width, height, tilesize) {
         this.io = io;
-        this.room = room;   // room id
         this.lobby = lobby;     // lobby object
+        this.room = room;   // room id
+        this.gameLength = gameLength ? gameLength * 60 : 300;
+        this.mapSize = mapSize;
+        this.friendlyFire = friendlyFire;
         this.width = width;
         this.height = height;
         this.tilesize = tilesize;
@@ -28,8 +29,9 @@ module.exports = class World {
         this.playerCount = 0;
         this.timeout = null;
         this.numCaptures = [0, 0];
-        this.gameTime = GAME_LENGTH;
+        this.gameTime = this.gameLength;
 
+        // TODO change map according to map size
         let data = require(maps + '/map.test.json');
 
         this.world = this.getWorld(data);

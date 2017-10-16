@@ -160,7 +160,13 @@ export default class LobbyCreation extends Phaser.State {
 
     private createLobby(): void {
         this.game.sound.play('click1');
-        this.socket.emit('room', { 'room': this.lobbyNameInput.value, 'isCreating': true });
+        this.socket.emit('room', {
+            room: this.lobbyNameInput.value,
+            isCreating: true,
+            gameLength: this.gameLengthInput.value,
+            mapSize: this.chosenMapSize,
+            friendlyFire: this.isFriendlyFire,
+        });
 
         // we need to check if this lobby already exists
         this.socket.on('room_join', () => {
