@@ -102,7 +102,18 @@ export default class LobbySelection extends Phaser.State {
             listView.removeAll();
 
             let numLobbies: number = Object.keys(allRooms).length;
+
+            if (this.numLobbyText) delete this.numLobbyText;
+            let numText = numLobbies === 1 ? numLobbies + ' lobby' : numLobbies + ' lobbies';
+            this.numLobbyText = this.game.add.text(bounds.x, bounds.y - 40, numText, {
+                font: '24px ' + Assets.GoogleWebFonts.Roboto,
+                fill: '#fff',
+                stroke: '#000',
+                strokeThickness: 3
+            });
+
             if (numLobbies === 0) {
+                if (this.numLobbyText) this.numLobbyText.visible = false;
                 this.noLobbyText.visible = true;
                 return;
             }
@@ -110,7 +121,8 @@ export default class LobbySelection extends Phaser.State {
             this.noLobbyText.visible = false;
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
-                let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
+                // let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
+                let button: Phaser.Image = this.game.add.image(0, 0, 'room', null, group);
                 button.alpha = 0.9;
                 button.width = boxW;
                 button.height = boxH;
@@ -152,15 +164,6 @@ export default class LobbySelection extends Phaser.State {
 
                 listView.add(img);
             }
-
-            if (this.numLobbyText) delete this.numLobbyText;
-            let numText = numLobbies === 1 ? numLobbies + ' lobby' : numLobbies + ' lobbies';
-            this.numLobbyText = this.game.add.text(bounds.x, bounds.y - 40, numText, {
-                font: '24px ' + Assets.GoogleWebFonts.Roboto,
-                fill: '#fff',
-                stroke: '#000',
-                strokeThickness: 3
-            });
         });
     }
 

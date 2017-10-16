@@ -100,6 +100,7 @@ module.exports = class Lobby {
                 this.red[oldTile] = null;
                 this.redCount--;
                 this.blueCount++;
+                this.blue[tile] = player;
             } else {
                 this.blue[oldTile] = null;
                 this.blue[tile] = player;
@@ -121,6 +122,7 @@ module.exports = class Lobby {
                 this.blue[oldTile] = null;
                 this.blueCount--;
                 this.redCount++;
+                this.red[tile] = player;
             } else {
                 this.red[oldTile] = null;
                 this.red[tile] = player;
@@ -156,9 +158,9 @@ module.exports = class Lobby {
      */
     removePlayer(socket, id, tile) {
         if (!this.players[id]) return;
-        
+
         // if tile wasn't passed as an argument, find the tile
-        if (tile === undefined) {
+        if (!tile) {
             let teamTile;
             if (this.players[id].team === RED) teamTile = this.red;
             if (this.players[id].team === BLUE) teamTile = this.blue;
