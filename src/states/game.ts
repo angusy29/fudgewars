@@ -132,6 +132,13 @@ export default class Game extends Phaser.State {
         this.registerSocketEvents(socket);
 
         this.room = room;
+
+
+        $(document).ready(() => {
+            $('#chatlogs').on('scroll', function(){
+                $('#chatlogs').data('scrolled', true);
+            });
+        });
     }
 
     private getTeamName(team: number): string {
@@ -218,7 +225,7 @@ export default class Game extends Phaser.State {
         // testing send message to server
         setInterval(() => {
             socket.emit('chatroom_msg', 'testing message');
-        }, 1500);
+        }, 500);
 
         // receive a chatroom message to be display in the chatroom
         socket.on('chatroom_msg', (data) => {
@@ -226,13 +233,16 @@ export default class Game extends Phaser.State {
             // display message
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
-                $('#chatlogs').append(
+                chatlogs.append(
                 '<div class="msg incoming">' +
                   '<div class="sender-name">' + this.players[data.sender].nameText.text + '</div>' +
                   '<div class="content">' + data.msg + '</div>' +
                 '</div>'
                 );
-                $('#chatlogs').scrollTop = $('#chatlogs').scrollHeight;
+                if (!($('#chatlogs').data('scrolled'))) {
+                    console.log('auto scroll', $('#chatlogs').prop('scrollHeight'));
+                    $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, "slow");
+                }
             });
         });
     }
