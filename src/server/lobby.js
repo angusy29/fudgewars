@@ -100,10 +100,12 @@ module.exports = class Lobby {
                 this.red[oldTile] = null;
                 this.redCount--;
                 this.blueCount++;
+                this.blue[tile] = player;
             } else {
                 this.blue[oldTile] = null;
                 this.blue[tile] = player;
             }
+            console.log(tile);
             player.team = BLUE;
             player.tile = tile;
             this.print();            
@@ -121,6 +123,7 @@ module.exports = class Lobby {
                 this.blue[oldTile] = null;
                 this.blueCount--;
                 this.redCount++;
+                this.red[tile] = player;
             } else {
                 this.red[oldTile] = null;
                 this.red[tile] = player;
@@ -158,7 +161,7 @@ module.exports = class Lobby {
         if (!this.players[id]) return;
         
         // if tile wasn't passed as an argument, find the tile
-        if (tile === undefined) {
+        if (!tile) {
             let teamTile;
             if (this.players[id].team === RED) teamTile = this.red;
             if (this.players[id].team === BLUE) teamTile = this.blue;
@@ -174,6 +177,7 @@ module.exports = class Lobby {
         if (this.blue[tile] && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
+            console.log('Blue count: ' + this.blueCount);
         }
 
         if (this.red[tile] && this.red[tile].id === id) {

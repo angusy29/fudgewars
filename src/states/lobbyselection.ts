@@ -138,6 +138,7 @@ export default class LobbySelection extends Phaser.State {
                 }, group);
 
                 let spriteX = 200;
+                console.log(allRooms[room].blueCount);
                 for (let i = 0; i < allRooms[room].blueCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 4, 'Blue', group);
                 }
