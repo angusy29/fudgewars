@@ -74,6 +74,8 @@ export default class Game extends Phaser.State {
     static readonly BLUE = 0;
     static readonly RED = 1;
 
+    private chatboxOn = false;
+
     public create(): void {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
@@ -144,6 +146,15 @@ export default class Game extends Phaser.State {
                     $('#down-btn').toggleClass('text-muted');
                 }
             });
+
+            $('#chatbox_form').submit((event) => {
+                event.preventDefault();
+                // console.log($('#chatbox_input').val());
+                this.sendMessage($('#chatbox_input').val());
+                $('#chatbox_input').val('')
+            });
+
+            
         });
 
     }
@@ -258,10 +269,10 @@ export default class Game extends Phaser.State {
     }
 
     private toggleChatbox(): void {
-        console.log('toggleChatbox');
+        this.chatboxOn = !(this.chatboxOn);
         $('#chatbox').toggleClass('hidden');
         if (!($('#chatbox').hasClass('hidden'))) {
-            $('#chatroom_input').focus();
+            $('#chatbox_input').focus();
         }
     }
 
@@ -414,16 +425,16 @@ export default class Game extends Phaser.State {
         this.isDown[e.keyCode] = true;
         switch (e.keyCode) {
             case 87:    // w
-                this.socket.emit('keydown', 'up');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'up');
                 break;
             case 65:    // a
-                this.socket.emit('keydown', 'left');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'left');
                 break;
             case 83:    // s
-                this.socket.emit('keydown', 'down');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'down');
                 break;
             case 68:    // d
-                this.socket.emit('keydown', 'right');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'right');
                 break;
             case 27:    // escape
                 if (!this.gameOver) {
@@ -434,7 +445,7 @@ export default class Game extends Phaser.State {
                     }
                 }
                 break;
-            case 67:     // c, to toggle chatbox
+            case 18:     // alt, to toggle chatbox
                 this.toggleChatbox();
                 break;
             default:

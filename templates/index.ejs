@@ -60,7 +60,7 @@
     }
 
     .chatbox .msg {
-      margin: 5px 35px;
+      margin: 6px 35px;
       font-size: 14px;
     }
 
@@ -82,7 +82,7 @@
     .chatbox .msg .content {
       font-size: 15px;
       opacity: 1;
-      margin-top: -2px;
+      margin-top: -3px;
     }
 
     .chatbox .msg.incoming .content {
@@ -110,7 +110,7 @@
 <body>
   <game></game>
   <div class="chatbox mr-5 hidden" id="chatbox">
-    <div class="header text-center py-1">
+    <div class="header text-center py-1 pl-2">
       Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
     </div>
     <div class="chatlogs" id="chatlogs">
@@ -127,12 +127,15 @@
       <div class="down-btn" id="down-btn">
         <i class="fa fa-angle-down fa-fw fa-lg" aria-hidden="true"></i>
       </div>
-      <div class="input-group">
-        <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatroom_input">
-        <span class="input-group-btn">
-          <button class="btn btn-primary" type="button"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
-        </span>
-      </div>
+      <form id="chatbox_form">
+        <input type="submit" style="display: none" />
+        <div class="input-group">
+          <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatbox_input">
+          <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
+          </span>
+        </div>
+      </form>
     </div>
   </div>
 
