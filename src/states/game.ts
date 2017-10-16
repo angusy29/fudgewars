@@ -278,13 +278,6 @@ export default class Game extends Phaser.State {
             player.update(update);
         }
 
-        // update the position of the flags
-        for (let update of data.flags) {
-            let flag = this.flags[update.colorIdx];
-            if (!flag) continue;
-            flag.update(update);
-        }
-
         this.game.world.bringToTop(this.playerGroup);
         this.game.world.bringToTop(this.weaponGroup);
         this.game.world.bringToTop(this.particleGroup);
@@ -299,6 +292,14 @@ export default class Game extends Phaser.State {
 
     private onTick(data: any): void {
         this.data = data;
+
+        // Do this here instead of update because indicators get blurry from updating too quickly :(
+        // update the position of the flags
+        for (let update of data.flags) {
+            let flag = this.flags[update.colorIdx];
+            if (!flag) continue;
+            flag.update(update);
+        }
     }
 
     private ping(): void {
