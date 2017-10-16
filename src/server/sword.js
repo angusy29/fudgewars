@@ -52,6 +52,9 @@ module.exports = class Sword extends Collidable {
 
                     if (this.world.collidesObject(hitBounds, hitBounds, other.getFullTopLeft(), other.getFullBottomRight())) {
                         this.damagePlayer(other);
+                        if (other.getHealth() <= 0) {
+                            this.player.kills += 1;
+                        }
                         break;
                     }
                 }

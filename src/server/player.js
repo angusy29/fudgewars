@@ -39,6 +39,7 @@ module.exports = class Player extends Collidable {
         this.hookedBy = null;
 
         this.sword = new Sword(world, this);
+        this.kills = 0;
     }
 
     static get MAX_HEALTH() {
@@ -130,6 +131,9 @@ module.exports = class Player extends Collidable {
     getHooked(hooker) {
         this.hookedBy = hooker;
         this.setHealth(this.getHealth() - Hook.HOOK_DAMAGE);
+        if (this.getHealth() <= 0) {
+            hooker.kills += 1;
+        }
     }
 
     getUnhooked() {
@@ -250,6 +254,7 @@ module.exports = class Player extends Collidable {
             hook: this.hook.getRep(toId),
             sword: this.sword.getRep(toId),
             respawnTime: this.respawnTime,
+            kills: this.kills,
         }
 
         return rep;

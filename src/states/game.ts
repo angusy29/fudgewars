@@ -45,6 +45,8 @@ export default class Game extends Phaser.State {
     private weaponGroup: Phaser.Group;
     private healthBarGroup: Phaser.Group;
     private particleGroup: Phaser.Group;
+    private scoreBoardGroup: Phaser.Group;
+    private scoreBoardData: any;
     private uiGroup: Phaser.Group;
 
     private isDown: any;
@@ -115,6 +117,7 @@ export default class Game extends Phaser.State {
         this.healthBarGroup = this.game.add.group();
         this.particleGroup = this.game.add.group();
         this.soundGroup = this.game.add.group();
+        this.scoreBoardGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
         this.initMenu();
 
@@ -131,6 +134,8 @@ export default class Game extends Phaser.State {
 
         this.room = room;
     }
+
+
 
     private getTeamName(team: number): string {
         if (team === Game.BLUE) {
@@ -272,17 +277,43 @@ export default class Game extends Phaser.State {
 
         this.gameTime = data.time;
 
+        let blueText = [];
+        let redText = [];
+
         for (let update of data.players) {
             let player = this.players[update.id];
             if (!player) continue;
             player.update(update);
+            if (player.team === Game.BLUE) {
+                blueText.push({text: player.kills + ' ' + player.name, kills: player.kills});
+            } else if (player.team === Game.RED) {
+                redText.push({text: player.kills + ' ' + player.name, kills: player.kills});
+            }
         }
+
+        blueText.sort((a, b) => (b.kills - a.kills));
+        redText.sort((a, b) => (b.kills - a.kills));
+
+        for (let i = 0; i < 6; i++) {
+            if (i < blueText.length) {
+                this.scoreBoardData.blueText[i].text = blueText[i].text;
+            } else {
+                this.scoreBoardData.blueText[i].text = '';
+            }
+            if (i < redText.length) {
+                this.scoreBoardData.redText[i].text = redText[i];
+            } else {
+                this.scoreBoardData.redText[i].text = '';
+            }
+        }
+
 
         this.game.world.bringToTop(this.playerGroup);
         this.game.world.bringToTop(this.weaponGroup);
         this.game.world.bringToTop(this.particleGroup);
         this.game.world.bringToTop(this.healthBarGroup);
         this.game.world.bringToTop(this.skillGroup);
+        this.game.world.bringToTop(this.scoreBoardGroup);
         this.game.world.bringToTop(this.uiGroup);
         this.game.world.bringToTop(this.menuGroup);
         this.game.world.bringToTop(this.soundGroup);
@@ -358,6 +389,9 @@ export default class Game extends Phaser.State {
             case 68:    // d
                 this.socket.emit('keydown', 'right');
                 break;
+            case 69:    // e
+                this.scoreBoardGroup.visible = true;
+                break;
             case 27:    // escape
                 if (!this.gameOver) {
                     if (this.isShowMenu === false) {
@@ -389,6 +423,9 @@ export default class Game extends Phaser.State {
                 break;
             case 68:    // d
                 this.socket.emit('keyup', 'right');
+                break;
+            case 69:    // e
+                this.scoreBoardGroup.visible = false;
                 break;
             default:
                 break;
@@ -497,6 +534,50 @@ export default class Game extends Phaser.State {
         });
         this.gameTimeText.anchor.setTo(0.5, 0);
 
+        // Score board
+        let center: number = this.game.width / 2;
+        let scoreWidth = center - 50;
+        let redX = 50;
+        let blueX = center;
+        let scoreHeight = this.game.height - 50;
+        let scoreBackground = this.game.add.graphics(0, 0);
+        scoreBackground.fillAlpha = 0.5;
+        scoreBackground.beginFill(0xff0000);
+        scoreBackground.drawRect(redX, 0, scoreWidth, scoreHeight);
+        scoreBackground.endFill();
+        scoreBackground.beginFill(0x0000ff);
+        scoreBackground.drawRect(blueX, 0, scoreWidth, scoreHeight);
+        scoreBackground.endFill();
+        scoreBackground.alpha = 0.5;
+        this.scoreBoardGroup.add(scoreBackground);
+        this.scoreBoardGroup.fixedToCamera = true;
+        // this.scoreBoardGroup.visible = false;
+        this.scoreBoardData = {};
+        this.scoreBoardData.blueText = [];
+        this.scoreBoardData.redText = [];
+        this.scoreBoardData.scoreBackground = scoreBackground;
+        let textHeight = (this.game.height - 100) / 6;
+        for (let i: number = 1; i < 7; i++) {
+
+            let y = textHeight * i;
+            let padding = 10;
+
+            let blueScoreText = this.game.add.text(blueX + padding, y, '' + i, {
+                font: '26px Arial',
+                fill: '#ffffff',
+            });
+            this.scoreBoardGroup.add(blueScoreText);
+            this.scoreBoardData.blueText.push(blueScoreText);
+
+            let redScoreText = this.game.add.text(redX + padding, y, '' + i, {
+                font: '26px Arial',
+                fill: '#ffffff',
+            });
+            redScoreText.visible = true;
+            this.scoreBoardGroup.add(redScoreText);
+            this.scoreBoardData.redText.push(redScoreText);
+        }
+
         // Score text
         this.blueScoreText = this.game.add.text(this.game.width / 2 + 47, 3, '', {
             font: 'bold 26px Arial',
@@ -522,6 +603,7 @@ export default class Game extends Phaser.State {
         this.uiGroup.add(this.gameTimeText);
         this.uiGroup.add(this.alertText);
         this.uiGroup.add(this.pingText);
+
 
         // Skills
         let width: number = 45;
