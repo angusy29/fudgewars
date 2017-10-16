@@ -5,6 +5,8 @@ import Flag from './flag';
 import ButtonUtil from './buttonutil';
 import CustomButton from './custombutton';
 
+import * as $ from 'jquery';
+
 // TODO have a single file for both server/client constants?
 const COOLDOWNS = {
     hook: 5,
@@ -208,6 +210,43 @@ export default class Game extends Phaser.State {
             this.pingTime = Math.round(Date.now() - this.pingStartTime);
         });
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+
+
+
+
+
+        // testing send message to server
+        setInterval(() => {
+            socket.emit('chatroom_msg', 'testing message');
+        }, 1500);
+
+        // receive a chatroom message to be display in the chatroom
+        socket.on('chatroom_msg', (data) => {
+            console.log('chatroom_msg', data.sender, data.msg);
+            // display message
+            $(document).ready(() => {
+                let chatlogs = $('#chatlogs');
+                $('#chatlogs').append(
+                '<div class="msg incoming">' +
+                  '<div class="sender-name">' + this.players[data.sender].nameText.text + '</div>' +
+                  '<div class="content">' + data.msg + '</div>' +
+                '</div>'
+                );
+                $('#chatlogs').scrollTop = $('#chatlogs').scrollHeight;
+            });
+        });
+    }
+
+    private sendMessage(text: string) {
+        this.socket.emit('chatroom_msg', 'testing message');
+        let chatlogs = document.getElementById('chatlogs');
+        chatlogs.insertAdjacentHTML('beforeend',
+        '<div class="msg outgoing">' +
+          '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
+          '<div class="content">' + text + '</div>' +
+        '</div>'
+        );
+        chatlogs.scrollTop = chatlogs.scrollHeight;
     }
 
     private addAndPlayAlert(text: string) {
