@@ -15,6 +15,7 @@ const COOLDOWNS = {
  * The actual game client
  */
 export default class Game extends Phaser.State {
+    private data: any;
     private pingText: Phaser.Text;
     private pingTime: number;
     private pingStartTime: number;
@@ -265,7 +266,10 @@ export default class Game extends Phaser.State {
         this.game.world.sendToBack(this.mapLayer);
     }
 
-    private onTick(data: any): void {
+    public update(): void {
+        let data = this.data;
+        if (!data) return;
+
         this.gameTime = data.time;
 
         for (let update of data.players) {
@@ -291,6 +295,10 @@ export default class Game extends Phaser.State {
         this.game.world.bringToTop(this.soundGroup);
 
         this.drawUI();
+    }
+
+    private onTick(data: any): void {
+        this.data = data;
     }
 
     private ping(): void {

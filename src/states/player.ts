@@ -51,9 +51,9 @@ export default class Player {
 
         this.trailEmitter = this.world.game.add.emitter(0, 0, 100);
         this.trailEmitter.makeParticles(Images.ImagesParticleWalkTrail.getName());
-        this.trailEmitter.minParticleScale = 0.05;
-        this.trailEmitter.maxParticleScale = 0.2;
-        this.trailEmitter.setYSpeed(-100, -50);
+        this.trailEmitter.minParticleScale = 0.02;
+        this.trailEmitter.maxParticleScale = 0.15;
+        this.trailEmitter.setYSpeed(-70, -50);
         this.trailEmitter.setXSpeed(-5, 5);
         this.trailEmitter.gravity = 200;
         this.trailEmitter.on = false;
@@ -72,23 +72,23 @@ export default class Player {
         this.setHealth(update.health);
 
         // walk particles
-        // if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
-        //     this.trailEmitter.on = true;
-        //     this.trailEmitter.x = update.x;
-        //     this.trailEmitter.y = update.y + this.sprite.height / 2;
-        //     this.trailEmitter.forEach((particle) => {
-        //         if (!particle.exists) {
-        //             if (Math.random() > 0.2) {
-        //                 particle.alpha = 1;
-        //             } else {
-        //                 particle.kill();
-        //             }
-        //         }
-        //         this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
-        //     }, this);
-        // } else {
-        //     this.trailEmitter.on = false;
-        // }
+        if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
+            this.trailEmitter.on = true;
+            this.trailEmitter.x = update.x;
+            this.trailEmitter.y = update.y + this.sprite.height / 2;
+            this.trailEmitter.forEach((particle) => {
+                if (!particle.exists) {
+                    if (Math.random() > 0.2) {
+                        particle.alpha = 1;
+                    } else {
+                        particle.kill();
+                    }
+                }
+                this.world.game.add.tween(particle).to({ alpha: 0 }, 1000, Phaser.Easing.Cubic.Out, true);
+            }, this);
+        } else {
+            this.trailEmitter.on = false;
+        }
 
         // update sprite position
         this.sprite.x = update.x;
