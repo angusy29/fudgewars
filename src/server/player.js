@@ -3,8 +3,9 @@ let utils = require('./utils');
 let Hook = require('./hook');
 let Sword = require('./sword');
 
-const MAX_VELOCITY = 100;     // px/s
-const ACCELERATION = 600;     // px/s/s
+const CARRYING_FLAG_MAX_VELOCITY = 75;
+const MAX_VELOCITY = 110;     // px/s
+const ACCELERATION = 6000;     // px/s/s
 const DECELERATION = 1000;   // px/s/s
 const BOUNDS = {
     top: 0,
@@ -58,12 +59,22 @@ module.exports = class Player extends Collidable {
         };
     }
 
+    captureFlag(flag) {
+        this.carryingFlag = flag;
+    }
+
+    dropFlag() {
+        this.carryingFlag = null;
+    }
+
     setSpawnPosition() {
         // Find spawn point that isnt colliding with anything
         let spawnPointCollides = false;
         do {
-            let x = utils.randomInt(this.world.left, this.world.right);
-            let y = utils.randomInt(this.world.top, this.world.bottom);
+            let startX = this.world.flags[this.team].startX;
+            let startY = this.world.flags[this.team].startY;
+            let x = utils.randomInt(startX - 200, startX + 200);
+            let y = utils.randomInt(startY - 200, startY + 200);
             this.x = x;
             this.y = y;
             spawnPointCollides = this.world.collides(this.id);
@@ -96,6 +107,7 @@ module.exports = class Player extends Collidable {
         if (!this.alive) {
             this.respawnTime -= delta;
             if (this.respawnTime <= 0) {
+                this.setSpawnPosition();
                 this.respawnTime = 0;
                 this.setHealth(Player.MAX_HEALTH);
                 this.world.io.emit('respawn', this.id);
@@ -148,8 +160,14 @@ module.exports = class Player extends Collidable {
         }
 
         // Clamp velocity
-        this.vx = utils.clamp(-MAX_VELOCITY, MAX_VELOCITY, this.vx);
-        this.vy = utils.clamp(-MAX_VELOCITY, MAX_VELOCITY, this.vy);
+        let maxVelocity;
+        if (this.carryingFlag) {
+            maxVelocity = CARRYING_FLAG_MAX_VELOCITY;
+        } else {
+            maxVelocity = MAX_VELOCITY;
+        }
+        this.vx = utils.clamp(-maxVelocity, maxVelocity, this.vx);
+        this.vy = utils.clamp(-maxVelocity, maxVelocity, this.vy);
 
         let steps = 5;
         let collideX = false;

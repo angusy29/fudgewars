@@ -59,15 +59,25 @@ io.on('connection', function(socket) {
     // so if a room is deleted, and a player was still on lobby screen, it won't update
     socket.on('get_lobbies', () => {
         let all = {};
-        for (room in allRooms) {
+        for (let roomId in allRooms) {
             // clean up lobbies which have no players
-            if (allRooms[room].lobby.isEmpty()) {
+            let room = allRooms[roomId];
+            let lobby = room.lobby;
+            let world = room.world;
+
+            if (lobby.isEmpty()) {
                 console.log('lobby destroyed!');
-                delete allRooms[room];
+                delete allRooms[roomId];
                 continue;
             }
-            all[room] = { 'playerCount': allRooms[room].lobby.playerCount, 'blueCount': allRooms[room].lobby.blueCount, 'redCount': allRooms[room].lobby.redCount,
-                            'isPlaying': allRooms[room].lobby.isPlaying };
+            if (world.gameTime > 0) {
+                all[roomId] = {
+                    playerCount: lobby.playerCount,
+                    blueCount: lobby.blueCount,
+                    redCount: lobby.redCount,
+                    isPlaying: lobby.isPlaying,
+                };
+            }
         }
         socket.emit('lobby_selection_update', all);
     });
@@ -86,7 +96,7 @@ io.on('connection', function(socket) {
             io.sockets.in(room).emit('player_in');
             console.log('let player in');
         }
-        lobby.print();
+        // lobby.print();
     });
 
     socket.on('join_game', function(room) {

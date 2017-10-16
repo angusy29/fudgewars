@@ -51,9 +51,9 @@ export default class Player {
 
         this.trailEmitter = this.world.game.add.emitter(0, 0, 100);
         this.trailEmitter.makeParticles(Images.ImagesParticleWalkTrail.getName());
-        this.trailEmitter.minParticleScale = 0.05;
-        this.trailEmitter.maxParticleScale = 0.2;
-        this.trailEmitter.setYSpeed(-100, -50);
+        this.trailEmitter.minParticleScale = 0.02;
+        this.trailEmitter.maxParticleScale = 0.15;
+        this.trailEmitter.setYSpeed(-70, -50);
         this.trailEmitter.setXSpeed(-5, 5);
         this.trailEmitter.gravity = 200;
         this.trailEmitter.on = false;

@@ -158,7 +158,7 @@ module.exports = class Lobby {
      */
     removePlayer(socket, id, tile) {
         if (!this.players[id]) return;
-        
+
         // if tile wasn't passed as an argument, find the tile
         if (!tile) {
             let teamTile;
