@@ -221,6 +221,7 @@ module.exports = class World {
         console.log('=====world discon=====');
         this.removePlayer(socket, player.id);
         this.lobby.removePlayer(socket, player.id);
+        socket.leave(this.room);
         this.io.sockets.in(this.room).emit('player_left', player.id);
 
         // this.lobby.print();
