@@ -204,7 +204,7 @@ export default class LobbySelection extends Phaser.State {
     }
 
     private refreshLobbyList(): void {
-        this.socket.emit('get_lobbies');        
+        this.socket.emit('get_lobbies');
     }
 
     private joinLobby(room: string, context: any): void {

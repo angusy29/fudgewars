@@ -38,7 +38,7 @@ export default class CustomButton {
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton10,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton11,
         Assets.Atlases.ButtonsBlueSheet.Frames.BlueButton12
-    ];''
+    ];
 
     constructor(button: Phaser.Button, text: Phaser.Text) {
         this.button = button;
