@@ -105,7 +105,6 @@ module.exports = class Lobby {
                 this.blue[oldTile] = null;
                 this.blue[tile] = player;
             }
-            console.log(tile);
             player.team = BLUE;
             player.tile = tile;
             this.print();            
@@ -177,7 +176,6 @@ module.exports = class Lobby {
         if (this.blue[tile] && this.blue[tile].id === id) {
             this.blue[tile] = null;
             this.blueCount--;
-            console.log('Blue count: ' + this.blueCount);
         }
 
         if (this.red[tile] && this.red[tile].id === id) {

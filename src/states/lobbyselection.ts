@@ -103,6 +103,7 @@ export default class LobbySelection extends Phaser.State {
 
             let numLobbies: number = Object.keys(allRooms).length;
             if (numLobbies === 0) {
+                if (this.numLobbyText) this.numLobbyText.visible = false;
                 this.noLobbyText.visible = true;
                 return;
             }
@@ -110,7 +111,8 @@ export default class LobbySelection extends Phaser.State {
             this.noLobbyText.visible = false;
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
-                let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
+                // let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
+                let button: Phaser.Image = this.game.add.image(0, 0, 'room', null, group);
                 button.alpha = 0.9;
                 button.width = boxW;
                 button.height = boxH;
@@ -138,7 +140,6 @@ export default class LobbySelection extends Phaser.State {
                 }, group);
 
                 let spriteX = 200;
-                console.log(allRooms[room].blueCount);
                 for (let i = 0; i < allRooms[room].blueCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 4, 'Blue', group);
                 }
