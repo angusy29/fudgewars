@@ -135,10 +135,17 @@ export default class Game extends Phaser.State {
 
 
         $(document).ready(() => {
-            $('#chatlogs').on('scroll', function(){
-                $('#chatlogs').data('scrolled', true);
+            $('#down-btn').on('click', () => {
+                let chatlogs = $('#chatlogs');
+                if (chatlogs.data('scrolled') === undefined) {
+                  $('#chatlogs').data('scrolled', true);
+                } else {
+                    $('#chatlogs').data('scrolled', !($('#chatlogs').data('scrolled')));
+                    $('#down-btn').toggleClass('text-muted');
+                }
             });
         });
+
     }
 
     private getTeamName(team: number): string {
@@ -223,13 +230,14 @@ export default class Game extends Phaser.State {
 
 
         // testing send message to server
-        setInterval(() => {
-            socket.emit('chatroom_msg', 'testing message');
-        }, 500);
+        // setInterval(() => {
+            // this.sendMessage('testing message');
+        // }, 500);
+
 
         // receive a chatroom message to be display in the chatroom
         socket.on('chatroom_msg', (data) => {
-            console.log('chatroom_msg', data.sender, data.msg);
+            // console.log('chatroom_msg', data.sender, data.msg);
             // display message
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
@@ -239,24 +247,34 @@ export default class Game extends Phaser.State {
                   '<div class="content">' + data.msg + '</div>' +
                 '</div>'
                 );
-                if (!($('#chatlogs').data('scrolled'))) {
-                    console.log('auto scroll', $('#chatlogs').prop('scrollHeight'));
-                    $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, "slow");
+
+                // console.log($('#chatlogs').data('scrolled') === undefined, $('#chatlogs').data('scrolled') == false);
+                if ($('#chatlogs').data('scrolled') === undefined || $('#chatlogs').data('scrolled') == false) {
+                    // console.log('auto scroll', $('#chatlogs').prop('scrollHeight'));
+                    $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
                 }
             });
         });
     }
 
-    private sendMessage(text: string) {
-        this.socket.emit('chatroom_msg', 'testing message');
-        let chatlogs = document.getElementById('chatlogs');
-        chatlogs.insertAdjacentHTML('beforeend',
+    private toggleChatbox(): void {
+        console.log('toggleChatbox');
+        $('#chatbox').toggleClass('hidden');
+        if (!($('#chatbox').hasClass('hidden'))) {
+            $('#chatroom_input').focus();
+        }
+    }
+
+    private sendMessage(text: string): void {
+        this.socket.emit('chatroom_msg', text);
+        let chatlogs = $('#chatlogs');
+        chatlogs.append(
         '<div class="msg outgoing">' +
           '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
           '<div class="content">' + text + '</div>' +
         '</div>'
         );
-        chatlogs.scrollTop = chatlogs.scrollHeight;
+        $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
     }
 
     private addAndPlayAlert(text: string) {
@@ -415,6 +433,9 @@ export default class Game extends Phaser.State {
                         this.showMenu(false);
                     }
                 }
+                break;
+            case 67:     // c, to toggle chatbox
+                this.toggleChatbox();
                 break;
             default:
                 break;

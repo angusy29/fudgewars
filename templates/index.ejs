@@ -46,6 +46,7 @@
 
     .chatbox .input-box {
       height: 38px;
+      position: relative;
     }
 
     .chatbox .input-box input {
@@ -59,7 +60,7 @@
     }
 
     .chatbox .msg {
-      margin: 5px 20px;
+      margin: 5px 35px;
       font-size: 14px;
     }
 
@@ -91,27 +92,43 @@
     .chatbox .msg.outgoing .content {
       margin-left: 25px;
     }
+
+    .chatbox .input-box .down-btn {
+      position: absolute;
+      bottom: 43px;
+      right: 8px;
+      cursor: pointer;
+
+    }
+
+    .hidden {
+      display: none !important;
+      visibility: hidden !important;
+    }
   </style>
 </head>
 <body>
   <game></game>
-  <div class="chatbox mr-5" id="chatbox">
+  <div class="chatbox mr-5 hidden" id="chatbox">
     <div class="header text-center py-1">
-        Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
+      Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
     </div>
     <div class="chatlogs" id="chatlogs">
       <!-- <div class="msg incoming">
         <div class="sender-name">kelvin</div>
         <div class="content">fadsfadsf</div>
-      </div> -->
-      <div class="msg outgoing">
-          <div class="sender-name">kelvin</div>
-          <div class="content">fadsfadsf</div>
       </div>
+      <div class="msg outgoing">
+        <div class="sender-name">kelvin</div>
+        <div class="content">fadsfadsf</div>
+      </div> -->
     </div>
     <div class="input-box d-block">
+      <div class="down-btn" id="down-btn">
+        <i class="fa fa-angle-down fa-fw fa-lg" aria-hidden="true"></i>
+      </div>
       <div class="input-group">
-        <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ...">
+        <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatroom_input">
         <span class="input-group-btn">
           <button class="btn btn-primary" type="button"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
         </span>
@@ -119,6 +136,12 @@
     </div>
   </div>
 
+
+  <script>
+  $(document).ready(() => {
+
+  });
+  </script>
 
 </body>
 </html>
