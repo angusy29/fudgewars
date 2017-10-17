@@ -43,9 +43,9 @@ export default class ButtonUtil {
      * label: string to label this Phaser.Text
      * return: A label positioned at x, y with string label
      */
-    public createText(x, y, label): Phaser.Text {
+    public createText(x, y, label, fontSize = 24): Phaser.Text {
         let text = this.game.add.text(x, y, label, {
-            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            font: fontSize + 'px ' + Assets.GoogleWebFonts.Roboto,
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3
