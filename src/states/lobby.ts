@@ -157,12 +157,7 @@ export default class Lobby extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
-        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, this.room, {
-            font: '48px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, this.room, 48);
         title.anchor.setTo(0.5, 0.5);
 
         this.initBlueTeamPanels();
@@ -199,12 +194,7 @@ export default class Lobby extends Phaser.State {
         spritePosY = teamtiles[player.tile].image.centerY + 16;
 
         // set up label of the player
-        let name = this.game.add.text(namePosX, namePosY, player.name, {
-            font: '14px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        let name = this.buttonUtil.createText(namePosX, namePosY, player.name, 14);
         name.anchor.setTo(0.5, 0.5);
 
         let sprite = this.game.add.sprite(spritePosX, spritePosY, frame);
@@ -225,12 +215,7 @@ export default class Lobby extends Phaser.State {
     }
 
     private initBlueTeamPanels(): void {
-        let label = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Blue', {
-            font: '32px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        let label = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Blue', 32);
         label.anchor.setTo(1.25, 4.0);
 
         let n: number = 0;
@@ -249,12 +234,7 @@ export default class Lobby extends Phaser.State {
     }
 
     private initRedTeamPanels(): void {
-        let label = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Red', {
-            font: '32px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        let label = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Red', 32);
         label.anchor.setTo(-0.32, 4.0);
 
         let n: number = 0;

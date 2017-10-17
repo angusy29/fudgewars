@@ -508,7 +508,7 @@ export default class Game extends Phaser.State {
     private loadUI(): void {
         // Ping
         this.pingText = this.game.add.text(0, 0, '', {
-            font: '8px ' + Assets.GoogleWebFonts.Roboto,
+            font: '8px ' + 'Arial',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
@@ -628,20 +628,10 @@ export default class Game extends Phaser.State {
             overlayImg.anchor.setTo(0.5, 1);
             overlayImg.visible = false;
 
-            let text: Phaser.Text = this.game.add.text(centerX, centerY, '', {
-                font: '16px ' + Assets.GoogleWebFonts.Roboto,
-                fill: '#ffffff',
-                stroke: '#000000',
-                strokeThickness: 3,
-            });
+            let text: Phaser.Text = this.buttonUtil.createText(centerX, centerY, '', 16);
             text.anchor.setTo(0.5);
 
-            let buttonText: Phaser.Text = this.game.add.text(centerX + width / 2, centerY + height / 2 + 7, skill.button, {
-                font: '8px ' + Assets.GoogleWebFonts.Roboto,
-                fill: '#ffffff',
-                stroke: '#000000',
-                strokeThickness: 3,
-            });
+            let buttonText: Phaser.Text = this.buttonUtil.createText(centerX + width / 2, centerY + height / 2 + 7, skill.button, 8);
             buttonText.anchor.setTo(1);
 
             skill.ui = {

@@ -47,20 +47,10 @@ export default class LobbySelection extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
-        let title: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'Select a lobby', {
-            font: '48px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'Select a lobby', 48);
         title.anchor.setTo(0.5, 0.5);
 
-        this.noLobbyText = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 'There are currently no lobbies.', {
-            font: '36px ' + Assets.GoogleWebFonts.Roboto,
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
+        this.noLobbyText = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'There are currently no lobbies.', 36);
         this.noLobbyText.anchor.setTo(0.5, 0.5);
         this.noLobbyText.visible = false;
 
@@ -128,14 +118,14 @@ export default class LobbySelection extends Phaser.State {
                 button.height = boxH;
 
                 let roomName = this.game.add.text(button.x + 14, button.y + 10, room, {
-                    font: '24px ' + Assets.GoogleWebFonts.Roboto,
+                    font: '24px ' + 'Arial',
                     fill: '#ffffff',
                     stroke: '#000000',
                     strokeThickness: 3,
                 }, group);
 
                 let roomCapacity = this.game.add.text(roomName.x, roomName.y + 32, allRooms[room].playerCount + ' / 12 players', {
-                    font: '16px ' + Assets.GoogleWebFonts.Roboto,
+                    font: '16px ' + 'Arial',
                     fill: '#ffffff',
                     stroke: '#000000',
                     strokeThickness: 3,
@@ -143,7 +133,7 @@ export default class LobbySelection extends Phaser.State {
 
                 let progressText = allRooms[room].isPlaying === true ? 'In progress' : 'In lobby';
                 let roomProgress = this.game.add.text(roomCapacity.x, roomCapacity.y + 42, progressText, {
-                    font: '16px ' + Assets.GoogleWebFonts.Roboto,
+                    font: '16px ' + 'Arial',
                     fill: '#ffffff',
                     stroke: '#000000',
                     strokeThickness: 3,
