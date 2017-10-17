@@ -103,14 +103,28 @@
 
     .hidden {
       display: none !important;
-      visibility: hidden !important;
+      /* visibility: hidden !important; */
+    }
+
+    .minimize {
+      height: 32px;
+      overflow-y: hidden;
+
+    }
+
+    .chatbox .header {
+      cursor: pointer;
+    }
+
+    .minimize .input-box, .minimize .chatlogs {
+      display: none !important;
     }
   </style>
 </head>
 <body>
   <game></game>
-  <div class="chatbox mr-5 hidden" id="chatbox">
-    <div class="header text-center py-1 pl-2">
+  <div class="chatbox mr-5 minimize hidden" id="chatbox">
+    <div class="header text-center py-1 pl-2" id="chatbox-tab">
       Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
     </div>
     <div class="chatlogs" id="chatlogs">

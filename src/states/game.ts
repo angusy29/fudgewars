@@ -157,7 +157,11 @@ export default class Game extends Phaser.State {
                 $('#chatbox_input').val('')
             });
 
-            
+            $('#chatbox').removeClass('hidden');
+
+            $('#chatbox-tab').on('click', () => {
+                this.toggleChatbox();
+            });
         });
 
     }
@@ -241,16 +245,6 @@ export default class Game extends Phaser.State {
         });
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
 
-
-
-
-
-        // testing send message to server
-        // setInterval(() => {
-            // this.sendMessage('testing message');
-        // }, 500);
-
-
         // receive a chatroom message to be display in the chatroom
         socket.on('chatroom_msg', (data) => {
             // console.log('chatroom_msg', data.sender, data.msg);
@@ -275,22 +269,24 @@ export default class Game extends Phaser.State {
 
     private toggleChatbox(): void {
         this.chatboxOn = !(this.chatboxOn);
-        $('#chatbox').toggleClass('hidden');
-        if (!($('#chatbox').hasClass('hidden'))) {
+        $('#chatbox').toggleClass('minimize');
+        if (!($('#chatbox').hasClass('minimize'))) {
             $('#chatbox_input').focus();
         }
     }
 
     private sendMessage(text: string): void {
-        this.socket.emit('chatroom_msg', text);
-        let chatlogs = $('#chatlogs');
-        chatlogs.append(
-        '<div class="msg outgoing">' +
-          '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
-          '<div class="content">' + text + '</div>' +
-        '</div>'
-        );
-        $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
+        if (text != '') {
+            this.socket.emit('chatroom_msg', text);
+            let chatlogs = $('#chatlogs');
+            chatlogs.append(
+            '<div class="msg outgoing">' +
+              '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
+              '<div class="content">' + text + '</div>' +
+            '</div>'
+            );
+            $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
+        }
     }
 
     private addAndPlayAlert(text: string) {
