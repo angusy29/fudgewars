@@ -40,6 +40,7 @@ module.exports = class Player extends Collidable {
 
         this.sword = new Sword(world, this);
         this.kills = 0;
+        this.deaths = 0;
     }
 
     static get MAX_HEALTH() {
@@ -98,6 +99,7 @@ module.exports = class Player extends Collidable {
         if (this._health <= 0) {
             this._health = 0;
             this.alive = false;
+            this.deaths += 1;
         } else {
             this.alive = true;
         }
@@ -255,6 +257,7 @@ module.exports = class Player extends Collidable {
             sword: this.sword.getRep(toId),
             respawnTime: this.respawnTime,
             kills: this.kills,
+            deaths: this.deaths,
         }
 
         return rep;
