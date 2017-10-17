@@ -551,7 +551,7 @@ export default class Game extends Phaser.State {
         scoreBackground.alpha = 0.5;
         this.scoreBoardGroup.add(scoreBackground);
         this.scoreBoardGroup.fixedToCamera = true;
-        // this.scoreBoardGroup.visible = false;
+        this.scoreBoardGroup.visible = false;
         this.scoreBoardData = {};
         this.scoreBoardData.blueText = [];
         this.scoreBoardData.redText = [];
