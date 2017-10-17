@@ -1,16 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title><%= htmlWebpackPlugin.options.title %></title>
+  <meta charset="UTF-8">
+  <title><%= htmlWebpackPlugin.options.title %></title>
 
-    <style>
-        body {
-            background-color: black;
-            margin: 0px;/*This removes the border around the canvas that Phaser adds, making the game actually take up all the available space*/
-        }
-    </style>
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+    body {
+      background-color: black;
+      margin: 0px;/*This removes the border around the canvas that Phaser adds, making the game actually take up all the available space*/
+      position: relative;
+    }
+
+
+    .chatbox {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+
+      width: 280px;
+      height: 400px;
+      background: rgba(0, 132, 255, 0.5);
+      color: white;
+
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .chatbox .header {
+      background: rgba(0, 132, 255, 0.2);
+      min-height: 20px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .chatbox .chatlogs {
+      overflow: scroll;
+      height: 330px;
+    }
+
+    .chatbox .input-box {
+      height: 38px;
+      position: relative;
+    }
+
+    .chatbox .input-box input {
+      color: rgb(255, 255, 255);
+      background: rgba(0,0,0,0.2);
+      border: 0px;
+    }
+
+    .chatbox .input-box input::-webkit-input-placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .chatbox .msg {
+      margin: 6px 35px;
+      font-size: 14px;
+    }
+
+
+    .chatbox .msg.incoming {
+      text-align: left;
+    }
+
+    .chatbox .msg.outgoing {
+      text-align: right;
+    }
+
+    .chatbox .msg .sender-name {
+      font-size: 12px;
+      opacity: 0.8;
+      margin: 0 0;
+    }
+
+    .chatbox .msg .content {
+      font-size: 15px;
+      opacity: 1;
+      margin-top: -3px;
+    }
+
+    .chatbox .msg.incoming .content {
+      margin-right: 25px;
+    }
+
+    .chatbox .msg.outgoing .content {
+      margin-left: 25px;
+    }
+
+    .chatbox .input-box .down-btn {
+      position: absolute;
+      bottom: 43px;
+      right: 8px;
+      cursor: pointer;
+
+    }
+
+    .hidden {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  </style>
 </head>
 <body>
+  <game></game>
+  <div class="chatbox mr-5 hidden" id="chatbox">
+    <div class="header text-center py-1 pl-2">
+      Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
+    </div>
+    <div class="chatlogs" id="chatlogs">
+      <!-- <div class="msg incoming">
+        <div class="sender-name">kelvin</div>
+        <div class="content">fadsfadsf</div>
+      </div>
+      <div class="msg outgoing">
+        <div class="sender-name">kelvin</div>
+        <div class="content">fadsfadsf</div>
+      </div> -->
+    </div>
+    <div class="input-box d-block">
+      <div class="down-btn" id="down-btn">
+        <i class="fa fa-angle-down fa-fw fa-lg" aria-hidden="true"></i>
+      </div>
+      <form id="chatbox_form">
+        <input type="submit" style="display: none" />
+        <div class="input-group">
+          <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatbox_input">
+          <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
+          </span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <script>
+  $(document).ready(() => {
+
+  });
+  </script>
+
 </body>
 </html>

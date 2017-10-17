@@ -5,6 +5,8 @@ import Flag from './flag';
 import ButtonUtil from './buttonutil';
 import CustomButton from './custombutton';
 
+import * as $ from 'jquery';
+
 // TODO have a single file for both server/client constants?
 const COOLDOWNS = {
     hook: 5,
@@ -74,6 +76,8 @@ export default class Game extends Phaser.State {
     static readonly BLUE = 0;
     static readonly RED = 1;
 
+    private chatboxOn = false;
+
     public create(): void {
         // on down keypress, call onDown function
         // on up keypress, call the onUp function
@@ -133,6 +137,29 @@ export default class Game extends Phaser.State {
         this.registerSocketEvents(socket);
 
         this.room = room;
+
+
+        $(document).ready(() => {
+            $('#down-btn').on('click', () => {
+                let chatlogs = $('#chatlogs');
+                if (chatlogs.data('scrolled') === undefined) {
+                  $('#chatlogs').data('scrolled', true);
+                } else {
+                    $('#chatlogs').data('scrolled', !($('#chatlogs').data('scrolled')));
+                    $('#down-btn').toggleClass('text-muted');
+                }
+            });
+
+            $('#chatbox_form').submit((event) => {
+                event.preventDefault();
+                // console.log($('#chatbox_input').val());
+                this.sendMessage($('#chatbox_input').val());
+                $('#chatbox_input').val('')
+            });
+
+            
+        });
+
     }
 
 
@@ -213,6 +240,57 @@ export default class Game extends Phaser.State {
             this.pingTime = Math.round(Date.now() - this.pingStartTime);
         });
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
+
+
+
+
+
+        // testing send message to server
+        // setInterval(() => {
+            // this.sendMessage('testing message');
+        // }, 500);
+
+
+        // receive a chatroom message to be display in the chatroom
+        socket.on('chatroom_msg', (data) => {
+            // console.log('chatroom_msg', data.sender, data.msg);
+            // display message
+            $(document).ready(() => {
+                let chatlogs = $('#chatlogs');
+                chatlogs.append(
+                '<div class="msg incoming">' +
+                  '<div class="sender-name">' + this.players[data.sender].nameText.text + '</div>' +
+                  '<div class="content">' + data.msg + '</div>' +
+                '</div>'
+                );
+
+                // console.log($('#chatlogs').data('scrolled') === undefined, $('#chatlogs').data('scrolled') == false);
+                if ($('#chatlogs').data('scrolled') === undefined || $('#chatlogs').data('scrolled') == false) {
+                    // console.log('auto scroll', $('#chatlogs').prop('scrollHeight'));
+                    $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
+                }
+            });
+        });
+    }
+
+    private toggleChatbox(): void {
+        this.chatboxOn = !(this.chatboxOn);
+        $('#chatbox').toggleClass('hidden');
+        if (!($('#chatbox').hasClass('hidden'))) {
+            $('#chatbox_input').focus();
+        }
+    }
+
+    private sendMessage(text: string): void {
+        this.socket.emit('chatroom_msg', text);
+        let chatlogs = $('#chatlogs');
+        chatlogs.append(
+        '<div class="msg outgoing">' +
+          '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
+          '<div class="content">' + text + '</div>' +
+        '</div>'
+        );
+        $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
     }
 
     private addAndPlayAlert(text: string) {
@@ -378,16 +456,16 @@ export default class Game extends Phaser.State {
         this.isDown[e.keyCode] = true;
         switch (e.keyCode) {
             case 87:    // w
-                this.socket.emit('keydown', 'up');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'up');
                 break;
             case 65:    // a
-                this.socket.emit('keydown', 'left');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'left');
                 break;
             case 83:    // s
-                this.socket.emit('keydown', 'down');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'down');
                 break;
             case 68:    // d
-                this.socket.emit('keydown', 'right');
+                if (!this.chatboxOn) this.socket.emit('keydown', 'right');
                 break;
             case 69:    // e
                 this.scoreBoardGroup.visible = true;
@@ -400,6 +478,9 @@ export default class Game extends Phaser.State {
                         this.showMenu(false);
                     }
                 }
+                break;
+            case 18:     // alt, to toggle chatbox
+                this.toggleChatbox();
                 break;
             default:
                 break;

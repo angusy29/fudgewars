@@ -210,6 +210,21 @@ module.exports = class World {
         socket.on('game_quit', () => {
             this.disconnectPlayer(socket, player);
         });
+
+        // receive chatroom message from player
+        socket.on('chatroom_msg', (msg) => {
+            // relay message to other player in the team
+            for (let id in this.players) {
+                let p = this.players[id]
+                if (p.id != player.id && p.team == player.team) {
+                    // broadcast message to other player in the same team
+                    socket.broadcast.to(p.id).emit('chatroom_msg', {
+                        'sender': player.id,
+                        'msg' : msg
+                    });
+                }
+            }
+        });
     }
 
     disconnectPlayer(socket, player) {

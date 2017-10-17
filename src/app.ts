@@ -52,7 +52,7 @@ function startApp(): void {
         width: gameWidth,
         height: gameHeight,
         renderer: Phaser.AUTO,
-        parent: '',
+        parent: 'game',
         resolution: 1
     };
 
