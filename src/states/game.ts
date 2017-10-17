@@ -259,7 +259,7 @@ export default class Game extends Phaser.State {
             // display message
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
-                et playerName = this.players[data.sender].nameText.text;
+                let playerName = this.players[data.sender].nameText.text;
                 if (playerName == '')
                     playerName = 'no name';
                 chatlogs.append(
