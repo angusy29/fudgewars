@@ -467,8 +467,11 @@ export default class Game extends Phaser.State {
             case 68:    // d
                 if (!this.chatboxOn) this.socket.emit('keydown', 'right');
                 break;
-            case 69:    // e
-                this.scoreBoardGroup.visible = true;
+            case 9:    // tab
+                if (!this.chatboxOn) {
+                    this.scoreBoardGroup.visible = true;
+                    e.preventDefault();
+                }
                 break;
             case 27:    // escape
                 if (!this.gameOver) {
@@ -505,8 +508,9 @@ export default class Game extends Phaser.State {
             case 68:    // d
                 this.socket.emit('keyup', 'right');
                 break;
-            case 69:    // e
+            case 9:    // tab
                 this.scoreBoardGroup.visible = false;
+                e.preventDefault();
                 break;
             default:
                 break;
