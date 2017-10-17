@@ -301,7 +301,7 @@ export default class Game extends Phaser.State {
                 this.scoreBoardData.blueText[i].text = '';
             }
             if (i < redText.length) {
-                this.scoreBoardData.redText[i].text = redText[i];
+                this.scoreBoardData.redText[i].text = redText[i].text;
             } else {
                 this.scoreBoardData.redText[i].text = '';
             }
