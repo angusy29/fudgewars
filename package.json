@@ -40,6 +40,7 @@
     "express": "^4.15.4",
     "file-loader": "0.11.2",
     "html-webpack-plugin": "2.29.0",
+    "jquery": "^3.2.1",
     "nodemon": "^1.12.0",
     "npm-check": "5.4.5",
     "phaser-ce": "2.8.3",
