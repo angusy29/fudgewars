@@ -251,7 +251,6 @@ export default class Player {
             // Update status to dead the first time we receive it
             this.alive = false;
             this.changeVisiblity(false);
-            this.deaths += 1;
         } else if (!this.alive && this.health > 0) {
             // Update status to alive the first time we receive it
             this.alive = true;
