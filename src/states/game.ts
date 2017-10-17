@@ -461,6 +461,7 @@ export default class Game extends Phaser.State {
      */
     private onDown(e: KeyboardEvent): void {
         if (this.isDown[e.keyCode]) {
+            e.preventDefault();
             return;
         }
         this.isDown[e.keyCode] = true;
@@ -480,8 +481,8 @@ export default class Game extends Phaser.State {
             case 9:    // tab
                 if (!this.chatboxOn) {
                     this.scoreBoardGroup.visible = true;
-                    e.preventDefault();
                 }
+                e.preventDefault();
                 break;
             case 27:    // escape
                 if (!this.gameOver) {
@@ -494,6 +495,7 @@ export default class Game extends Phaser.State {
                 break;
             case 18:     // alt, to toggle chatbox
                 this.toggleChatbox();
+                e.preventDefault();
                 break;
             default:
                 break;
