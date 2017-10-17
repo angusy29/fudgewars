@@ -139,6 +139,7 @@ module.exports = class Lobby {
             this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
+            socket.leave(this.room);
         });
 
         // If player clicks on back
@@ -147,7 +148,7 @@ module.exports = class Lobby {
             this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
-            // socket.leave(this.room); // doesn't seem to do anything
+            socket.leave(this.room);
         });
 
     }

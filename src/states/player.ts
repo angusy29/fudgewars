@@ -8,6 +8,7 @@ export default class Player {
     id: any;
     team: number;
     world: Game;
+    name: string;
     nameText: Phaser.Text;         // child of sprite
     private health: number;    // Note: Use the getter and setter to keep alive status accurate
     healthBar: Phaser.Group;   // health bar of the sprite
@@ -19,6 +20,8 @@ export default class Player {
     sword: Sword;
     trailEmitter: any;
     bloodEmitter: any;
+    kills: number;
+    deaths: number;
 
     // width of healthbar is 40
     static readonly HEALTHBAR_WIDTH = 40;
@@ -41,6 +44,9 @@ export default class Player {
         this.alive = false;
         this.sprite = this.createSprite(x, y, name);
         this.healthBar = this.createHealthBar();
+        this.kills = 0;
+        this.deaths = 0;
+        this.name = name;
 
         this.hook = new Hook(world, this);
         this.sword = new Sword(world, this);
@@ -70,6 +76,8 @@ export default class Player {
 
     public update(update: any): void {
         this.setHealth(update.health);
+        this.kills = update.kills;
+        this.deaths = update.deaths;
 
         // walk particles
         if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
@@ -130,7 +138,7 @@ export default class Player {
 
         // set up label of the player
         this.nameText = this.world.game.add.text(x, y - Player.PLAYER_NAME_Y_OFFSET, name, {
-            font: '14px ' + Assets.GoogleWebFonts.Roboto
+            font: '14px ' + 'Arial'
         });
         this.nameText.anchor.setTo(0.5, 0.5);
 

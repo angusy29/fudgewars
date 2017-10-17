@@ -106,6 +106,11 @@ io.on('connection', function(socket) {
         }
 
         let world = allRooms[room].world;
+        if (world.gameTime <= 0) {
+            console.log('Game over');
+            return;
+        }
+
         world.sendInitialData(socket);
         world.addPlayer(socket);
     });

@@ -16,6 +16,16 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/demo.png'); }
     }
+    export class ImagesGreenBoxCheckmark {
+        static getName(): string { return 'green_boxCheckmark'; }
+
+        static getPNG(): string { return require('assets/images/green_boxCheckmark.png'); }
+    }
+    export class ImagesGreyBox {
+        static getName(): string { return 'grey_box'; }
+
+        static getPNG(): string { return require('assets/images/grey_box.png'); }
+    }
     export class ImagesMouse {
         static getName(): string { return 'mouse'; }
 
