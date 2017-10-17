@@ -45,7 +45,7 @@ export default class ButtonUtil {
      */
     public createText(x, y, label, fontSize = 24): Phaser.Text {
         let text = this.game.add.text(x, y, label, {
-            font: fontSize + 'px ' + Assets.GoogleWebFonts.Roboto,
+            font: fontSize + 'px ' + 'Arial',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3
@@ -66,7 +66,7 @@ export default class ButtonUtil {
 
     public createSoundBar(): Phaser.Group {
         let soundText: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 56, 'Sound', {
-            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            font: '24px ' + 'Arial',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
