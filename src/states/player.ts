@@ -21,6 +21,7 @@ export default class Player {
     trailEmitter: any;
     bloodEmitter: any;
     kills: number;
+    deaths: number;
 
     // width of healthbar is 40
     static readonly HEALTHBAR_WIDTH = 40;
@@ -44,6 +45,7 @@ export default class Player {
         this.sprite = this.createSprite(x, y, name);
         this.healthBar = this.createHealthBar();
         this.kills = 0;
+        this.deaths = 0;
         this.name = name;
 
         this.hook = new Hook(world, this);
@@ -75,6 +77,7 @@ export default class Player {
     public update(update: any): void {
         this.setHealth(update.health);
         this.kills = update.kills;
+        this.deaths = update.deaths;
 
         // walk particles
         if (update.x !== this.sprite.x || update.y !== this.sprite.y) {
@@ -248,6 +251,7 @@ export default class Player {
             // Update status to dead the first time we receive it
             this.alive = false;
             this.changeVisiblity(false);
+            this.deaths += 1;
         } else if (!this.alive && this.health > 0) {
             // Update status to alive the first time we receive it
             this.alive = true;

@@ -285,9 +285,9 @@ export default class Game extends Phaser.State {
             if (!player) continue;
             player.update(update);
             if (player.team === Game.BLUE) {
-                blueText.push({text: player.kills + ' ' + player.name, kills: player.kills});
+                blueText.push({text: player.kills + '/' + player.deaths + ' ' + player.name, kills: player.kills});
             } else if (player.team === Game.RED) {
-                redText.push({text: player.kills + ' ' + player.name, kills: player.kills});
+                redText.push({text: player.kills + '/' + player.deaths + ' ' + player.name, kills: player.kills});
             }
         }
 
@@ -551,7 +551,7 @@ export default class Game extends Phaser.State {
         scoreBackground.alpha = 0.5;
         this.scoreBoardGroup.add(scoreBackground);
         this.scoreBoardGroup.fixedToCamera = true;
-        // this.scoreBoardGroup.visible = false;
+        this.scoreBoardGroup.visible = false;
         this.scoreBoardData = {};
         this.scoreBoardData.blueText = [];
         this.scoreBoardData.redText = [];
