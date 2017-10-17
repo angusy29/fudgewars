@@ -154,7 +154,7 @@ export default class Game extends Phaser.State {
                 event.preventDefault();
                 // console.log($('#chatbox_input').val());
                 this.sendMessage($('#chatbox_input').val());
-                $('#chatbox_input').val('')
+                $('#chatbox_input').val('');
             });
 
             $('#chatbox').removeClass('hidden');
@@ -164,7 +164,7 @@ export default class Game extends Phaser.State {
             });
 
 
-            if (this.players[this.socket.id].team == 1) {
+            if (this.players[this.socket.id].team === 1) {
                 $('#chatbox').addClass('red');
             } else {
                 $('#chatbox').addClass('blue');
@@ -260,7 +260,7 @@ export default class Game extends Phaser.State {
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
                 let playerName = this.players[data.sender].nameText.text;
-                if (playerName == '')
+                if (playerName === '')
                     playerName = 'no name';
                 chatlogs.append(
                 '<div class="msg incoming">' +
@@ -270,7 +270,7 @@ export default class Game extends Phaser.State {
                 );
 
                 // console.log($('#chatlogs').data('scrolled') === undefined, $('#chatlogs').data('scrolled') == false);
-                if ($('#chatlogs').data('scrolled') === undefined || $('#chatlogs').data('scrolled') == false) {
+                if ($('#chatlogs').data('scrolled') === undefined || $('#chatlogs').data('scrolled') === false) {
                     // console.log('auto scroll', $('#chatlogs').prop('scrollHeight'));
                     $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
                 }
@@ -287,11 +287,11 @@ export default class Game extends Phaser.State {
     }
 
     private sendMessage(text: string): void {
-        if (text != '') {
+        if (text !== '') {
             this.socket.emit('chatroom_msg', text);
             let chatlogs = $('#chatlogs');
             let playerName = this.players[this.socket.id].nameText.text;
-            if (playerName == '')
+            if (playerName === '')
                 playerName = 'no name';
             chatlogs.append(
             '<div class="msg outgoing">' +
