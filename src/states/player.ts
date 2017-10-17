@@ -135,7 +135,7 @@ export default class Player {
 
         // set up label of the player
         this.nameText = this.world.game.add.text(x, y - Player.PLAYER_NAME_Y_OFFSET, name, {
-            font: '14px ' + Assets.GoogleWebFonts.Roboto
+            font: '14px ' + 'Arial'
         });
         this.nameText.anchor.setTo(0.5, 0.5);
 

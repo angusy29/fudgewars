@@ -66,7 +66,7 @@ export default class LobbyCreation extends Phaser.State {
 
         // create form
         this.lobbyNameInput = this.game.add['inputField']((this.game.canvas.width / 2) - (LobbyCreation.INPUTFIELD_WIDTH / 2), this.game.canvas.height / 2 - 100, {
-            font: '24px Roboto',
+            font: '24px Arial',
             width: LobbyCreation.INPUTFIELD_WIDTH,
             padding: 8,
             borderWidth: 1,
@@ -81,7 +81,7 @@ export default class LobbyCreation extends Phaser.State {
         // game length label and input
         let gameLengthLabel: Phaser.Text = this.buttonUtil.createText((this.game.canvas.width / 2) - 108, this.game.canvas.height / 2, 'Game length: ');
         this.gameLengthInput = this.game.add['inputField'](gameLengthLabel.x + (gameLengthLabel.width / 2), gameLengthLabel.y - 18, {
-            font: '24px Roboto',
+            font: '24px Arial',
             width: 200,
             padding: 8,
             borderWidth: 1,
