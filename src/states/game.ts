@@ -157,7 +157,19 @@ export default class Game extends Phaser.State {
                 $('#chatbox_input').val('')
             });
 
-            
+            $('#chatbox').removeClass('hidden');
+
+            $('#chatbox-tab').on('click', () => {
+                this.toggleChatbox();
+            });
+
+
+            if (this.players[this.socket.id].team == 1) {
+                $('#chatbox').addClass('red');
+            } else {
+                $('#chatbox').addClass('blue');
+
+            }
         });
 
     }
@@ -241,25 +253,18 @@ export default class Game extends Phaser.State {
         });
         this.game.time.events.loop(Phaser.Timer.SECOND * 0.5, this.ping, this);
 
-
-
-
-
-        // testing send message to server
-        // setInterval(() => {
-            // this.sendMessage('testing message');
-        // }, 500);
-
-
         // receive a chatroom message to be display in the chatroom
         socket.on('chatroom_msg', (data) => {
             // console.log('chatroom_msg', data.sender, data.msg);
             // display message
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
+                et playerName = this.players[data.sender].nameText.text;
+                if (playerName == '')
+                    playerName = 'no name';
                 chatlogs.append(
                 '<div class="msg incoming">' +
-                  '<div class="sender-name">' + this.players[data.sender].nameText.text + '</div>' +
+                  '<div class="sender-name">' + playerName + '</div>' +
                   '<div class="content">' + data.msg + '</div>' +
                 '</div>'
                 );
@@ -275,22 +280,27 @@ export default class Game extends Phaser.State {
 
     private toggleChatbox(): void {
         this.chatboxOn = !(this.chatboxOn);
-        $('#chatbox').toggleClass('hidden');
-        if (!($('#chatbox').hasClass('hidden'))) {
+        $('#chatbox').toggleClass('minimize');
+        if (!($('#chatbox').hasClass('minimize'))) {
             $('#chatbox_input').focus();
         }
     }
 
     private sendMessage(text: string): void {
-        this.socket.emit('chatroom_msg', text);
-        let chatlogs = $('#chatlogs');
-        chatlogs.append(
-        '<div class="msg outgoing">' +
-          '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
-          '<div class="content">' + text + '</div>' +
-        '</div>'
-        );
-        $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
+        if (text != '') {
+            this.socket.emit('chatroom_msg', text);
+            let chatlogs = $('#chatlogs');
+            let playerName = this.players[this.socket.id].nameText.text;
+            if (playerName == '')
+                playerName = 'no name';
+            chatlogs.append(
+            '<div class="msg outgoing">' +
+              '<div class="sender-name">' + playerName + '</div>' +
+              '<div class="content">' + text + '</div>' +
+            '</div>'
+            );
+            $('#chatlogs').animate({ scrollTop: $('#chatlogs').prop('scrollHeight') }, 100);
+        }
     }
 
     private addAndPlayAlert(text: string) {
