@@ -162,6 +162,14 @@ export default class Game extends Phaser.State {
             $('#chatbox-tab').on('click', () => {
                 this.toggleChatbox();
             });
+
+
+            if (this.players[this.socket.id].team == 1) {
+                $('#chatbox').addClass('red');
+            } else {
+                $('#chatbox').addClass('blue');
+
+            }
         });
 
     }
@@ -251,9 +259,12 @@ export default class Game extends Phaser.State {
             // display message
             $(document).ready(() => {
                 let chatlogs = $('#chatlogs');
+                et playerName = this.players[data.sender].nameText.text;
+                if (playerName == '')
+                    playerName = 'no name';
                 chatlogs.append(
                 '<div class="msg incoming">' +
-                  '<div class="sender-name">' + this.players[data.sender].nameText.text + '</div>' +
+                  '<div class="sender-name">' + playerName + '</div>' +
                   '<div class="content">' + data.msg + '</div>' +
                 '</div>'
                 );
@@ -279,9 +290,12 @@ export default class Game extends Phaser.State {
         if (text != '') {
             this.socket.emit('chatroom_msg', text);
             let chatlogs = $('#chatlogs');
+            let playerName = this.players[this.socket.id].nameText.text;
+            if (playerName == '')
+                playerName = 'no name';
             chatlogs.append(
             '<div class="msg outgoing">' +
-              '<div class="sender-name">' + this.players[this.socket.id].nameText.text + '</div>' +
+              '<div class="sender-name">' + playerName + '</div>' +
               '<div class="content">' + text + '</div>' +
             '</div>'
             );

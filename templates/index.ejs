@@ -39,9 +39,37 @@
       color: rgba(255, 255, 255, 0.8);
     }
 
+    .chatbox.blue {
+      background: rgba(0, 132, 255, 0.5);
+    }
+
+    .chatbox.blue .header{
+      background: rgba(0, 132, 255, 0.2);
+    }
+
+    .chatbox.blue .send-btn{
+      background: rgba(0, 132, 255, 1);
+    }
+
+    .chatbox.red {
+      background: rgba(255, 46, 46, 0.5);
+    }
+
+    .chatbox.red .header {
+      background: rgba(255, 46, 46, 0.2);
+    }
+
+    .chatbox.red .send-btn {
+      background: red;
+    }
+
     .chatbox .chatlogs {
       overflow: scroll;
       height: 330px;
+    }
+
+    .chatbox .send-btn {
+      border: 0px;
     }
 
     .chatbox .input-box {
@@ -146,7 +174,7 @@
         <div class="input-group">
           <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatbox_input">
           <span class="input-group-btn">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
+            <button class="btn btn-primary send-btn" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
           </span>
         </div>
       </form>
