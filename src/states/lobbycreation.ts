@@ -94,7 +94,7 @@ export default class LobbyCreation extends Phaser.State {
         });
 
         // game mode labels
-        
+
         // map size labels
         let mapSizeLabel: Phaser.Text = this.buttonUtil.createText(gameLengthLabel.x, gameLengthLabel.y + 64, 'Map size: ');
         for (let i = 0; i < this.mapSizes.length; i++) {
@@ -104,6 +104,7 @@ export default class LobbyCreation extends Phaser.State {
             if (i === LobbyCreation.MEDIUM) {
                 this.mapSizes[i].checkbox = this.game.add.button(label.x + (label.width / 2), label.y - 18, 'green_boxCheckmark',
                                                 this.changeMapSize.bind(this, i), this);
+                this.chosenMapSize = i;
             } else {
                 this.mapSizes[i].checkbox = this.game.add.button(label.x + (label.width / 2), label.y - 18, 'grey_box',
                                                 this.changeMapSize.bind(this, i), this);
@@ -160,7 +161,13 @@ export default class LobbyCreation extends Phaser.State {
 
     private createLobby(): void {
         this.game.sound.play('click1');
-        this.socket.emit('room', { 'room': this.lobbyNameInput.value, 'isCreating': true });
+        this.socket.emit('room', {
+            room: this.lobbyNameInput.value,
+            isCreating: true,
+            gameLength: this.gameLengthInput.value,
+            mapSize: this.chosenMapSize,
+            friendlyFire: this.isFriendlyFire,
+        });
 
         // we need to check if this lobby already exists
         this.socket.on('room_join', () => {

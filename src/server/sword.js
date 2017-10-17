@@ -40,7 +40,7 @@ module.exports = class Sword extends Collidable {
             for (let id in this.world.players) {
                 let other = this.world.players[id];
                 if (this.player.id === other.id) continue;
-                if (this.player.team === other.team) continue;
+                if (this.player.team === other.team && !this.world.friendlyFire) continue;
 
                 // Collision using with point vs rectangle check
                 // Check collision near the 'end' of the sword

@@ -41,7 +41,7 @@ io.on('connection', function(socket) {
             // still inefficient because we're creating the world even if the game hasn't started :/
             // agile gods pls fix... jk.
             let lobby = new Lobby(io, data.room);
-            let world = new World(io, data.room, lobby, 786 * 2, 640 * 2, 64);
+            let world = new World(io, lobby, data.room, data.gameLength, data.mapSize, data.friendlyFire, 786 * 2, 640 * 2, 64);
             allRooms[data.room] = { 'lobby': lobby, 'world': world };
         } else if (data.room in allRooms && data.isCreating) {
             // room already exists
