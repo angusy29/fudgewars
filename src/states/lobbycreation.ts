@@ -117,7 +117,6 @@ export default class LobbyCreation extends Phaser.State {
         let friendlyFireLabel: Phaser.Text = this.buttonUtil.createText(mapSizeLabel.x, mapSizeLabel.y + 96, 'Friendly fire: ');
         this.friendlyFireButton = this.game.add.button(friendlyFireLabel.x + (friendlyFireLabel.width / 2),
                                         friendlyFireLabel.y - 18, 'grey_box', this.setFriendlyFire, this);
-        
 
         // if a room already exists of this name, then pop an error message
         this.roomExistText = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 + 192, 'Lobby with this name already exists!');

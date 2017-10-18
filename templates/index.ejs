@@ -39,9 +39,37 @@
       color: rgba(255, 255, 255, 0.8);
     }
 
+    .chatbox.blue {
+      background: rgba(0, 132, 255, 0.5);
+    }
+
+    .chatbox.blue .header{
+      background: rgba(0, 132, 255, 0.2);
+    }
+
+    .chatbox.blue .send-btn{
+      background: rgba(0, 132, 255, 1);
+    }
+
+    .chatbox.red {
+      background: rgba(255, 46, 46, 0.5);
+    }
+
+    .chatbox.red .header {
+      background: rgba(255, 46, 46, 0.2);
+    }
+
+    .chatbox.red .send-btn {
+      background: red;
+    }
+
     .chatbox .chatlogs {
       overflow: scroll;
       height: 330px;
+    }
+
+    .chatbox .send-btn {
+      border: 0px;
     }
 
     .chatbox .input-box {
@@ -103,14 +131,28 @@
 
     .hidden {
       display: none !important;
-      visibility: hidden !important;
+      /* visibility: hidden !important; */
+    }
+
+    .minimize {
+      height: 32px;
+      overflow-y: hidden;
+
+    }
+
+    .chatbox .header {
+      cursor: pointer;
+    }
+
+    .minimize .input-box, .minimize .chatlogs {
+      display: none !important;
     }
   </style>
 </head>
 <body>
   <game></game>
-  <div class="chatbox mr-5 hidden" id="chatbox">
-    <div class="header text-center py-1 pl-2">
+  <div class="chatbox mr-5 minimize hidden" id="chatbox">
+    <div class="header text-center py-1 pl-2" id="chatbox-tab">
       Team Chat <i class="fa fa-commenting-o fa-fw fa-lg" aria-hidden="true"></i>
     </div>
     <div class="chatlogs" id="chatlogs">
@@ -132,7 +174,7 @@
         <div class="input-group">
           <input type="text" class="form-control form-control-sm px-3" placeholder="Type a message ..." id="chatbox_input">
           <span class="input-group-btn">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
+            <button class="btn btn-primary send-btn" type="submit"><i class="fa fa-paper-plane-o fa-fw" aria-hidden="true"></i></button>
           </span>
         </div>
       </form>
