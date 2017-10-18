@@ -56,8 +56,8 @@ export default class Lobby extends Phaser.State {
 
                 // render the tick image next to the player if they are ready
                 if (player.isReady) {
-                    if (!this.players[player.id]) return;
-                    if (this.players[player.id].readyImg !== null) return;
+                    if (!this.players[player.id]) continue;
+                    if (this.players[player.id].readyImg !== null) continue;
 
                     let obj;
                     if (player.team === Lobby.BLUE) obj = this.blueTiles;
