@@ -2,6 +2,9 @@ import * as Assets from '../assets';
 import * as io from 'socket.io-client';
 import Player from './player';
 import Flag from './flag';
+import Item from './item';
+import HealthPot from './healthpot';
+import CooldownPot from './cooldownpot';
 import ButtonUtil from './buttonutil';
 import CustomButton from './custombutton';
 
@@ -38,8 +41,9 @@ export default class Game extends Phaser.State {
     public me: Player;
     private gameOver: boolean;
     private map: Phaser.Tilemap;
-    private players: any;
-    private flags: Flag[];
+    private players: any;               // all players, mapping from socket id to player object
+    private flags: Flag[];              // red flag and blue flag
+    private items: any;        // items on the map
 
     private flagGroup: Phaser.Group;
     private skillGroup: Phaser.Group;
@@ -90,6 +94,7 @@ export default class Game extends Phaser.State {
         this.alertQueue = [];
         this.players = {};
         this.flags = [];
+        this.items = {};
         this.isDown = {};
         this.nextFrame = 0;
         this.isShowMenu = false;
@@ -163,7 +168,7 @@ export default class Game extends Phaser.State {
                 this.toggleChatbox();
             });
 
-
+            // this is undefined, you need to set it in create not init
             if (this.players[this.socket.id].team === 1) {
                 $('#chatbox').addClass('red');
             } else {
@@ -395,7 +400,6 @@ export default class Game extends Phaser.State {
             }
         }
 
-
         this.game.world.bringToTop(this.playerGroup);
         this.game.world.bringToTop(this.weaponGroup);
         this.game.world.bringToTop(this.particleGroup);
@@ -418,6 +422,21 @@ export default class Game extends Phaser.State {
             let flag = this.flags[update.colorIdx];
             if (!flag) continue;
             flag.update(update);
+        }
+
+        for (let item of data.items) {
+            if (!this.items[item.id]) {
+                if (item.type === 'health') {
+                    this.items[item.id] = new HealthPot(this, item.x, item.y);
+                } else if (item.type === 'cooldown') {
+                    this.items[item.id] = new CooldownPot(this, item.x, item.y);
+                }
+            }
+
+            if (this.items[item.id] && item.isPickedUp) {
+                this.items[item.id].destroy();
+                delete this.items[item.id];
+            }
         }
     }
 

@@ -15,6 +15,9 @@ import HowToPlay from './states/howtoplay';
 import Options from './states/options';
 import Game from './states/game';
 import ButtonUtil from './states/buttonutil';
+import Item from './states/item';
+import HealthPot from './states/healthpot';
+import CooldownPot from './states/cooldownpot';
 import * as Utils from './utils/utils';
 import * as Assets from './assets';
 
