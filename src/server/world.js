@@ -158,7 +158,7 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
-        let itemReps = [];      
+        let itemReps = [];
         for (let id in this.items) {
             itemReps.push(this.items[id].getRep());
         }
