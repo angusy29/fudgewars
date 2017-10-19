@@ -94,6 +94,10 @@ export default class Game extends Phaser.State {
         this.nextFrame = 0;
         this.isShowMenu = false;
 
+        this.scoreBoardData = {};
+        this.scoreBoardData.blueText = [];
+        this.scoreBoardData.redText = [];
+
         this.skills = {
             hook: {
                 name: 'hook',
@@ -649,9 +653,6 @@ export default class Game extends Phaser.State {
         this.scoreBoardGroup.add(scoreBackground);
         this.scoreBoardGroup.fixedToCamera = true;
         this.scoreBoardGroup.visible = false;
-        this.scoreBoardData = {};
-        this.scoreBoardData.blueText = [];
-        this.scoreBoardData.redText = [];
         this.scoreBoardData.scoreBackground = scoreBackground;
         let textHeight = (this.game.height - 100) / 6;
         for (let i: number = 1; i < 7; i++) {
