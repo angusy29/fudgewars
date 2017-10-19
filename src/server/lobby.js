@@ -86,6 +86,8 @@ module.exports = class Lobby {
                 this.timeout = null;
                 this.isPlaying = true;
                 this.io.sockets.in(this.room).emit('lobby_start');
+            } else if (this.isPlaying) {
+                socket.emit('lobby_start');
             }
         });
 
