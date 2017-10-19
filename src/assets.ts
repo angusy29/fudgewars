@@ -11,10 +11,30 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/attack_sword.png'); }
     }
+    export class ImagesBaseBlue {
+        static getName(): string { return 'base_blue'; }
+
+        static getPNG(): string { return require('assets/images/base_blue.png'); }
+    }
+    export class ImagesBaseRed {
+        static getName(): string { return 'base_red'; }
+
+        static getPNG(): string { return require('assets/images/base_red.png'); }
+    }
     export class ImagesDemo {
         static getName(): string { return 'demo'; }
 
         static getPNG(): string { return require('assets/images/demo.png'); }
+    }
+    export class ImagesFlagBlue {
+        static getName(): string { return 'flag_blue'; }
+
+        static getPNG(): string { return require('assets/images/flag_blue.png'); }
+    }
+    export class ImagesFlagRed {
+        static getName(): string { return 'flag_red'; }
+
+        static getPNG(): string { return require('assets/images/flag_red.png'); }
     }
     export class ImagesGreenBoxCheckmark {
         static getName(): string { return 'green_boxCheckmark'; }
@@ -51,10 +71,30 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/score_overlay.png'); }
     }
+    export class ImagesSelfBlue {
+        static getName(): string { return 'self_blue'; }
+
+        static getPNG(): string { return require('assets/images/self_blue.png'); }
+    }
+    export class ImagesSelfRed {
+        static getName(): string { return 'self_red'; }
+
+        static getPNG(): string { return require('assets/images/self_red.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 
         static getPNG(): string { return require('assets/images/skill_cooldown_overlay.png'); }
+    }
+    export class ImagesTeamBlue {
+        static getName(): string { return 'team_blue'; }
+
+        static getPNG(): string { return require('assets/images/team_blue.png'); }
+    }
+    export class ImagesTeamRed {
+        static getName(): string { return 'team_red'; }
+
+        static getPNG(): string { return require('assets/images/team_red.png'); }
     }
     export class ImagesTitlescreen {
         static getName(): string { return 'titlescreen'; }

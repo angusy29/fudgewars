@@ -150,8 +150,10 @@ module.exports = class World {
         }
 
         let flagReps = [];
+        let bases = [];
         for (let flag of this.flags) {
             flagReps.push(flag.getRep());
+            bases.push({team: flag.colorIdx, x:flag.startX, y:flag.startY});
         }
 
         socket.emit('loaded', {
@@ -159,6 +161,9 @@ module.exports = class World {
             terrain: this.terrain,
             players: playerReps,
             flags: flagReps,
+            bases: bases,
+            playerId: socket.id,
+            teamId: this.lobby.getPlayers()[socket.id].team,
             scores: this.numCaptures,
             gameTime: this.gameTime,
         });

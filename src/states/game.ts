@@ -49,6 +49,8 @@ export default class Game extends Phaser.State {
     private particleGroup: Phaser.Group;
     private scoreBoardGroup: Phaser.Group;
     private scoreBoardData: any;
+    private miniMapGroup: Phaser.Group;
+    private miniMapData: any;
     private uiGroup: Phaser.Group;
 
     private isDown: any;
@@ -122,6 +124,7 @@ export default class Game extends Phaser.State {
         this.particleGroup = this.game.add.group();
         this.soundGroup = this.game.add.group();
         this.scoreBoardGroup = this.game.add.group();
+        this.miniMapGroup = this.game.add.group();
         this.uiGroup = this.game.add.group();
         this.initMenu();
 
@@ -164,12 +167,7 @@ export default class Game extends Phaser.State {
             });
 
 
-            if (this.players[this.socket.id].team === 1) {
-                $('#chatbox').addClass('red');
-            } else {
-                $('#chatbox').addClass('blue');
 
-            }
         });
 
     }
@@ -346,6 +344,7 @@ export default class Game extends Phaser.State {
 
     private onLoaded(data: any): void {
         this.loadUI();
+        this.loadMiniMap(data);
         this.loadPlayers(data.players);
         this.loadWorld(data.world);
         this.loadTerrain(data.terrain);
@@ -357,6 +356,13 @@ export default class Game extends Phaser.State {
         this.game.world.sendToBack(this.flagGroup);
         this.game.world.sendToBack(this.terrainLayer);
         this.game.world.sendToBack(this.mapLayer);
+
+        // Set Chatbox colour
+        if (data.teamId === Game.RED) {
+            $('#chatbox').addClass('red');
+        } else {
+            $('#chatbox').addClass('blue');
+        }
     }
 
     public update(): void {
@@ -411,7 +417,7 @@ export default class Game extends Phaser.State {
 
     private onTick(data: any): void {
         this.data = data;
-
+        this.drawMiniMap(data);
         // Do this here instead of update because indicators get blurry from updating too quickly :(
         // update the position of the flags
         for (let update of data.flags) {
@@ -544,6 +550,107 @@ export default class Game extends Phaser.State {
             let newFlag = new Flag(this, f.x, f.y, f.colorIdx, f.captured);
             this.flags[f.colorIdx] = newFlag;
             this.flagGroup.add(newFlag.sprite);
+        }
+    }
+
+    private loadMiniMap(data: any): void {
+        this.miniMapData = {
+            mapHeight: 64 * data.world.length,
+            mapWidth: 64 * data.world[0].length,
+            playerId: data.playerId,
+            teamId: data.teamId,
+            bg: null,   // mini map background
+            self: null, // current player image
+            team: [],   // array of team images
+            flag: {},  // teamId: team flag image
+            base: {},  // teamId: team base image
+        };
+        let teamId = data.teamId;
+        let mmd = this.miniMapData;
+        let mmg = this.miniMapGroup;
+        let flagRed = Assets.Images.ImagesFlagRed.getName();
+        let baseRed = Assets.Images.ImagesBaseRed.getName();
+        let selfRed = Assets.Images.ImagesSelfRed.getName();
+        let teamRed = Assets.Images.ImagesTeamRed.getName();
+        let flagBlue = Assets.Images.ImagesFlagBlue.getName();
+        let baseBlue = Assets.Images.ImagesBaseBlue.getName();
+        let selfBlue = Assets.Images.ImagesSelfBlue.getName();
+        let teamBlue = Assets.Images.ImagesTeamBlue.getName();
+        let self = Game.BLUE === teamId ? selfBlue : selfRed;
+        let team = Game.BLUE === teamId ? teamBlue : teamRed;
+        // Background
+        mmg.add(mmd.bg = this.game.add.graphics(0, 0));
+        // Bases
+        mmd.base[data.bases[0].team] = {...data.bases[0], img: null};
+        mmd.base[data.bases[1].team] = {...data.bases[1], img: null};
+        mmg.add(mmd.base[Game.BLUE].img = this.game.add.image(0, 0, baseBlue));
+        mmg.add(mmd.base[Game.RED].img = this.game.add.image(0, 0, baseRed));
+        // Team members
+        for (let i = 0; i < 5; i++) {
+            let img = this.game.add.image(0, 0, team);
+            mmd.team.push(img);
+            mmg.add(img);
+        }
+        // Self
+        mmg.add(mmd.self = this.game.add.image(0, 0, self));
+        // Flags
+        mmg.add(mmd.flag[Game.BLUE] = this.game.add.image(0, 0, flagBlue));
+        mmg.add(mmd.flag[Game.RED] = this.game.add.image(0, 0, flagRed));
+        mmg.fixedToCamera = true;
+
+    }
+
+    private drawMiniMap(data: any): void {
+        let {mapHeight, mapWidth, playerId, teamId, bg, self, team, flag, base}
+            = this.miniMapData;
+
+        let maxWidth = 0.3 * this.game.width;
+        let maxHeight = 0.3 * this.game.height;
+        let scale = Math.min(maxWidth / mapWidth, maxHeight / mapHeight);
+        let width = mapWidth * scale;
+        let height = mapHeight * scale;
+        let x = this.game.width - width;
+        let y = this.game.height - height;
+
+        // Position and Draw mini map
+        this.miniMapGroup.cameraOffset.x = x;
+        this.miniMapGroup.cameraOffset.y = y;
+        bg.clear();
+        bg.alpha = 0.7;
+        bg.beginFill(0xffffff);
+        bg.drawRect(0, 0, width, height);
+        bg.endFill();
+
+        // Position bases
+        for (let key in base) {
+            let {x, y, img} = base[key];
+            img.x = x * scale;
+            img.y = y * scale;
+        }
+
+        // Position flag
+        for (let update of data.flags) {
+            let img = flag[update.colorIdx];
+            img.x = (update.x * scale) + 5;
+            img.y = update.y * scale;
+        }
+
+        // Position players
+        let teamTotal = 0;  // number of team players not counting self
+        for (let update of data.players) {
+            let {id, x, y} = update;
+            if (id === playerId) {
+                self.x = x * scale;
+                self.y = y * scale;
+            } else if (update.team === teamId) {
+                team[teamTotal].x = x * scale;
+                team[teamTotal].y = y * scale;
+                team[teamTotal].visible = true;
+                teamTotal++;
+            }
+        }
+        for ( ; teamTotal < 5; teamTotal++) {
+            team[teamTotal].visible = false;
         }
     }
 
