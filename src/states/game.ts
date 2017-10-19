@@ -142,40 +142,6 @@ export default class Game extends Phaser.State {
 
         this.room = room;
 
-
-        $(document).ready(() => {
-            $('#down-btn').on('click', () => {
-                let chatlogs = $('#chatlogs');
-                if (chatlogs.data('scrolled') === undefined) {
-                  $('#chatlogs').data('scrolled', true);
-                } else {
-                    $('#chatlogs').data('scrolled', !($('#chatlogs').data('scrolled')));
-                    $('#down-btn').toggleClass('text-muted');
-                }
-            });
-
-            $('#chatbox_form').submit((event) => {
-                event.preventDefault();
-                // console.log($('#chatbox_input').val());
-                this.sendMessage($('#chatbox_input').val());
-                $('#chatbox_input').val('');
-            });
-
-            $('#chatbox').removeClass('hidden');
-
-            $('#chatbox-tab').on('click', () => {
-                this.toggleChatbox();
-            });
-
-
-            if (this.players[this.socket.id].team === 1) {
-                $('#chatbox').addClass('red');
-            } else {
-                $('#chatbox').addClass('blue');
-
-            }
-        });
-
     }
 
 
@@ -387,15 +353,19 @@ export default class Game extends Phaser.State {
         redText.sort((a, b) => (b.kills - a.kills));
 
         for (let i = 0; i < 6; i++) {
-            if (i < blueText.length) {
-                this.scoreBoardData.blueText[i].text = blueText[i].text;
-            } else {
-                this.scoreBoardData.blueText[i].text = '';
+            if (this.scoreBoardData.blueText[i]) {
+                if (i < blueText.length) {
+                    this.scoreBoardData.blueText[i].text = blueText[i].text;
+                } else {
+                    this.scoreBoardData.blueText[i].text = '';
+                }
             }
-            if (i < redText.length) {
-                this.scoreBoardData.redText[i].text = redText[i].text;
-            } else {
-                this.scoreBoardData.redText[i].text = '';
+            if (this.scoreBoardData.redText[i]) {
+                if (i < redText.length) {
+                    this.scoreBoardData.redText[i].text = redText[i].text;
+                } else {
+                    this.scoreBoardData.redText[i].text = '';
+                }
             }
         }
 
@@ -452,6 +422,40 @@ export default class Game extends Phaser.State {
             this.me = player;
             player.nameText.addColor('#32CD32', 0);
             this.world.camera.follow(player.sprite);
+
+            $(document).ready(() => {
+                $('#down-btn').on('click', () => {
+                    let chatlogs = $('#chatlogs');
+                    if (chatlogs.data('scrolled') === undefined) {
+                      $('#chatlogs').data('scrolled', true);
+                    } else {
+                        $('#chatlogs').data('scrolled', !($('#chatlogs').data('scrolled')));
+                        $('#down-btn').toggleClass('text-muted');
+                    }
+                });
+
+                $('#chatbox_form').submit((event) => {
+                    event.preventDefault();
+                    // console.log($('#chatbox_input').val());
+                    this.sendMessage($('#chatbox_input').val());
+                    $('#chatbox_input').val('');
+                });
+
+                $('#chatbox').removeClass('hidden');
+
+                $('#chatbox-tab').on('click', () => {
+                    this.toggleChatbox();
+                });
+
+                if (player.team === 1) {
+                    $('#chatbox').addClass('red');
+                    $('#chatbox').removeClass('blue');
+                } else {
+                    $('#chatbox').addClass('blue');
+                    $('#chatbox').removeClass('red');
+
+                }
+            });
         }
 
         this.playerGroup.add(player.sprite);
