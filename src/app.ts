@@ -40,8 +40,8 @@ class App extends Phaser.Game {
 }
 
 function startApp(): void {
-    let gameWidth: number = DEFAULT_GAME_WIDTH;
-    let gameHeight: number = DEFAULT_GAME_HEIGHT;
+    let gameWidth: number = window.innerWidth;
+    let gameHeight: number = window.innerHeight;
 
     if (SCALE_MODE === 'USER_SCALE') {
         let screenMetrics: Utils.ScreenMetrics = Utils.ScreenUtils.calculateScreenMetrics(gameWidth, gameHeight);

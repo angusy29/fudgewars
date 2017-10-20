@@ -688,8 +688,8 @@ export default class Game extends Phaser.State {
         let scale = Math.min(maxWidth / mapWidth, maxHeight / mapHeight);
         let width = mapWidth * scale;
         let height = mapHeight * scale;
-        let x = this.game.width - width;
-        let y = this.game.height - height;
+        let x = 0; // this.game.width - width;
+        let y = 0; // this.game.height - height;
 
         // Position and Draw mini map
         this.miniMapGroup.cameraOffset.x = x;

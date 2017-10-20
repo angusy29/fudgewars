@@ -27,8 +27,8 @@ export default class Preloader extends Phaser.State {
         loadingBarBg.ctx.fillStyle = '#FFFFFF';
         loadingBarBg.ctx.fillRect(0, 0, this.game.width, loadingBarHeight);
 
-        let loadingBarBgSprite = this.game.add.sprite(0, this.game.width / 2, loadingBarBg);
-        let loadingBarSprite = this.game.add.sprite(0, this.game.width / 2, loadingBar);
+        let loadingBarBgSprite = this.game.add.sprite(0, -10 + this.game.height / 2, loadingBarBg);
+        let loadingBarSprite = this.game.add.sprite(0, -10 + this.game.height / 2, loadingBar);
 
         this.load.setPreloadSprite(loadingBarSprite);
     }

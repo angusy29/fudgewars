@@ -215,15 +215,16 @@ export default class Lobby extends Phaser.State {
     }
 
     private initBlueTeamPanels(): void {
-        let label = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Blue', 32);
-        label.anchor.setTo(1.25, 4.0);
-
+        let label = this.buttonUtil.createText((this.game.canvas.width / 2) - 120, this.game.canvas.height * 0.25, 'Team Blue', 32);
+        label.anchor.setTo(0.5, 0.5);
+        let x = (this.game.canvas.width / 2) - 220;
+        let y = (this.game.canvas.height * 0.24) + 40;
         let n: number = 0;
         // 3 rows
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 2; i++) {
             // 2 cols
             for (let j = 0; j < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 3; j++) {
-                let image = this.game.add.button(70 + 100 * (j + 1), 90 + 100 * (i + 1),
+                let image = this.game.add.button(x + 100 * j, y + i * 100,
                                 Assets.Atlases.ButtonsBlueSheet.getName(), this.bluePanelClick.bind(this, n),
                                 this, Lobby.team_sheets[0], Lobby.team_sheets[0], Lobby.team_sheets[0], Lobby.team_sheets[0]);
                 image.alpha = 0.9;
@@ -234,15 +235,16 @@ export default class Lobby extends Phaser.State {
     }
 
     private initRedTeamPanels(): void {
-        let label = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'Team Red', 32);
-        label.anchor.setTo(-0.32, 4.0);
-
+        let label = this.buttonUtil.createText((this.game.canvas.width / 2) + 120, this.game.canvas.height * 0.25 , 'Team Red', 32);
+        label.anchor.setTo(0.5, 0.5);
+        let x = (this.game.canvas.width / 2) + 20;
+        let y = (this.game.canvas.height * 0.25) + 40;
         let n: number = 0;
         // 3 rows
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 2; i++) {
             // 2 cols
             for (let j = 0; j < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 3; j++) {
-                let image = this.game.add.button(300 + (100 * (j + 1)), 90 + 100 * (i + 1),
+                let image = this.game.add.button(x + 100 * j, y + 100 * i,
                                 Assets.Atlases.ButtonsRedSheet.getName(), this.redPanelClick.bind(this, n),
                                 this, Lobby.team_sheets[1], Lobby.team_sheets[1], Lobby.team_sheets[1], Lobby.team_sheets[1]);
                 image.alpha = 0.9;
