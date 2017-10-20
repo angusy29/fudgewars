@@ -218,7 +218,7 @@ export default class Lobby extends Phaser.State {
         let label = this.buttonUtil.createText((this.game.canvas.width / 2) - 120, this.game.canvas.height * 0.25, 'Team Blue', 32);
         label.anchor.setTo(0.5, 0.5);
         let x = (this.game.canvas.width / 2) - 220;
-        let y = (this.game.canvas.height * 0.24) + 40;
+        let y = (this.game.canvas.height * 0.25) + 40;
         let n: number = 0;
         // 3 rows
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 2; i++) {
