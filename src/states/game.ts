@@ -678,6 +678,7 @@ export default class Game extends Phaser.State {
         this.game.world.bringToTop(this.miniMapGroup);
         bg.clear();
         bg.alpha = 0.7;
+        bg.lineStyle(1, 0x000000, 1);
         bg.beginFill(0xffffff);
         bg.drawRect(0, 0, width, height);
         bg.endFill();
