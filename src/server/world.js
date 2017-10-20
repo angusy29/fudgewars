@@ -174,7 +174,7 @@ module.exports = class World {
             flags: flagReps,
             bases: bases,
             playerId: socket.id,
-            teamId: this.lobby.getPlayers()[socket.id].team,
+            teamId: this.lobby.getPlayers()[socket.id] ? this.lobby.getPlayers()[socket.id].team : null,
             items: itemReps,
             scores: this.numCaptures,
             gameTime: this.gameTime,

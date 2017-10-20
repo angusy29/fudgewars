@@ -16,7 +16,7 @@ const COOLDOWNS = {
     sword: 0.5,
 };
 
-const FREE_FOLLOW = -1 // SpectateIndex = -1 means camera is in free follow mode
+const FREE_FOLLOW = -1; // SpectateIndex = -1 means camera is in free follow mode
 const FREE_FOLLOW_MOVE_SPEED = 6;
 
 /*
@@ -412,7 +412,7 @@ export default class Game extends Phaser.State {
         // Set Chatbox colour
         if (data.teamId === Game.RED) {
             $('#chatbox').addClass('red');
-        } else {
+        } else if (data.teamId === Game.BLUE) {
             $('#chatbox').addClass('blue');
         }
     }
@@ -708,6 +708,7 @@ export default class Game extends Phaser.State {
             team: [],   // array of team images
             flag: {},  // teamId: team flag image
             base: {},  // teamId: team base image
+            enemy: [],
         };
         let teamId = data.teamId;
         let mmd = this.miniMapData;
@@ -722,6 +723,7 @@ export default class Game extends Phaser.State {
         let teamBlue = Assets.Images.ImagesTeamBlue.getName();
         let self = Game.BLUE === teamId ? selfBlue : selfRed;
         let team = Game.BLUE === teamId ? teamBlue : teamRed;
+        let enemy = teamBlue;
         // Background
         mmg.add(mmd.bg = this.game.add.graphics(0, 0));
         // Bases
@@ -735,6 +737,12 @@ export default class Game extends Phaser.State {
             mmd.team.push(img);
             mmg.add(img);
         }
+        for (let i = 0; i < 5; i++) {
+            let img = this.game.add.image(0, 0, enemy);
+            img.visible = false;
+            mmd.enemy.push(img);
+            mmg.add(img);
+        }
         // Self
         mmg.add(mmd.self = this.game.add.image(0, 0, self));
         // Flags
@@ -745,7 +753,7 @@ export default class Game extends Phaser.State {
     }
 
     private drawMiniMap(data: any): void {
-        let {mapHeight, mapWidth, playerId, teamId, bg, self, team, flag, base}
+        let {mapHeight, mapWidth, playerId, teamId, bg, self, team, flag, base, enemy}
             = this.miniMapData;
 
         let maxWidth = 0.3 * this.game.width;
@@ -783,20 +791,38 @@ export default class Game extends Phaser.State {
 
         // Position players
         let teamTotal = 0;  // number of team players not counting self
+        let enemyTotal = 0;
         for (let update of data.players) {
             let {id, x, y} = update;
-            if (id === playerId) {
-                self.x = x * scale;
-                self.y = y * scale;
-            } else if (update.team === teamId) {
-                team[teamTotal].x = x * scale;
-                team[teamTotal].y = y * scale;
-                team[teamTotal].visible = true;
-                teamTotal++;
+            if (!this.isSpectating) {
+                if (id === playerId) {
+                    self.x = x * scale;
+                    self.y = y * scale;
+                } else if (update.team === teamId) {
+                    team[teamTotal].x = x * scale;
+                    team[teamTotal].y = y * scale;
+                    team[teamTotal].visible = true;
+                    teamTotal++;
+                }
+            } else {
+                if (update.team === Game.RED) {
+                    team[teamTotal].x = x * scale;
+                    team[teamTotal].y = y * scale;
+                    team[teamTotal].visible = true;
+                    teamTotal++;
+                } else if (update.team === Game.BLUE) {
+                    enemy[enemyTotal].x = x * scale;
+                    enemy[enemyTotal].y = y * scale;
+                    enemy[enemyTotal].visible = true;
+                    enemyTotal++;
+                }
             }
         }
         for ( ; teamTotal < 5; teamTotal++) {
             team[teamTotal].visible = false;
+        }
+        for ( ; enemyTotal < 5; enemyTotal++) {
+            enemy[enemyTotal].visible = false;
         }
     }
 
