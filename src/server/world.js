@@ -3,6 +3,9 @@ let maps = path.resolve(__dirname + '/../../assets/json');
 
 let Player = require('./player');
 let Flag = require('./flag');
+let Item = require('./item');
+let HealthPot = require('./healthpot');
+let CooldownPot = require('./cooldownpot');
 let utils = require('./utils');
 
 const TILE_SIZE = 64;
@@ -27,6 +30,7 @@ module.exports = class World {
         this.right = width - tilesize/2;
         this.players = {};
         this.playerCount = 0;
+        this.items = {};        // powerups currently on the map
         this.timeout = null;
         this.numCaptures = [0, 0];
         this.gameTime = this.gameLength;
@@ -156,6 +160,11 @@ module.exports = class World {
             bases.push({team: flag.colorIdx, x:flag.startX, y:flag.startY});
         }
 
+        let itemReps = [];
+        for (let id in this.items) {
+            itemReps.push(this.items[id].getRep());
+        }
+
         socket.emit('loaded', {
             world: this.world,
             terrain: this.terrain,
@@ -164,6 +173,7 @@ module.exports = class World {
             bases: bases,
             playerId: socket.id,
             teamId: this.lobby.getPlayers()[socket.id].team,
+            items: itemReps,
             scores: this.numCaptures,
             gameTime: this.gameTime,
         });
@@ -186,6 +196,34 @@ module.exports = class World {
         if (this.timeout === null) {
             this.timeout = setInterval(() => {this.update()}, 30);
         }
+    }
+
+    // spawn a powerup on the map
+    addItem() {
+        let itemId = 0;
+        while (itemId === 0 || this.items[itemId]) {
+            itemId = Math.random() * 1000;
+        }
+
+        let x = Math.random() * this.width;
+        let y = Math.random() * this.height;
+        if (y < 100) y += 100;
+
+        let powerup;
+        if (Math.random() < 0.5) {
+            powerup = new HealthPot(this, itemId, x, y);
+        } else {
+            powerup = new CooldownPot(this, itemId, x, y);
+        }
+
+        while (this.collidesTerrain(powerup.getTopLeft(), powerup.getBottomRight())) {
+            powerup.x = Math.random() * this.width;
+            powerup.y = Math.random() * this.height;
+
+            if (powerup.y < 100) powerup.y += 100;
+        }
+
+        this.items[itemId] = powerup;
     }
 
     registerSocketEvents(socket, player) {
@@ -311,10 +349,27 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
+        let itemReps = [];
+        for (let id in this.items) {
+            this.items[id].update(seconds);
+            itemReps.push(this.items[id].getRep());
+
+            if (this.items[id].isPickedUp) {
+                delete this.items[id];
+            }
+        }
+
+        // if there are less than 5 items on the map
+        // spawn some
+        if (Object.keys(this.items).length < 5) {
+            this.addItem();
+        }
+
         this.io.sockets.in(this.room).emit('update', {
             time: this.gameTime,
             players: playerReps,
-            flags:   flagReps
+            flags:   flagReps,
+            items: itemReps
         });
     }
 }

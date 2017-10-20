@@ -106,6 +106,21 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/wasd.png'); }
     }
+    export class ItemsCooldownpot {
+        static getName(): string { return 'cooldownpot'; }
+
+        static getPNG(): string { return require('assets/items/cooldownpot.png'); }
+    }
+    export class ItemsHealthpot {
+        static getName(): string { return 'healthpot'; }
+
+        static getPNG(): string { return require('assets/items/healthpot.png'); }
+    }
+    export class ItemsSpeedboost {
+        static getName(): string { return 'speedboost'; }
+
+        static getPNG(): string { return require('assets/items/speedboost.png'); }
+    }
 }
 
 export namespace Spritesheets {

@@ -105,6 +105,11 @@ module.exports = class Player extends Collidable {
         }
     }
 
+    resetCooldown() {
+        this.sword.cooldown = 0;
+        this.hook.cooldown = 0;
+    }
+
     update(delta) {
         // Respawn
         if (!this.alive) {
