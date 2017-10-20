@@ -65,18 +65,21 @@ io.on('connection', function(socket) {
             let lobby = room.lobby;
             let world = room.world;
 
-            if (lobby.isEmpty()) {
+            if (lobby.isEmpty() && Object.keys(lobby.spectators).length === 0) {
                 console.log('lobby destroyed!');
                 delete allRooms[roomId];
                 continue;
             }
-            if (world.gameTime > 0) {
-                all[roomId] = {
-                    playerCount: lobby.playerCount,
-                    blueCount: lobby.blueCount,
-                    redCount: lobby.redCount,
-                    isPlaying: lobby.isPlaying,
-                };
+
+            if (!lobby.isEmpty() || (lobby.isEmpty() && !world.started)) {
+                if (world.gameTime > 0) {
+                    all[roomId] = {
+                        playerCount: lobby.playerCount,
+                        blueCount: lobby.blueCount,
+                        redCount: lobby.redCount,
+                        isPlaying: lobby.isPlaying,
+                    };
+                }
             }
         }
         socket.emit('lobby_selection_update', all);
@@ -105,13 +108,20 @@ io.on('connection', function(socket) {
             return;
         }
 
+        let lobby = allRooms[room].lobby;
         let world = allRooms[room].world;
+        world.started = true;
         if (world.gameTime <= 0) {
             console.log('Game over');
             return;
         }
 
         world.sendInitialData(socket);
-        world.addPlayer(socket);
+
+        if (lobby.players[socket.id]) {
+            world.addPlayer(socket);
+        } else if (lobby.spectators[socket.id]) {
+            world.addSpectator(socket);
+        }
     });
 });

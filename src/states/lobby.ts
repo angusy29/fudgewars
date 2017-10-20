@@ -19,6 +19,7 @@ export default class Lobby extends Phaser.State {
     // buttons at bottom of page
     private ready: CustomButton;
     private back: CustomButton;
+    private spectateBtn: CustomButton;
 
     // used to pass to game.ts
     private client_player_name: string;
@@ -85,48 +86,64 @@ export default class Lobby extends Phaser.State {
         // when player moves to a new tile
         this.socket.on('player_moved', (player: any) => {
             let playerToMove = this.players[player.id];
+            if (!playerToMove) {
+                playerToMove = this.addNewPlayer(player);
+            }
             let oldteam = playerToMove.team;
             let newteam = player.team;
             let teamtiles;
             let frame;
 
-            if (oldteam === Lobby.BLUE) teamtiles = this.blueTiles;
-            if (oldteam === Lobby.RED) teamtiles = this.redTiles;
-
-            // need to clear tile of oldteam
-            teamtiles[playerToMove.tile].player = null;
-
-            if (newteam === Lobby.BLUE) {
-                teamtiles = this.blueTiles;
-                frame = 'p2_walk';
-            } else if (newteam === Lobby.RED) {
-                teamtiles = this.redTiles;
-                frame = 'p3_walk';
-            }
-
-            if (newteam === oldteam) {
-                // if the team is the same, all we need to do is reuse our current character
-                playerToMove.sprite.x = teamtiles[player.tile].image.centerX - 16;
-                playerToMove.sprite.y = teamtiles[player.tile].image.centerY + 16;
+            if (player.tile === null && player.team === null) {
+                playerToMove.sprite.visible = false;
+                playerToMove.name.visible = false;
             } else {
-                // if the team is different, we need to create a sprite of the other team
-                playerToMove.sprite.destroy();
-                let spritePosX = teamtiles[player.tile].image.centerX - 16;
-                let spritePosY = teamtiles[player.tile].image.centerY + 16;
-                let sprite = this.game.add.sprite(spritePosX, spritePosY, frame);
-                sprite.anchor.setTo(0.5, 0.5);
-                sprite.scale.setTo(0.5);
-                sprite.animations.add('walk');
-                playerToMove.setSprite(sprite);
+                if (player.id === this.socket.id) {
+                    this.spectateBtn.setText('Spectate');
+                    this.spectateBtn.getText().fontSize = '24px';
+                }
+
+                playerToMove.sprite.visible = true;
+                playerToMove.name.visible = true;
+
+                if (oldteam === Lobby.BLUE) teamtiles = this.blueTiles;
+                if (oldteam === Lobby.RED) teamtiles = this.redTiles;
+
+                // need to clear tile of oldteam
+                teamtiles[playerToMove.tile].player = null;
+
+                if (newteam === Lobby.BLUE) {
+                    teamtiles = this.blueTiles;
+                    frame = 'p2_walk';
+                } else if (newteam === Lobby.RED) {
+                    teamtiles = this.redTiles;
+                    frame = 'p3_walk';
+                }
+
+                if (newteam === oldteam) {
+                    // if the team is the same, all we need to do is reuse our current character
+                    playerToMove.sprite.x = teamtiles[player.tile].image.centerX - 16;
+                    playerToMove.sprite.y = teamtiles[player.tile].image.centerY + 16;
+                } else {
+                    // if the team is different, we need to create a sprite of the other team
+                    playerToMove.sprite.destroy();
+                    let spritePosX = teamtiles[player.tile].image.centerX - 16;
+                    let spritePosY = teamtiles[player.tile].image.centerY + 16;
+                    let sprite = this.game.add.sprite(spritePosX, spritePosY, frame);
+                    sprite.anchor.setTo(0.5, 0.5);
+                    sprite.scale.setTo(0.5);
+                    sprite.animations.add('walk');
+                    playerToMove.setSprite(sprite);
+                }
+
+                playerToMove.team = player.team;
+                playerToMove.tile = player.tile;
+                playerToMove.name.x = teamtiles[player.tile].image.centerX;
+                playerToMove.name.y = teamtiles[player.tile].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
+
+                // assign player to the new tile
+                teamtiles[playerToMove.tile].player = playerToMove;
             }
-
-            playerToMove.team = player.team;
-            playerToMove.tile = player.tile;
-            playerToMove.name.x = teamtiles[player.tile].image.centerX;
-            playerToMove.name.y = teamtiles[player.tile].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
-
-            // assign player to the new tile
-            teamtiles[playerToMove.tile].player = playerToMove;
         });
 
         // start the game because everyone is ready
@@ -164,6 +181,7 @@ export default class Lobby extends Phaser.State {
         this.initRedTeamPanels();
         this.initReadyButton();
         this.initBackButton();
+        this.initSpectateButton();
 
         this.socket.emit('join_lobby', this.room, this.client_player_name);
     }
@@ -212,6 +230,8 @@ export default class Lobby extends Phaser.State {
         if (player.team === Lobby.RED) {
             this.redTiles[player.tile].player = this.players[player.id];
         }
+
+        return this.players[player.id];
     }
 
     private initBlueTeamPanels(): void {
@@ -256,7 +276,7 @@ export default class Lobby extends Phaser.State {
 
     private initReadyButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 + 248, this, this.readyOnClick);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108 * 2, this.game.canvas.height / 2 + 248, this, this.readyOnClick);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Ready');
         this.ready = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.ready), this);
@@ -269,39 +289,58 @@ export default class Lobby extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height / 2 + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108 * 2, this.game.canvas.height / 2 + 248, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.back = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.back), this);
         button.onInputOut.add(this.buttonUtil.out.bind(this, this.back), this);
     }
 
+    private initSpectateButton(): void {
+        // pick the first button in the array to use as the asset
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2 + 248, this, this.onSpectateClick);
+        let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Spectate');
+        this.spectateBtn = new CustomButton(button, text);
+        button.onInputOver.add(this.buttonUtil.over.bind(this, this.spectateBtn), this);
+        button.onInputOut.add(this.buttonUtil.out.bind(this, this.spectateBtn), this);
+    }
+
+    private onSpectateClick(): void {
+        this.game.sound.play('click1');
+
+        this.spectateBtn.setText('Waiting for game to start...');
+        this.spectateBtn.getText().fontSize = '16px';
+
+        this.socket.emit('on_player_spectate');
+    }
+
     private readyOnClick(): void {
         this.game.sound.play('click1');
-        this.players[this.socket.id].isReady = !this.players[this.socket.id].isReady;
 
-        if (this.players[this.socket.id].isReady) {
-            this.ready.setText('Waiting for others...');
-            this.ready.getText().fontSize = '16px';
-        } else {
-            this.ready.setText('Ready');
-            this.ready.getText().fontSize = '24px';
+        if (this.spectateBtn.getText().text === 'Spectate') { // Hacky way to check if spectating
+            this.players[this.socket.id].isReady = !this.players[this.socket.id].isReady;
+
+            if (this.players[this.socket.id].isReady) {
+                this.ready.setText('Waiting for others...');
+                this.ready.getText().fontSize = '16px';
+            } else {
+                this.ready.setText('Ready');
+                this.ready.getText().fontSize = '24px';
+            }
+
+            this.socket.emit('player_ready');
         }
-
-        this.socket.emit('player_ready');
     }
 
     private bluePanelClick(tile: number): void {
         this.game.sound.play('click1');
         if (this.players[this.socket.id].isReady) return;
-        if (this.blueTiles[tile].player !== null) return;
         this.socket.emit('blue_team_change', tile);
     }
 
     private redPanelClick(tile: number): void {
         this.game.sound.play('click1');
         if (this.players[this.socket.id].isReady) return;
-        if (this.redTiles[tile].player !== null) return;
         this.socket.emit('red_team_change', tile);
     }
 

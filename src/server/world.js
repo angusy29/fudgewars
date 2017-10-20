@@ -15,6 +15,7 @@ const RED = 1;
 
 module.exports = class World {
     constructor(io, lobby, room, gameLength, mapSize, friendlyFire, width, height, tilesize) {
+        this.started = false;
         this.io = io;
         this.lobby = lobby;     // lobby object
         this.room = room;   // room id
@@ -29,6 +30,7 @@ module.exports = class World {
         this.left = 0 + tilesize/2;
         this.right = width - tilesize/2;
         this.players = {};
+        this.spectators = {};
         this.playerCount = 0;
         this.items = {};        // powerups currently on the map
         this.timeout = null;
@@ -172,7 +174,7 @@ module.exports = class World {
             flags: flagReps,
             bases: bases,
             playerId: socket.id,
-            teamId: this.lobby.getPlayers()[socket.id].team,
+            teamId: this.lobby.getPlayers()[socket.id] ? this.lobby.getPlayers()[socket.id].team : null,
             items: itemReps,
             scores: this.numCaptures,
             gameTime: this.gameTime,
@@ -196,6 +198,12 @@ module.exports = class World {
         if (this.timeout === null) {
             this.timeout = setInterval(() => {this.update()}, 30);
         }
+    }
+
+    addSpectator(socket) {
+        this.spectators[socket.id] = socket;
+        this.registerSocketEvents(socket, null);
+        this.io.sockets.in(this.room).emit('player_spectating', socket.id);
     }
 
     // spawn a powerup on the map
@@ -227,64 +235,70 @@ module.exports = class World {
     }
 
     registerSocketEvents(socket, player) {
-        socket.on('keydown', (direction) => {
-            player.keydown(direction);
-        });
-
-        socket.on('pingcheck', () => {
-            socket.emit('pongcheck');
-        });
-
-        socket.on('keyup', (direction) => {
-            player.keyup(direction);
-        });
-
-        socket.on('attack_hook', (angle) => {
-            player.useHook(angle);
-        });
-
-        socket.on('attack_sword', (angle) => {
-            player.useSword(angle);
-        });
-
         socket.on('disconnect', () => {
-            this.disconnectPlayer(socket, player);
+            this.disconnectPlayer(socket);
         });
 
         // in case the player clicks on quit game, instead of quitting game
         socket.on('game_quit', () => {
-            this.disconnectPlayer(socket, player);
+            this.disconnectPlayer(socket);
         });
 
-        // receive chatroom message from player
-        socket.on('chatroom_msg', (msg) => {
-            // relay message to other player in the team
-            for (let id in this.players) {
-                let p = this.players[id]
-                if (p.id != player.id && p.team == player.team) {
-                    // broadcast message to other player in the same team
-                    socket.broadcast.to(p.id).emit('chatroom_msg', {
-                        'sender': player.id,
-                        'msg' : msg
-                    });
+        if (player !== null) {
+            socket.on('keydown', (direction) => {
+                player.keydown(direction);
+            });
+
+            socket.on('pingcheck', () => {
+                socket.emit('pongcheck');
+            });
+
+            socket.on('keyup', (direction) => {
+                player.keyup(direction);
+            });
+
+            socket.on('attack_hook', (angle) => {
+                player.useHook(angle);
+            });
+
+            socket.on('attack_sword', (angle) => {
+                player.useSword(angle);
+            });
+
+            // receive chatroom message from player
+            socket.on('chatroom_msg', (msg) => {
+                // relay message to other player in the team
+                for (let id in this.players) {
+                    let p = this.players[id]
+                    if (p.id != player.id && p.team == player.team) {
+                        // broadcast message to other player in the same team
+                        socket.broadcast.to(p.id).emit('chatroom_msg', {
+                            'sender': player.id,
+                            'msg' : msg
+                        });
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
-    disconnectPlayer(socket, player) {
-        // release the flag that is being carry by the player
-        if (player.carryingFlag !== null) {
-            player.carryingFlag.drop();
+    disconnectPlayer(socket) {
+        console.log('=====world discon=====');
+
+        let player = this.players[socket.id];
+        if (player) {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag !== null) {
+                player.carryingFlag.drop();
+            }
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
         }
 
-        console.log('=====world discon=====');
-        this.removePlayer(socket, player.id);
-        this.lobby.removePlayer(socket, player.id);
-        // socket.leave(this.room);
-        this.io.sockets.in(this.room).emit('player_left', player.id);
+        this.removeSpectator(socket, socket.id);
+        this.lobby.removeSpectator(socket, socket.id);
 
-        // this.lobby.print();
+        this.io.sockets.in(this.room).emit('player_left', socket.id);
     }
 
     removePlayer(socket, id) {
@@ -304,6 +318,19 @@ module.exports = class World {
         if (this.playerCount === 0) {
             this.stopGame();
         }
+    }
+
+    removeSpectator(socket, id) {
+        if (!this.spectators[id]) return;
+
+        socket.removeAllListeners(['keydown']);
+        socket.removeAllListeners(['pingcheck']);
+        socket.removeAllListeners(['keyup']);
+        socket.removeAllListeners(['attack_hook']);
+        socket.removeAllListeners(['attack_sword']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['game_quit']);
+        delete this.spectators[id];
     }
 
     isEmpty() {
@@ -368,7 +395,7 @@ module.exports = class World {
         this.io.sockets.in(this.room).emit('update', {
             time: this.gameTime,
             players: playerReps,
-            flags:   flagReps,
+            flags: flagReps,
             items: itemReps
         });
     }

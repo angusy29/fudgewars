@@ -16,11 +16,19 @@ const COOLDOWNS = {
     sword: 0.5,
 };
 
+const FREE_FOLLOW = -1; // SpectateIndex = -1 means camera is in free follow mode
+const FREE_FOLLOW_MOVE_SPEED = 6;
+
 /*
  * The actual game client
  */
 export default class Game extends Phaser.State {
     private data: any;
+    private isSpectating: boolean;
+    private currentlySpectatingIndex: number;
+    private currentlySpectatingId: string;
+    private spectatingText: Phaser.Text;
+
     private pingText: Phaser.Text;
     private pingTime: number;
     private pingStartTime: number;
@@ -92,6 +100,9 @@ export default class Game extends Phaser.State {
         this.game.input.mouse.capture = true;
         this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
+        this.isSpectating = false;
+        this.currentlySpectatingIndex = null;
+        this.currentlySpectatingId = null;
         this.gameOver = false;
         this.pingTime = 0;
         this.alertQueue = [];
@@ -192,9 +203,31 @@ export default class Game extends Phaser.State {
         }
     }
 
+    private freeSpectate(): void {
+        this.world.camera.unfollow();
+        this.currentlySpectatingIndex = FREE_FOLLOW;
+        this.currentlySpectatingId = null;
+    }
+
+    private spectatePlayer(index: number): void {
+        if (Object.keys(this.players).length > index) {
+            let player = this.players[Object.keys(this.players)[index]];
+            this.currentlySpectatingIndex = index;
+            this.currentlySpectatingId = player.id;
+            this.world.camera.follow(player.sprite);
+        }
+    }
+
     private registerSocketEvents(socket: any): void {
         socket.on('loaded', (data: any) => {
             this.onLoaded(data);
+        });
+
+        socket.on('player_spectating', (id: number) => {
+            if (id === this.socket.id) {
+                this.isSpectating = true;
+                this.spectatePlayer(0);
+            }
         });
 
         socket.on('update', (data: any) => {
@@ -203,11 +236,18 @@ export default class Game extends Phaser.State {
 
         socket.on('player_join', (data: any) => {
             this.addPlayer(data);
+            if (this.isSpectating && this.currentlySpectatingIndex === null && this.currentlySpectatingId === null) {
+                this.spectatePlayer(0);
+            }
         });
 
         socket.on('player_left', (id: string) => {
             console.log(id);
             this.removePlayer(id);
+            if (id === this.currentlySpectatingId) {
+                let numPlayers = Object.keys(this.players).length;
+                this.spectatePlayer((this.currentlySpectatingIndex + 1) % numPlayers);
+            }
         });
 
         socket.on('captured_flag', (team) => {
@@ -372,7 +412,7 @@ export default class Game extends Phaser.State {
         // Set Chatbox colour
         if (data.teamId === Game.RED) {
             $('#chatbox').addClass('red');
-        } else {
+        } else if (data.teamId === Game.BLUE) {
             $('#chatbox').addClass('blue');
         }
     }
@@ -417,6 +457,8 @@ export default class Game extends Phaser.State {
             }
         }
 
+        this.moveSpectateCamera();
+
         this.game.world.bringToTop(this.playerGroup);
         this.game.world.bringToTop(this.weaponGroup);
         this.game.world.bringToTop(this.particleGroup);
@@ -428,6 +470,23 @@ export default class Game extends Phaser.State {
         this.game.world.bringToTop(this.soundGroup);
 
         this.drawUI();
+    }
+
+    private moveSpectateCamera(): void {
+        if (this.isSpectating && this.currentlySpectatingIndex === FREE_FOLLOW) {
+            if (this.isDown[87]) { // w
+                this.game.camera.y -= FREE_FOLLOW_MOVE_SPEED;
+            }
+            if (this.isDown[65]) { // a
+                this.game.camera.x -= FREE_FOLLOW_MOVE_SPEED;
+            }
+            if (this.isDown[83]) { // s
+                this.game.camera.y += FREE_FOLLOW_MOVE_SPEED;
+            }
+            if (this.isDown[68]) { // d
+                this.game.camera.x += FREE_FOLLOW_MOVE_SPEED;
+            }
+        }
     }
 
     private onTick(data: any): void {
@@ -530,30 +589,7 @@ export default class Game extends Phaser.State {
      * Callback for when key is pressed down
      */
     private onDown(e: KeyboardEvent): void {
-        if (this.isDown[e.keyCode]) {
-            e.preventDefault();
-            return;
-        }
-        this.isDown[e.keyCode] = true;
         switch (e.keyCode) {
-            case 87:    // w
-                if (!this.chatboxOn) this.socket.emit('keydown', 'up');
-                break;
-            case 65:    // a
-                if (!this.chatboxOn) this.socket.emit('keydown', 'left');
-                break;
-            case 83:    // s
-                if (!this.chatboxOn) this.socket.emit('keydown', 'down');
-                break;
-            case 68:    // d
-                if (!this.chatboxOn) this.socket.emit('keydown', 'right');
-                break;
-            case 9:    // tab
-                if (!this.chatboxOn) {
-                    this.scoreBoardGroup.visible = true;
-                }
-                e.preventDefault();
-                break;
             case 27:    // escape
                 if (!this.gameOver) {
                     if (this.isShowMenu === false) {
@@ -563,6 +599,12 @@ export default class Game extends Phaser.State {
                     }
                 }
                 break;
+            case 9:    // tab
+                if (!this.chatboxOn) {
+                    this.scoreBoardGroup.visible = true;
+                }
+                e.preventDefault();
+                break;
             case 18:     // alt, to toggle chatbox
                 this.toggleChatbox();
                 e.preventDefault();
@@ -570,6 +612,29 @@ export default class Game extends Phaser.State {
             default:
                 break;
         }
+
+        if (!this.isSpectating) {
+            if (this.isDown[e.keyCode]) {
+                e.preventDefault();
+                return;
+            }
+            switch (e.keyCode) {
+                case 87:    // w
+                    if (!this.chatboxOn) this.socket.emit('keydown', 'up');
+                    break;
+                case 65:    // a
+                    if (!this.chatboxOn) this.socket.emit('keydown', 'left');
+                    break;
+                case 83:    // s
+                    if (!this.chatboxOn) this.socket.emit('keydown', 'down');
+                    break;
+                case 68:    // d
+                    if (!this.chatboxOn) this.socket.emit('keydown', 'right');
+                    break;
+            }
+        }
+
+        this.isDown[e.keyCode] = true;
     }
 
     /*
@@ -643,6 +708,7 @@ export default class Game extends Phaser.State {
             team: [],   // array of team images
             flag: {},  // teamId: team flag image
             base: {},  // teamId: team base image
+            enemy: [],
         };
         let teamId = data.teamId;
         let mmd = this.miniMapData;
@@ -657,6 +723,7 @@ export default class Game extends Phaser.State {
         let teamBlue = Assets.Images.ImagesTeamBlue.getName();
         let self = Game.BLUE === teamId ? selfBlue : selfRed;
         let team = Game.BLUE === teamId ? teamBlue : teamRed;
+        let enemy = teamBlue;
         // Background
         mmg.add(mmd.bg = this.game.add.graphics(0, 0));
         // Bases
@@ -670,6 +737,12 @@ export default class Game extends Phaser.State {
             mmd.team.push(img);
             mmg.add(img);
         }
+        for (let i = 0; i < 5; i++) {
+            let img = this.game.add.image(0, 0, enemy);
+            img.visible = false;
+            mmd.enemy.push(img);
+            mmg.add(img);
+        }
         // Self
         mmg.add(mmd.self = this.game.add.image(0, 0, self));
         // Flags
@@ -680,7 +753,7 @@ export default class Game extends Phaser.State {
     }
 
     private drawMiniMap(data: any): void {
-        let {mapHeight, mapWidth, playerId, teamId, bg, self, team, flag, base}
+        let {mapHeight, mapWidth, playerId, teamId, bg, self, team, flag, base, enemy}
             = this.miniMapData;
 
         let maxWidth = 0.3 * this.game.width;
@@ -718,20 +791,38 @@ export default class Game extends Phaser.State {
 
         // Position players
         let teamTotal = 0;  // number of team players not counting self
+        let enemyTotal = 0;
         for (let update of data.players) {
             let {id, x, y} = update;
-            if (id === playerId) {
-                self.x = x * scale;
-                self.y = y * scale;
-            } else if (update.team === teamId) {
-                team[teamTotal].x = x * scale;
-                team[teamTotal].y = y * scale;
-                team[teamTotal].visible = true;
-                teamTotal++;
+            if (!this.isSpectating) {
+                if (id === playerId) {
+                    self.x = x * scale;
+                    self.y = y * scale;
+                } else if (update.team === teamId) {
+                    team[teamTotal].x = x * scale;
+                    team[teamTotal].y = y * scale;
+                    team[teamTotal].visible = true;
+                    teamTotal++;
+                }
+            } else {
+                if (update.team === Game.RED) {
+                    team[teamTotal].x = x * scale;
+                    team[teamTotal].y = y * scale;
+                    team[teamTotal].visible = true;
+                    teamTotal++;
+                } else if (update.team === Game.BLUE) {
+                    enemy[enemyTotal].x = x * scale;
+                    enemy[enemyTotal].y = y * scale;
+                    enemy[enemyTotal].visible = true;
+                    enemyTotal++;
+                }
             }
         }
         for ( ; teamTotal < 5; teamTotal++) {
             team[teamTotal].visible = false;
+        }
+        for ( ; enemyTotal < 5; enemyTotal++) {
+            enemy[enemyTotal].visible = false;
         }
     }
 
@@ -761,6 +852,20 @@ export default class Game extends Phaser.State {
         // Ping
         this.pingText.text = `Ping: ${this.pingTime}ms`;
 
+        // Spectate text
+        if (this.isSpectating) {
+            if (this.currentlySpectatingIndex === FREE_FOLLOW) {
+                this.spectatingText.text = `Free cam`;
+            } else {
+                let spectatingPlayer = this.players[this.currentlySpectatingId];
+                if (spectatingPlayer) {
+                    this.spectatingText.text = `Spectating ${spectatingPlayer.name}`;
+                } else {
+                    this.spectatingText.text = '';
+                }
+            }
+        }
+
         // Game time
         let minutes: string = (Math.floor(this.gameTime / 60)).toString();
         let seconds: string = (Math.round(this.gameTime) % 60).toString();
@@ -773,19 +878,35 @@ export default class Game extends Phaser.State {
         this.redScoreText.text = this.numCaptures[Game.RED].toString();
 
         // Skills
-        for (let skillIndex in this.skillList) {
-            let skillName: string = this.skillList[skillIndex];
-            let skill = this.skills[skillName];
-            if (Object.keys(skill.ui).length === 0) continue;
+        if (!this.isSpectating) {
+            for (let skillIndex in this.skillList) {
+                let skillName: string = this.skillList[skillIndex];
+                let skill = this.skills[skillName];
+                if (Object.keys(skill.ui).length === 0) continue;
 
-            let ui = skill.ui;
-            if (skill.cooldown > 0) {
-                ui.overlayImg.visible = true;
-                ui.overlayImg.height = (skill.cooldown / COOLDOWNS[skill.name]) * ui.skillImg.height;
-                ui.text.text = skill.cooldown.toFixed(1);
-            } else {
+                let ui = skill.ui;
+                if (skill.cooldown > 0) {
+                    ui.overlayImg.visible = true;
+                    ui.overlayImg.height = (skill.cooldown / COOLDOWNS[skill.name]) * ui.skillImg.height;
+                    ui.text.text = skill.cooldown.toFixed(1);
+                } else {
+                    ui.overlayImg.visible = false;
+                    ui.text.text = '';
+                }
+            }
+        } else {
+            for (let skillIndex in this.skillList) {
+                let skillName: string = this.skillList[skillIndex];
+                let skill = this.skills[skillName];
+                if (Object.keys(skill.ui).length === 0) continue;
+
+                let ui = skill.ui;
                 ui.overlayImg.visible = false;
                 ui.text.text = '';
+                ui.skillImg.visible = false;
+                ui.overlayImg.visible = false;
+                ui.text.visible = false;
+                ui.buttonText.visible = false;
             }
         }
     }
@@ -798,6 +919,15 @@ export default class Game extends Phaser.State {
             stroke: '#000000',
             strokeThickness: 3,
         });
+
+        // Spectate text
+        this.spectatingText = this.game.add.text(this.game.width / 2, 60, '', {
+            font: '12px ' + 'Arial',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+        });
+        this.spectatingText.anchor.setTo(0.5, 0.5);
 
         // Alert text
         this.alertText = this.game.add.text(this.game.width / 2, this.game.height / 6, '', {
@@ -885,6 +1015,7 @@ export default class Game extends Phaser.State {
         this.uiGroup.add(this.gameTimeText);
         this.uiGroup.add(this.alertText);
         this.uiGroup.add(this.pingText);
+        this.uiGroup.add(this.spectatingText);
 
 
         // Skills
@@ -935,21 +1066,47 @@ export default class Game extends Phaser.State {
     }
 
     private onWorldClick(layer: Phaser.TilemapLayer, pointer: Phaser.Pointer): void {
-        let id = this.socket.id;
-        let me: Player = this.players[id];
-        if (!me) return;
+        if (!this.isSpectating) {
+            let id = this.socket.id;
+            let me: Player = this.players[id];
+            if (!me) return;
 
-        let camera: Phaser.Camera = this.game.camera;
-        let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
-        let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
+            let camera: Phaser.Camera = this.game.camera;
+            let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
+            let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
 
-        if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
-            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
-            this.socket.emit('attack_hook', angle);
-        }
-        if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
-            let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
-            this.socket.emit('attack_sword', angle);
+            if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
+                let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
+                this.socket.emit('attack_hook', angle);
+            }
+            if (pointer.rightButton.isDown && this.skills.sword.cooldown === 0) {
+                let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
+                this.socket.emit('attack_sword', angle);
+            }
+        } else {
+            let numPlayers = Object.keys(this.players).length;
+            let newSpectateIndex = null;
+            if (pointer.leftButton.isDown) {
+                if (this.currentlySpectatingIndex === null || this.currentlySpectatingIndex === FREE_FOLLOW) {
+                    newSpectateIndex = 0;
+                } else {
+                    newSpectateIndex = (this.currentlySpectatingIndex + 1);
+                }
+            }
+            if (pointer.rightButton.isDown) {
+                if (this.currentlySpectatingIndex === null || this.currentlySpectatingIndex === FREE_FOLLOW) {
+                    newSpectateIndex = numPlayers - 1;
+                } else {
+                    newSpectateIndex = (this.currentlySpectatingIndex - 1);
+                }
+            }
+            if (newSpectateIndex !== null) {
+                if (newSpectateIndex < 0 || newSpectateIndex >= numPlayers) {
+                    this.freeSpectate();
+                } else {
+                    this.spectatePlayer(newSpectateIndex);
+                }
+            }
         }
     }
 

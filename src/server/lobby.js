@@ -25,7 +25,6 @@ module.exports = class Lobby {
 
         // spectators
         this.spectators = {};
-        this.spectatorCount = 0;
     }
 
     /*
@@ -65,6 +64,28 @@ module.exports = class Lobby {
         // }
     }
 
+    startGameIfReady(socket) {
+        if (Object.keys(this.players).length === 0) return;
+
+        let startGame = true;
+        for (let id in this.players) {
+            if (this.players[id].isReady === false) {
+                startGame = false;
+                break;
+            }
+        }
+
+        // everyone is ready so we start the game
+        if (startGame === true) {
+            clearInterval(this.timeout);
+            this.timeout = null;
+            this.isPlaying = true;
+            this.io.sockets.in(this.room).emit('lobby_start');
+        } else if (this.isPlaying) {
+            socket.emit('lobby_start');
+        }
+    }
+
     registerSocketEvents(socket, player) {
         // toggle player ready
         socket.on('player_ready', () => {
@@ -72,28 +93,11 @@ module.exports = class Lobby {
             //this.io.emit('lobby_player_ready', player);
             this.update();
 
-            let startGame = true;
-            for (let id in this.players) {
-                if (this.players[id].isReady === false) {
-                    startGame = false;
-                    break;
-                }
-            }
-
-            // everyone is ready so we start the game
-            if (startGame === true) {
-                clearInterval(this.timeout);
-                this.timeout = null;
-                this.isPlaying = true;
-                this.io.sockets.in(this.room).emit('lobby_start');
-            } else if (this.isPlaying) {
-                socket.emit('lobby_start');
-            }
+            this.startGameIfReady(socket);
         });
 
         // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
-            console.log('change blue team');
             // if the tile we want to move to is not empty, return
             if (this.blue[tile]) return;
             let oldTile = player.tile;
@@ -101,37 +105,52 @@ module.exports = class Lobby {
                 // if player was in red team
                 this.red[oldTile] = null;
                 this.redCount--;
-                this.blueCount++;
-                this.blue[tile] = player;
-            } else {
-                this.blue[oldTile] = null;
-                this.blue[tile] = player;
             }
+            if (player.team !== BLUE) {
+                this.blueCount++;
+            }
+            if (player.team === BLUE) {
+                this.blue[oldTile] = null;
+            }
+            if (player.team === null) {
+                this.playerCount++;
+            }
+            this.blue[tile] = player;
+
             player.team = BLUE;
             player.tile = tile;
-            this.print();            
+            this.players[player.id] = player;
+            this.print();
+            this.removeSpectatorFromGame(player.id);
             this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
         // when player clicks on red panel this gets called
         socket.on('red_team_change', (tile) => {
-            console.log('change red team');
             // if the tile we want to move to is not empty, return
             if (this.red[tile]) return;
-            let oldTile = player.tile;            
-            if (player.team === BLUE) {     
+            let oldTile = player.tile;
+            if (player.team === BLUE) {
                 // if player was in blue team
                 this.blue[oldTile] = null;
                 this.blueCount--;
-                this.redCount++;
-                this.red[tile] = player;
-            } else {
-                this.red[oldTile] = null;
-                this.red[tile] = player;
             }
+            if (player.team !== RED) {
+                this.redCount++;
+            }
+            if (player.team === RED) {
+                this.red[oldTile] = null;
+            }
+            if (player.team === null) {
+                this.playerCount++;
+            }
+            this.red[tile] = player;
+
             player.team = RED;
             player.tile = tile;
+            this.players[player.id] = player;
             this.print();
+            this.removeSpectatorFromGame(player.id);
             this.io.sockets.in(this.room).emit('player_moved', player);
         });
 
@@ -153,6 +172,11 @@ module.exports = class Lobby {
             socket.leave(this.room);
         });
 
+        socket.on('on_player_spectate', () => {
+            this.addSpectator(socket, player);
+            this.removePlayerFromTeam(socket, player.id, player.tile);
+            this.startGameIfReady(socket);
+        });
     }
 
     /*
@@ -160,13 +184,19 @@ module.exports = class Lobby {
      * id: id of player to remove
      */
     removePlayer(socket, id, tile) {
-        if (!this.players[id]) return;
+        this.removePlayerFromTeam(socket, id, tile);
+        this.unsubscribeAll(socket);
+    }
+
+    removePlayerFromTeam(socket, id, tile) {
+        let player = this.players[id];
+        if (!player) return;
 
         // if tile wasn't passed as an argument, find the tile
         if (!tile) {
             let teamTile;
-            if (this.players[id].team === RED) teamTile = this.red;
-            if (this.players[id].team === BLUE) teamTile = this.blue;
+            if (player.team === RED) teamTile = this.red;
+            if (player.team === BLUE) teamTile = this.blue;
 
             for (let tempTile in teamTile) {
                 if (teamTile[tempTile] && teamTile[tempTile].id === id) {
@@ -186,20 +216,25 @@ module.exports = class Lobby {
             this.redCount--;
         }
 
-        this.unsubscribeAll(socket);
         delete this.players[id];
+        player.team = null;
+        player.tile = null;
         this.playerCount--;
+        this.io.sockets.in(this.room).emit('player_moved', player);
     }
 
-    addSpectator(socket, name) {
+    addSpectator(socket, player) {
         let id = socket.id;
-        this.spectatorCount++;
-        this.spectators[id] = { 'name': name };
-    } 
+        this.spectators[id] = player;
+    }
 
     removeSpectator(socket, id) {
+        console.log("REMOVE SPEC", id);
+        this.removeSpectatorFromGame(id);
         this.unsubscribeAll(socket);
-        this.spectatorCount--;
+    }
+
+    removeSpectatorFromGame(id) {
         delete this.spectators[id];
     }
 
@@ -217,11 +252,12 @@ module.exports = class Lobby {
      */
     unsubscribeAll(socket) {
         // can't seem to just chuck it all in 1 array...
-        socket.removeAllListeners(['player_ready']); 
+        socket.removeAllListeners(['player_ready']);
         socket.removeAllListeners(['blue_team_change']);
         socket.removeAllListeners(['red_team_change']);
         socket.removeAllListeners(['disconnect']);
         socket.removeAllListeners(['lobby_player_back']);
+        socket.removeAllListeners(['on_player_spectate']);
     }
 
     /*
@@ -247,21 +283,21 @@ module.exports = class Lobby {
      * Debugging purposes
      */
     print() {
-        console.log('===== LOBBY STATUS =====');
-        for (var id in this.players) {
-            console.log(this.players[id]);
-        } 
-        console.log();
-        console.log('===BLUE TEAM===');
-        for (var id in this.blue) {
-            if (this.blue[id] !== null) console.log(this.blue[id]);
-        }
-        console.log();
-        console.log('===RED TEAM===');
-        for (var id in this.red) {
-            if (this.red[id] !== null) console.log(this.red[id]);
-        }
+        // console.log('===== LOBBY STATUS =====');
+        // for (var id in this.players) {
+        //     console.log(this.players[id]);
+        // } 
+        // console.log();
+        // console.log('===BLUE TEAM===');
+        // for (var id in this.blue) {
+        //     if (this.blue[id] !== null) console.log(this.blue[id]);
+        // }
+        // console.log();
+        // console.log('===RED TEAM===');
+        // for (var id in this.red) {
+        //     if (this.red[id] !== null) console.log(this.red[id]);
+        // }
 
-        console.log();
+        // console.log();
     }
 }
