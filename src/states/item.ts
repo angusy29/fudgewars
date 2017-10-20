@@ -13,9 +13,9 @@ export default class Item {
     constructor(game: Game, x: number, y: number, key: string) {
         this.game = game;
         this.sprite = game.add.sprite(x, y, key);
-        this.sprite.anchor.setTo(0.5 ,0.5);
+        this.sprite.anchor.setTo(0.5, 0.5);
 
-        this.game.add.tween(this.sprite).to({ y: this.sprite.y + 4 }, 500, "Circ", true, 0, -1, true);
+        this.game.add.tween(this.sprite).to({ y: this.sprite.y + 4 }, 500, 'Circ', true, 0, -1, true);
     }
 
     public destroy(): void {

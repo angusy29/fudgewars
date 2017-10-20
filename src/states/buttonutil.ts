@@ -10,8 +10,8 @@ export default class ButtonUtil {
 
     static readonly SOUNDBAR_LENGTH = 200;
     static readonly SOUNDBAR_HEIGHT = 25;
-    static readonly SOUNDBAR_MIN = 270;     // hardcoded
-    static readonly SOUNDBAR_MAX = 470;     // hardcoded
+    private SOUNDBAR_MIN = 270;     // hardcoded
+    private SOUNDBAR_MAX = 470;     // hardcoded
 
     static readonly SOUNDSLIDER_WIDTH = 28;
 
@@ -87,10 +87,12 @@ export default class ButtonUtil {
         soundBgBMP.ctx.fillRect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
 
         // sound bar foreground, centre in middle of screen without using anchor, because anchor causes problems
-        this.soundBarFg = this.game.add.sprite((this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2), this.game.canvas.height / 2 - 8, soundFgBMP);
+        let x = (this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2);
+        let y = this.game.canvas.height / 2 - 8;
+        this.soundBarFg = this.game.add.sprite(x, y, soundFgBMP);
 
         // sound bar background
-        let soundBarBg = this.game.add.sprite((this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2), this.game.canvas.height / 2 - 8, soundBgBMP);
+        let soundBarBg = this.game.add.sprite(x, y, soundBgBMP);
 
         // the actual slider, 17 is the little pointy y offset of the slider
         let soundSlider = this.game.add.sprite(soundBarBg.x, soundBarBg.y - 17, Assets.Atlases.ButtonsBlueSheet.getName(), CustomButton.soundButtons[3]);
@@ -111,7 +113,7 @@ export default class ButtonUtil {
         soundBar.fixedToCamera = true;
 
         // calculate sprite position by rearranging normalization formula
-        soundSlider.x = this.game.sound.volume * (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN) + ButtonUtil.SOUNDBAR_MIN;
+        soundSlider.x = this.soundBarFg.x + (ButtonUtil.SOUNDBAR_LENGTH * this.game.sound.volume);
         this.updateSoundBarFG(soundSlider);     // set the sound bar foreground to initial position
 
         return soundBar;
@@ -136,7 +138,7 @@ export default class ButtonUtil {
     }
 
     private onDragUpdate(sprite: Phaser.Sprite, pointer: Phaser.Pointer): void {
-        let normalizedVolume = (sprite.x - ButtonUtil.SOUNDBAR_MIN) / (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN);
+        let normalizedVolume = (sprite.x - this.soundBarFg.x) / ButtonUtil.SOUNDBAR_LENGTH;
         this.game.sound.volume = normalizedVolume;
         this.updateSoundBarFG(sprite);
     }
