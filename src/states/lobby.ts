@@ -157,7 +157,7 @@ export default class Lobby extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
-        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, this.room, 48);
+        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height * 0.17, this.room, 48);
         title.anchor.setTo(0.5, 0.5);
 
         this.initBlueTeamPanels();
