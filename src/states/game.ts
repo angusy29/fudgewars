@@ -46,6 +46,7 @@ export default class Game extends Phaser.State {
     private items: any;        // items on the map
 
     private flagGroup: Phaser.Group;
+    private baseGroup: Phaser.Group;
     private skillGroup: Phaser.Group;
     private playerGroup: Phaser.Group;
     private weaponGroup: Phaser.Group;
@@ -126,6 +127,7 @@ export default class Game extends Phaser.State {
         this.buttonUtil = new ButtonUtil(this.game);
 
         this.flagGroup = this.game.add.group();
+        this.baseGroup = this.game.add.group();
         this.skillGroup = this.game.add.group();
         this.playerGroup = this.game.add.group();
         this.weaponGroup = this.game.add.group();
@@ -357,11 +359,13 @@ export default class Game extends Phaser.State {
         this.loadWorld(data.world);
         this.loadTerrain(data.terrain);
         this.loadFlags(data.flags);
+        this.loadBases(data.bases);
         this.numCaptures = data.scores;
         this.gameTime = data.gameTime;
 
         // Sprite ordering
         this.game.world.sendToBack(this.flagGroup);
+        this.game.world.sendToBack(this.baseGroup);
         this.game.world.sendToBack(this.terrainLayer);
         this.game.world.sendToBack(this.mapLayer);
 
@@ -603,6 +607,21 @@ export default class Game extends Phaser.State {
         let terrainMap: Phaser.Tilemap = this.game.add.tilemap('terrain', 64, 64);
         terrainMap.addTilesetImage('tilesheet', 'world.[64,64]');
         this.terrainLayer = terrainMap.createLayer(0);
+    }
+
+    private loadBases(bases: any): void {
+        console.log(bases);
+        for (let key in bases) {
+            let {team, x, y} = bases[key];
+            let img = this.game.add.graphics(x - 32 + 3, y - 32);
+            if (team === Game.BLUE) {
+                img.lineStyle(5, 0x1f95da, 0.5);
+            } else {
+                img.lineStyle(5, 0xe05414, 0.5);
+            }
+            img.drawCircle(32, 32, 32);
+            this.baseGroup.add(img);
+        }
     }
 
     private loadFlags(flags: any): void {
