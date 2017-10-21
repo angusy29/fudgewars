@@ -52,7 +52,7 @@ io.on('connection', function(socket) {
 
         socket.emit('room_join', { 'joinable': !allRooms[data.room].lobby.isFull() });
 
-        console.log(allRooms);
+        // console.log(allRooms);
     });
 
     // obviously this isn't called all the time
@@ -66,7 +66,7 @@ io.on('connection', function(socket) {
             let world = room.world;
 
             if (lobby.isEmpty() && Object.keys(lobby.spectators).length === 0) {
-                console.log('lobby destroyed!');
+                // console.log('lobby destroyed!');
                 delete allRooms[roomId];
                 continue;
             }
@@ -89,7 +89,7 @@ io.on('connection', function(socket) {
         // console.log(room);
         // console.log(allRooms);
         if (!(room in allRooms)) {
-            console.log('Room does not exist!');
+            // console.log('Room does not exist!');
             return;
         }
 
@@ -97,14 +97,14 @@ io.on('connection', function(socket) {
         if (!lobby.isFull()) {
             lobby.addPlayer(socket, name);
             io.sockets.in(room).emit('player_in');
-            console.log('let player in');
+            // console.log('let player in');
         }
         // lobby.print();
     });
 
     socket.on('join_game', function(room) {
         if (!(room in allRooms)) {
-            console.log('Room does not exist!');
+            // console.log('Room does not exist!');
             return;
         }
 
@@ -112,7 +112,7 @@ io.on('connection', function(socket) {
         let world = allRooms[room].world;
         world.started = true;
         if (world.gameTime <= 0) {
-            console.log('Game over');
+            // console.log('Game over');
             return;
         }
 

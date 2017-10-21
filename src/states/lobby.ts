@@ -148,7 +148,7 @@ export default class Lobby extends Phaser.State {
 
         // start the game because everyone is ready
         this.socket.on('lobby_start', () => {
-            console.log('lobby start');
+            // console.log('lobby start');
             this.loadGame();
         });
 
@@ -348,7 +348,7 @@ export default class Lobby extends Phaser.State {
      * Goes back to the main menu
      */
     private loadBack(): void {
-        console.log('press back');
+        // console.log('press back');
         this.socket.emit('lobby_player_back');
         this.game.sound.play('click1');
         this.unsubscribeAll();

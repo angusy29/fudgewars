@@ -283,7 +283,7 @@ module.exports = class World {
     }
 
     disconnectPlayer(socket) {
-        console.log('=====world discon=====');
+        // console.log('=====world discon=====');
 
         let player = this.players[socket.id];
         if (player) {

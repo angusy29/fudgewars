@@ -47,7 +47,7 @@ module.exports = class Lobby {
             this.redCount++;
         }
         this.playerCount++;
-        console.log(this.playerCount);
+        // console.log(this.playerCount);
 
         let tileIndex = this[team.name].indexOf(null);
         let player = new LobbyPlayer(id, name, tileIndex, team.color);
@@ -156,7 +156,7 @@ module.exports = class Lobby {
 
         // If player control q's out or quits browser
         socket.on('disconnect', () => {
-            console.log('lobby disconnected');
+            // console.log('lobby disconnected');
             this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
@@ -165,7 +165,7 @@ module.exports = class Lobby {
 
         // If player clicks on back
         socket.on('lobby_player_back', () => {
-            console.log('lobby player back');
+            // console.log('lobby player back');
             this.removePlayer(socket, player.id, player.tile);
             this.io.sockets.in(this.room).emit('lobby_player_left', player.id);
             this.print();
@@ -229,7 +229,7 @@ module.exports = class Lobby {
     }
 
     removeSpectator(socket, id) {
-        console.log("REMOVE SPEC", id);
+        // console.log("REMOVE SPEC", id);
         this.removeSpectatorFromGame(id);
         this.unsubscribeAll(socket);
     }
