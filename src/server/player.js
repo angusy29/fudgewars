@@ -16,7 +16,7 @@ const BOUNDS = {
 const RESPAWN_TIME = 5; // Seconds
 
 module.exports = class Player extends Collidable {
-    constructor(world, id, name, team, x, y) {
+    constructor(world, id, name, team, x, y, accessoryTile) {
         super(world, x, y, BOUNDS);
 
         this.id = id;
@@ -41,6 +41,8 @@ module.exports = class Player extends Collidable {
         this.sword = new Sword(world, this);
         this.kills = 0;
         this.deaths = 0;
+
+        this.accessoryTile = accessoryTile;
     }
 
     static get MAX_HEALTH() {
@@ -263,6 +265,7 @@ module.exports = class Player extends Collidable {
             respawnTime: this.respawnTime,
             kills: this.kills,
             deaths: this.deaths,
+            accessoryTile: this.accessoryTile
         }
 
         return rep;

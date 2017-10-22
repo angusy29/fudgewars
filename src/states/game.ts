@@ -535,7 +535,7 @@ export default class Game extends Phaser.State {
     private addPlayer(data: any): void {
         if (this.players[data.id]) return;
 
-        let player = new Player(this, data.x, data.y, data.id, data.name, data.team);
+        let player = new Player(this, data.x, data.y, data.id, data.name, data.team, data.accessoryTile);
         this.players[data.id] = player;
 
         // if this is the client's player, set the colour to be limegreen
@@ -580,6 +580,7 @@ export default class Game extends Phaser.State {
         }
 
         this.playerGroup.add(player.sprite);
+        this.playerGroup.add(player.accessory);
         this.weaponGroup.add(player.weaponGroup);
         this.healthBarGroup.add(player.healthBar);
         this.particleGroup.add(player.bloodEmitter);

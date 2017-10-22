@@ -61,11 +61,11 @@ export default class LobbyCreation extends Phaser.State {
         this.background.width = this.game.width;
 
         // title which tells us what screen we are on
-        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 192, 'Create lobby', 48);
+        let title: Phaser.Text = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2 * 0.25, 'Create lobby', 48);
         title.anchor.setTo(0.5, 0.5);
 
         // create form
-        this.lobbyNameInput = this.game.add['inputField']((this.game.canvas.width / 2) - (LobbyCreation.INPUTFIELD_WIDTH / 2), this.game.canvas.height / 2 - 100, {
+        this.lobbyNameInput = this.game.add['inputField'](title.x - (LobbyCreation.INPUTFIELD_WIDTH / 2), title.y * 1.8, {
             font: '24px Arial',
             width: LobbyCreation.INPUTFIELD_WIDTH,
             padding: 8,
@@ -79,8 +79,8 @@ export default class LobbyCreation extends Phaser.State {
         });
 
         // game length label and input
-        let gameLengthLabel: Phaser.Text = this.buttonUtil.createText((this.game.canvas.width / 2) - 108, this.game.canvas.height / 2, 'Game length: ');
-        this.gameLengthInput = this.game.add['inputField'](gameLengthLabel.x + (gameLengthLabel.width / 2), gameLengthLabel.y - 18, {
+        let gameLengthLabel: Phaser.Text = this.buttonUtil.createNormalText(this.lobbyNameInput.x * 1.05, this.lobbyNameInput.y * 1.6, 'Game length: ');
+        this.gameLengthInput = this.game.add['inputField'](gameLengthLabel.x + gameLengthLabel.width, gameLengthLabel.y, {
             font: '24px Arial',
             width: 200,
             padding: 8,
@@ -96,17 +96,17 @@ export default class LobbyCreation extends Phaser.State {
         // game mode labels
 
         // map size labels
-        let mapSizeLabel: Phaser.Text = this.buttonUtil.createText(gameLengthLabel.x, gameLengthLabel.y + 64, 'Map size: ');
+        let mapSizeLabel: Phaser.Text = this.buttonUtil.createNormalText(gameLengthLabel.x, this.lobbyNameInput.y * 2, 'Map size: ');
         for (let i = 0; i < this.mapSizes.length; i++) {
-            let label = this.buttonUtil.createText(mapSizeLabel.x + (128 * i) - 24, mapSizeLabel.y + 48, this.mapSizes[i].title, 18);
+            let label = this.buttonUtil.createNormalText((mapSizeLabel.x * 1.05) + (128 * i), mapSizeLabel.y * 1.15, this.mapSizes[i].title, 18);
 
             // default to medium
             if (i === LobbyCreation.MEDIUM) {
-                this.mapSizes[i].checkbox = this.game.add.button(label.x + (label.width / 2), label.y - 18, 'green_boxCheckmark',
+                this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'green_boxCheckmark',
                                                 this.changeMapSize.bind(this, i), this);
                 this.chosenMapSize = i;
             } else {
-                this.mapSizes[i].checkbox = this.game.add.button(label.x + (label.width / 2), label.y - 18, 'grey_box',
+                this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'grey_box',
                                                 this.changeMapSize.bind(this, i), this);
             }
         }
@@ -114,12 +114,12 @@ export default class LobbyCreation extends Phaser.State {
         // friendly fire
         // NOT using atlases for friendlyFireButton because grey box isn't part of any atlas, so the green checkbox
         // is also just a png, like grey box
-        let friendlyFireLabel: Phaser.Text = this.buttonUtil.createText(mapSizeLabel.x, mapSizeLabel.y + 96, 'Friendly fire: ');
-        this.friendlyFireButton = this.game.add.button(friendlyFireLabel.x + (friendlyFireLabel.width / 2),
-                                        friendlyFireLabel.y - 18, 'grey_box', this.setFriendlyFire, this);
+        let friendlyFireLabel: Phaser.Text = this.buttonUtil.createNormalText(mapSizeLabel.x, this.lobbyNameInput.y * 2.65, 'Friendly fire: ');
+        this.friendlyFireButton = this.game.add.button(friendlyFireLabel.x + friendlyFireLabel.width,
+                                        friendlyFireLabel.y, 'grey_box', this.setFriendlyFire, this);
 
         // if a room already exists of this name, then pop an error message
-        this.roomExistText = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 + 192, 'Lobby with this name already exists!');
+        this.roomExistText = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2 * 1.6, 'Lobby with this name already exists!', 24);
         this.roomExistText.anchor.setTo(0.5, 0.5);
         this.roomExistText.visible = false;
 
@@ -139,7 +139,7 @@ export default class LobbyCreation extends Phaser.State {
      */
     private initCreateButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 + 248, this, this.createLobby);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height * 0.9, this, this.createLobby);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Create');
         this.createButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.createButton), this);
@@ -151,7 +151,7 @@ export default class LobbyCreation extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height / 2 + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height * 0.9, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.backButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.backButton), this);

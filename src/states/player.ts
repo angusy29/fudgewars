@@ -3,6 +3,7 @@ import Game from './game';
 import Hook from './hook';
 import Sword from './sword';
 import { Images } from '../assets';
+import Item from './item';
 
 export default class Player {
     id: any;
@@ -23,19 +24,26 @@ export default class Player {
     kills: number;
     deaths: number;
 
+    accessory: Phaser.Sprite;
+
     // width of healthbar is 40
     static readonly HEALTHBAR_WIDTH = 40;
 
     // offsets from the player pos where labels and sprites should be placed
     static readonly PLAYER_NAME_Y_OFFSET = 40;
+    static readonly PLAYER_NAME_Y_OFFSET_ACCESSORY = 47;
     static readonly HEALTH_BAR_X_OFFSET = 20;
     static readonly HEALTH_BAR_Y_OFFSET = 28;
+    static readonly HEALTH_BAR_Y_OFFSET_ACCESSORY = 35;
+
+    static readonly ACCESSORY_X_OFFSET = 18;
+    static readonly ACCESSORY_Y_OFFSET = 50;
 
     // health bar colors
     static readonly HEALTH_GREEN_COLOUR = '#32CD32';
     static readonly HEALTH_RED_COLOUR = '#FF0000';
 
-    constructor(world: Game, x: number, y: number, id: any, name: string, team: number) {
+    constructor(world: Game, x: number, y: number, id: any, name: string, team: number, accessoryTile: number) {
         this.world = world;
         this.id = id;
         this.team = team;
@@ -72,6 +80,12 @@ export default class Player {
         this.bloodEmitter.setYSpeed(-100, 0);
         this.bloodEmitter.setXSpeed(-60, 60);
         this.bloodEmitter.gravity = 200;
+
+        if (accessoryTile !== 0) {
+            this.accessory = this.world.game.add.sprite(x - Player.ACCESSORY_X_OFFSET, y - Player.ACCESSORY_Y_OFFSET,
+                                Assets.Atlases.SpritesheetsItemsSpritesheet.getName(), Item.AccessorySprites[accessoryTile]);
+            this.accessory.scale.setTo(0.5, 0.5);
+        }
     }
 
     public update(update: any): void {
@@ -102,13 +116,26 @@ export default class Player {
         this.sprite.x = update.x;
         this.sprite.y = update.y;
         this.nameText.x = update.x;
-        this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
+        if (this.accessory) {
+            this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET_ACCESSORY;
+        } else {
+            this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;    
+        }
+
+        if (this.accessory) {
+            this.accessory.x = update.x - Player.ACCESSORY_X_OFFSET;
+            this.accessory.y = update.y - Player.ACCESSORY_Y_OFFSET;
+        }
 
         // group items are relative to the group object, so we
         // loop through and set each one instead
         this.healthBar.forEach(element => {
             element.x = update.x - Player.HEALTH_BAR_X_OFFSET;
-            element.y = update.y - Player.HEALTH_BAR_Y_OFFSET;
+            if (this.accessory) {
+                element.y = update.y - Player.HEALTH_BAR_Y_OFFSET_ACCESSORY;
+            } else {
+                element.y = update.y - Player.HEALTH_BAR_Y_OFFSET;
+            }
         }, this);
 
         this.updateSpriteDirection(update);

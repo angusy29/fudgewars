@@ -181,12 +181,12 @@ module.exports = class World {
         });
     }
 
-    addPlayer(socket) {
+    addPlayer(socket, accessoryTile) {
         let id = socket.id;
         let name = this.lobby.getPlayers()[id].name;
         let team = this.lobby.getPlayers()[id].team;
 
-        let player = new Player(this, id, name, team, 0, 0);
+        let player = new Player(this, id, name, team, 0, 0, accessoryTile);
         this.players[id] = player;
         this.playerCount++;
         player.setSpawnPosition();

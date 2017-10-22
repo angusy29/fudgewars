@@ -1,5 +1,6 @@
 import * as Assets from '../assets';
 import Game from './game';
+import { Atlases } from '../assets';
 
 // Server decides to spawn an item
 // Server decides if its a health potion, a cooldown potion or a speed boost
@@ -9,6 +10,14 @@ import Game from './game';
 export default class Item {
     private game: Game;
     private sprite: Phaser.Sprite;
+
+    public static AccessorySprites: any = [
+        '',
+        Atlases.SpritesheetsItemsSpritesheet.Frames.Plant,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.PlantPurple,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.Star,
+        Atlases.SpritesheetsItemsSpritesheet.Frames.ButtonGreenPressed,
+    ];
 
     constructor(game: Game, x: number, y: number, key: string) {
         this.game = game;

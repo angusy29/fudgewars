@@ -37,6 +37,17 @@ export default class ButtonUtil {
         return button;
     }
 
+    public createNormalText(x, y, label, fontSize = 24): Phaser.Text {
+        let text = this.game.add.text(x, y, label, {
+            font: fontSize + 'px ' + 'Arial',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        text.addColor(CustomButton.TEXT_COLOR, 0);
+        return text;
+    }
+
     /*
      * x: x coordinate to draw text
      * y: y coordinate to draw text

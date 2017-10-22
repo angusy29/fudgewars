@@ -96,6 +96,11 @@ module.exports = class Lobby {
             this.startGameIfReady(socket);
         });
 
+        socket.on('add_accessory', (tile) => {
+            this.players[socket.id].accessoryTile = tile;
+            this.io.sockets.in(this.room).emit('accessory_added', player);
+        });
+
         // when the player clicks on a blue panel this gets called
         socket.on('blue_team_change', (tile) => {
             // if the tile we want to move to is not empty, return

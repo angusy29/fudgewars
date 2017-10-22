@@ -119,7 +119,7 @@ io.on('connection', function(socket) {
         world.sendInitialData(socket);
 
         if (lobby.players[socket.id]) {
-            world.addPlayer(socket);
+            world.addPlayer(socket, lobby.getPlayers()[socket.id].accessoryTile);
         } else if (lobby.spectators[socket.id]) {
             world.addSpectator(socket);
         }

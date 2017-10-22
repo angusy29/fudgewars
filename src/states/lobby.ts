@@ -3,6 +3,8 @@ import * as io from 'socket.io-client';
 import CustomButton from './custombutton';
 import ButtonUtil from './buttonutil';
 import LobbyPlayer from './lobbyplayer';
+import Item from './item';
+import { Atlases } from '../assets';
 
 /*
  * Lobby where player selects their team
@@ -15,6 +17,7 @@ export default class Lobby extends Phaser.State {
     // these group all the tiles on the GUI
     private blueTiles: any = {};
     private redTiles: any = {};
+    private greenTiles: any = {};
 
     // buttons at bottom of page
     private ready: CustomButton;
@@ -37,7 +40,8 @@ export default class Lobby extends Phaser.State {
     static team_sheets: any = [
         Assets.Atlases.ButtonsBlueSheet.Frames.BluePanel,
         Assets.Atlases.ButtonsRedSheet.Frames.RedPanel,
-        Assets.Atlases.ButtonsGreenSheet.Frames.GreenCheckmark
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenCheckmark,
+        Assets.Atlases.ButtonsGreenSheet.Frames.GreenPanel
     ];
 
     public init(socket: any, playername: string, room: string): void {
@@ -80,6 +84,23 @@ export default class Lobby extends Phaser.State {
                     this.players[player.id].readyImg = null;
                     this.players[player.id].sprite.animations.stop(null, true);
                 }
+            }
+        });
+
+        this.socket.on('accessory_added', (data: any) => {
+            let player = this.players[data.id];
+            player.accessoryTile = data.accessoryTile;
+
+            if (player.accessory) {
+                player.accessory.destroy();
+            }
+
+            if (player.accessoryTile !== 0) {
+                let x = player.sprite.x;
+                let y = player.sprite.y;
+                player.accessory = this.game.add.sprite(x - LobbyPlayer.ACCESSORY_X_OFFSET, y - LobbyPlayer.ACCESSORY_Y_OFFSET,
+                                            Atlases.SpritesheetsItemsSpritesheet.getName(), Item.AccessorySprites[player.accessoryTile]);        
+                player.accessory.scale.setTo(0.5, 0.5);
             }
         });
 
@@ -141,6 +162,11 @@ export default class Lobby extends Phaser.State {
                 playerToMove.name.x = teamtiles[player.tile].image.centerX;
                 playerToMove.name.y = teamtiles[player.tile].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
 
+                if (playerToMove.accessory) {
+                    playerToMove.accessory.x = playerToMove.sprite.x - LobbyPlayer.ACCESSORY_X_OFFSET;
+                    playerToMove.accessory.y = playerToMove.sprite.y - LobbyPlayer.ACCESSORY_Y_OFFSET;
+                }
+
                 // assign player to the new tile
                 teamtiles[playerToMove.tile].player = playerToMove;
             }
@@ -174,11 +200,12 @@ export default class Lobby extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
-        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height * 0.17, this.room, 48);
+        let title: Phaser.Text = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2 * 0.1, this.room, 48);
         title.anchor.setTo(0.5, 0.5);
 
         this.initBlueTeamPanels();
         this.initRedTeamPanels();
+        this.initChangeCharacter();
         this.initReadyButton();
         this.initBackButton();
         this.initSpectateButton();
@@ -231,14 +258,24 @@ export default class Lobby extends Phaser.State {
             this.redTiles[player.tile].player = this.players[player.id];
         }
 
+        // if the player has an accessory we add it
+        if (player.accessoryTile !== 0) {
+            let x = this.players[player.id].sprite.x;
+            let y = this.players[player.id].sprite.y;
+            this.players[player.id].accessoryTile = player.accessoryTile;
+            this.players[player.id].accessory = this.game.add.sprite(x - LobbyPlayer.ACCESSORY_X_OFFSET, y - LobbyPlayer.ACCESSORY_Y_OFFSET,
+                                        Atlases.SpritesheetsItemsSpritesheet.getName(), Item.AccessorySprites[this.players[player.id].accessoryTile]);        
+            this.players[player.id].accessory.scale.setTo(0.5, 0.5);
+        }
+
         return this.players[player.id];
     }
 
     private initBlueTeamPanels(): void {
-        let label = this.buttonUtil.createText((this.game.canvas.width / 2) - 120, this.game.canvas.height * 0.25, 'Team Blue', 32);
+        let label = this.buttonUtil.createNormalText((this.game.canvas.width / 2) - 120, this.game.canvas.height / 2 * 0.25, 'Team Blue', 32);
         label.anchor.setTo(0.5, 0.5);
         let x = (this.game.canvas.width / 2) - 220;
-        let y = (this.game.canvas.height * 0.25) + 40;
+        let y = label.y * 1.5;
         let n: number = 0;
         // 3 rows
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 2; i++) {
@@ -255,10 +292,10 @@ export default class Lobby extends Phaser.State {
     }
 
     private initRedTeamPanels(): void {
-        let label = this.buttonUtil.createText((this.game.canvas.width / 2) + 120, this.game.canvas.height * 0.25 , 'Team Red', 32);
+        let label = this.buttonUtil.createText((this.game.canvas.width / 2) + 120, this.game.canvas.height / 2 * 0.25, 'Team Red', 32);
         label.anchor.setTo(0.5, 0.5);
         let x = (this.game.canvas.width / 2) + 20;
-        let y = (this.game.canvas.height * 0.25) + 40;
+        let y = label.y * 1.5;
         let n: number = 0;
         // 3 rows
         for (let i = 0; i < Lobby.MAX_PLAYER_COUNT_PER_TEAM / 2; i++) {
@@ -274,9 +311,31 @@ export default class Lobby extends Phaser.State {
         }
     }
 
+    private initChangeCharacter(): void {
+        let label = this.buttonUtil.createText(this.game.canvas.width / 2, (this.blueTiles[5].image.y + this.blueTiles[5].image.height) * 1.05, 'Accessory selection', 24);
+
+        for (let i = 0; i < 5; i++) {
+            let panel = this.game.add.button(this.blueTiles[4].image.x + (this.blueTiles[4].image.width * i), label.y * 1.05, 
+                                Assets.Atlases.ButtonsGreenSheet.getName(), this.greenPanelClick.bind(this, i), this,
+                                Lobby.team_sheets[3], Lobby.team_sheets[3], Lobby.team_sheets[3], Lobby.team_sheets[3]);
+            panel.alpha = 0.9;
+
+            let spritePosX = panel.centerX;
+            let spritePosY = panel.centerY;
+
+            if (i !== 0) {
+                let sprite = this.game.add.sprite(panel.centerX, panel.centerY, Atlases.SpritesheetsItemsSpritesheet.getName(), Item.AccessorySprites[i]);
+                sprite.anchor.setTo(0.5, 0.5);
+                this.greenTiles[i] = sprite;
+            } else {
+                this.greenTiles[0] = null;
+            }
+        }
+    }
+
     private initReadyButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108 * 2, this.game.canvas.height / 2 + 248, this, this.readyOnClick);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108 * 2, this.game.canvas.height * 0.9, this, this.readyOnClick);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Ready');
         this.ready = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.ready), this);
@@ -289,7 +348,7 @@ export default class Lobby extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108 * 2, this.game.canvas.height / 2 + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108 * 2, this.game.canvas.height * 0.9, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.back = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.back), this);
@@ -298,7 +357,7 @@ export default class Lobby extends Phaser.State {
 
     private initSpectateButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2 + 248, this, this.onSpectateClick);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height * 0.9, this, this.onSpectateClick);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Spectate');
         this.spectateBtn = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.spectateBtn), this);
@@ -344,6 +403,11 @@ export default class Lobby extends Phaser.State {
         this.socket.emit('red_team_change', tile);
     }
 
+    private greenPanelClick(tile: number): void {
+        this.game.sound.play('click1');
+        this.socket.emit('add_accessory', tile);
+    }
+
     /*
      * Goes back to the main menu
      */
@@ -369,5 +433,6 @@ export default class Lobby extends Phaser.State {
         this.socket.off('lobby_update');
         this.socket.off('lobby_player_left');
         this.socket.off('player_moved');
+        this.socket.off('accessory_added');
     }
 }

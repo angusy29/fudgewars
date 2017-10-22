@@ -31,6 +31,8 @@ export default class LobbySelection extends Phaser.State {
     static readonly BOUND_WIDTH = 500;
     static readonly BOUND_HEIGHT = 380;
 
+    private title: Phaser.Text;
+
     public init(socket: any, playername: string): void {
         this.socket = socket;
         this.client_player_name = playername;
@@ -47,10 +49,10 @@ export default class LobbySelection extends Phaser.State {
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
-        let title: Phaser.Text = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2 - 248, 'Select a lobby', 48);
-        title.anchor.setTo(0.5, 0.5);
+        this.title = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2 * 0.25, 'Select a lobby', 48);
+        this.title.anchor.setTo(0.5, 0.5);
 
-        this.noLobbyText = this.buttonUtil.createText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'There are currently no lobbies.', 36);
+        this.noLobbyText = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2, 'There are currently no lobbies.', 36);
         this.noLobbyText.anchor.setTo(0.5, 0.5);
         this.noLobbyText.visible = false;
 
@@ -68,7 +70,7 @@ export default class LobbySelection extends Phaser.State {
 
     private initRefreshListButton(): void {
         // -49, because 49 is width of the refresh button
-        let button: Phaser.Button = this.game.add.button((this.game.canvas.width / 2) + (LobbySelection.BOUND_WIDTH / 2) - 49, (this.game.canvas.height / 2) - (LobbySelection.BOUND_HEIGHT / 2) - 50,
+        let button: Phaser.Button = this.game.add.button(this.title.x + (this.title.width / 1.5), this.title.y + (this.title.height / 2),
                                         Assets.Atlases.ButtonsBlueSheet.getName(), this.refreshLobbyList, this,
                                         CustomButton.iconButton[1], CustomButton.iconButton[2], CustomButton.iconButton[0], CustomButton.iconButton[1]);
         let icon: Phaser.Sprite = this.game.add.sprite(button.x - 1, button.y - 5, Assets.Atlases.ButtonsSheetWhite2x.getName(), CustomButton.icons[0]);
@@ -77,7 +79,7 @@ export default class LobbySelection extends Phaser.State {
     }
 
     private initLobbies(): void {
-        let bounds = new Phaser.Rectangle((this.game.canvas.width / 2) - (LobbySelection.BOUND_WIDTH / 2), (this.game.canvas.height / 2) - (LobbySelection.BOUND_HEIGHT / 2),
+        let bounds = new Phaser.Rectangle((this.game.canvas.width / 2) - (LobbySelection.BOUND_WIDTH / 2), (this.game.canvas.height / 2) * 0.5,
                                             LobbySelection.BOUND_WIDTH, LobbySelection.BOUND_HEIGHT);
         let options = { direction: 'y', overflow: 100, padding: 10, searchForClicks: true };
 
@@ -174,7 +176,7 @@ export default class LobbySelection extends Phaser.State {
      */
     private initCreateLobbyButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height / 2 + 248, this, this.createLobby);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 - 108, this.game.canvas.height * 0.9, this, this.createLobby);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Create lobby');
         this.createLobbyButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.createLobbyButton), this);
@@ -186,7 +188,7 @@ export default class LobbySelection extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height / 2 + 248, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2 + 108, this.game.canvas.height * 0.9, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.backButton = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.backButton), this);
