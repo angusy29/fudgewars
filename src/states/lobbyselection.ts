@@ -140,13 +140,33 @@ export default class LobbySelection extends Phaser.State {
                     strokeThickness: 3,
                 }, group);
 
-                let spriteX = 200;
+                let spriteX = 140;
                 for (let i = 0; i < allRooms[room].blueCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 4, 'Blue', group);
                 }
 
                 for (let i = 0; i < allRooms[room].redCount; i++) {
                     this.createSprite(spriteX + (40 * (i + 1)), roomName.y + 38, 'Red', group);
+                }
+
+                let minutes = allRooms[room].gameLength / 60;
+                let minText = minutes === 1 ? ' minute' : ' minutes';
+                let gameLengthText = this.game.add.text(button.x + button.width, button.y + 10, allRooms[room].gameLength / 60 + minText, {
+                    font: '14px ' + 'Arial',
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 3,
+                }, group);
+                gameLengthText.x = gameLengthText.x - gameLengthText.width - 10;
+
+                if (allRooms[room].friendlyFire) {
+                    let friendlyFireText = this.game.add.text(button.x + button.width, gameLengthText.y + 18, 'Friendly fire', {
+                        font: '14px ' + 'Arial',
+                        fill: '#ffffff',
+                        stroke: '#000000',
+                        strokeThickness: 3,
+                    }, group);
+                    friendlyFireText.x = friendlyFireText.x - friendlyFireText.width - 10;
                 }
 
                 let img = this.game.add.image(0, 0, group.generateTexture());

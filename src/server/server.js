@@ -78,6 +78,8 @@ io.on('connection', function(socket) {
                         blueCount: lobby.blueCount,
                         redCount: lobby.redCount,
                         isPlaying: lobby.isPlaying,
+                        gameLength: world.gameLength,
+                        friendlyFire: world.friendlyFire
                     };
                 }
             }
