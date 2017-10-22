@@ -97,6 +97,8 @@ module.exports = class Lobby {
         });
 
         socket.on('add_accessory', (tile) => {
+            // usually if a spectator presses on an accessory, reject him
+            if (!this.players[socket.id]) return;
             this.players[socket.id].accessoryTile = tile;
             this.io.sockets.in(this.room).emit('accessory_added', player);
         });

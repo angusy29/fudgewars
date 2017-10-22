@@ -580,7 +580,7 @@ export default class Game extends Phaser.State {
         }
 
         this.playerGroup.add(player.sprite);
-        this.playerGroup.add(player.accessory);
+        if (player.accessory) this.playerGroup.add(player.accessory);
         this.weaponGroup.add(player.weaponGroup);
         this.healthBarGroup.add(player.healthBar);
         this.particleGroup.add(player.bloodEmitter);

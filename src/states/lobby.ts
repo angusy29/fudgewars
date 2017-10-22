@@ -183,6 +183,7 @@ export default class Lobby extends Phaser.State {
             this.players[id].name.destroy();
             this.players[id].sprite.destroy();
             if (this.players[id].readyImg !== null) this.players[id].readyImg.destroy();
+            if (this.players[id].accessory !== null) this.players[id].accessory.destroy();
 
             if (this.players[id].team === Lobby.BLUE) {
                 this.blueTiles[this.players[id].tile].player = null;
@@ -272,9 +273,9 @@ export default class Lobby extends Phaser.State {
     }
 
     private initBlueTeamPanels(): void {
-        let label = this.buttonUtil.createNormalText((this.game.canvas.width / 2) - 120, this.game.canvas.height / 2 * 0.25, 'Team Blue', 32);
+        let label = this.buttonUtil.createNormalText((this.game.canvas.width / 2) - 150, this.game.canvas.height / 2 * 0.25, 'Team Blue', 32);
         label.anchor.setTo(0.5, 0.5);
-        let x = (this.game.canvas.width / 2) - 220;
+        let x = (this.game.canvas.width / 2) - 250;
         let y = label.y * 1.5;
         let n: number = 0;
         // 3 rows
@@ -292,9 +293,9 @@ export default class Lobby extends Phaser.State {
     }
 
     private initRedTeamPanels(): void {
-        let label = this.buttonUtil.createText((this.game.canvas.width / 2) + 120, this.game.canvas.height / 2 * 0.25, 'Team Red', 32);
+        let label = this.buttonUtil.createText((this.game.canvas.width / 2) + 150, this.game.canvas.height / 2 * 0.25, 'Team Red', 32);
         label.anchor.setTo(0.5, 0.5);
-        let x = (this.game.canvas.width / 2) + 20;
+        let x = (this.game.canvas.width / 2) + 50;
         let y = label.y * 1.5;
         let n: number = 0;
         // 3 rows
@@ -312,7 +313,9 @@ export default class Lobby extends Phaser.State {
     }
 
     private initChangeCharacter(): void {
-        let label = this.buttonUtil.createText(this.game.canvas.width / 2, (this.blueTiles[5].image.y + this.blueTiles[5].image.height) * 1.05, 'Accessory selection', 24);
+        let label = this.buttonUtil.createNormalText(this.game.canvas.width / 2,
+                                        (this.blueTiles[5].image.y + this.blueTiles[5].image.height) * 1.05, 'Accessory selection', 24);
+        label.anchor.setTo(0.5, 0.5);
 
         for (let i = 0; i < 5; i++) {
             let panel = this.game.add.button(this.blueTiles[4].image.x + (this.blueTiles[4].image.width * i), label.y * 1.05, 
@@ -369,6 +372,9 @@ export default class Lobby extends Phaser.State {
 
         this.spectateBtn.setText('Waiting for game to start...');
         this.spectateBtn.getText().fontSize = '16px';
+
+        if (this.players[this.socket.id].readyImg) this.players[this.socket.id].readyImg.destroy();
+        if (this.players[this.socket.id].accessory) this.players[this.socket.id].accessory.destroy();
 
         this.socket.emit('on_player_spectate');
     }

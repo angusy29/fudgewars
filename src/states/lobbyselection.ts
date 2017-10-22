@@ -113,7 +113,6 @@ export default class LobbySelection extends Phaser.State {
             this.noLobbyText.visible = false;
             for (let room in allRooms) {
                 let group = this.game.make.group(null);
-                // let button: Phaser.Button = this.game.add.button(0, 0, 'room', null, null, null, null, null, null, group);
                 let button: Phaser.Image = this.game.add.image(0, 0, 'room', null, group);
                 button.alpha = 0.9;
                 button.width = boxW;
