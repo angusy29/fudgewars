@@ -11,6 +11,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/attack_sword.png'); }
     }
+    export class ImagesDeath {
+        static getName(): string { return 'death'; }
+
+        static getPNG(): string { return require('assets/images/death.png'); }
+    }
     export class ImagesDemo {
         static getName(): string { return 'demo'; }
 
@@ -35,6 +40,11 @@ export namespace Images {
         static getName(): string { return 'wasd'; }
 
         static getPNG(): string { return require('assets/images/wasd.png'); }
+    }
+    export class ImagesWasted {
+        static getName(): string { return 'wasted'; }
+
+        static getPNG(): string { return require('assets/images/wasted.png'); }
     }
 }
 
