@@ -111,6 +111,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/wasd.png'); }
     }
+    export class ImagesWasted {
+        static getName(): string { return 'wasted'; }
+
+        static getPNG(): string { return require('assets/images/wasted.png'); }
+    }
     export class ItemsCooldownpot {
         static getName(): string { return 'cooldownpot'; }
 

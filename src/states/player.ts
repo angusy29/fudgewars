@@ -23,6 +23,8 @@ export default class Player {
     bloodEmitter: any;
     kills: number;
     deaths: number;
+    wasted: Phaser.Image;
+    spriteTween: Phaser.Tween;
 
     accessory: Phaser.Sprite;
 
@@ -55,6 +57,10 @@ export default class Player {
         this.kills = 0;
         this.deaths = 0;
         this.name = name;
+        this.wasted = this.world.add.image(this.world.camera.width / 2, this.world.camera.height / 2, 'wasted');
+        this.wasted.anchor.setTo(0.5, 0.5);
+        this.wasted.fixedToCamera = true;
+        this.wasted.visible = false;
 
         this.hook = new Hook(world, this);
         this.sword = new Sword(world, this);
@@ -119,7 +125,7 @@ export default class Player {
         if (this.accessory) {
             this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET_ACCESSORY;
         } else {
-            this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;    
+            this.nameText.y = update.y - Player.PLAYER_NAME_Y_OFFSET;
         }
 
         if (this.accessory) {
@@ -168,6 +174,8 @@ export default class Player {
             font: '14px ' + 'Arial'
         });
         this.nameText.anchor.setTo(0.5, 0.5);
+
+        this.spriteTween = this.world.add.tween(sprite).to({ angle: -90 }, 2000, 'Linear', true, 0);
 
         return sprite;
     }
@@ -238,7 +246,7 @@ export default class Player {
         }
     }
 
-    public changeVisiblity(visible: boolean): void {
+    public changeVisiblity(visible: boolean): any {
         this.sprite.visible = visible;
         this.nameText.visible = visible;
         this.healthBar.visible = visible;
@@ -277,11 +285,12 @@ export default class Player {
         if (this.alive && this.health <= 0) {
             // Update status to dead the first time we receive it
             this.alive = false;
-            this.changeVisiblity(false);
+            this.deathAnimation();
         } else if (!this.alive && this.health > 0) {
             // Update status to alive the first time we receive it
             this.alive = true;
-            this.changeVisiblity(true);
+            this.respawnAnimation();
+            this.world.tweens.removeAll();
         }
     }
 
@@ -291,5 +300,24 @@ export default class Player {
 
     public getIsFaceRight(): boolean {
         return this.isFaceRight;
+    }
+
+    public deathAnimation(): any {
+        this.spriteTween = this.world.add.tween(this.sprite).to({ angle: -90 }, 2000, 'Linear', true, 0);
+        this.spriteTween.onComplete.add(this.death, this);
+        this.healthBar.visible = false;
+    }
+
+    public death(): any {
+        if (this.world.client_id === this.id) {
+            this.wasted.visible = true;
+        }
+        this.changeVisiblity(false);
+    }
+
+    public respawnAnimation(): void {
+        this.changeVisiblity(true);
+        this.wasted.visible = false;
+        this.sprite.rotation = 0;
     }
 }
