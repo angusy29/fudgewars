@@ -162,6 +162,13 @@ export default class Lobby extends Phaser.State {
                 playerToMove.name.x = teamtiles[player.tile].image.centerX;
                 playerToMove.name.y = teamtiles[player.tile].image.centerY - Lobby.PLAYER_NAME_Y_OFFSET;
 
+                if (player.accessoryTile !== 0 && !playerToMove.accessory) {
+                    playerToMove.accessoryTile = player.accessoryTile;
+                    playerToMove.accessory = this.game.add.sprite(0, 0, Assets.Atlases.SpritesheetsItemsSpritesheet.getName(),
+                                            Item.AccessorySprites[playerToMove.accessoryTile]);
+                    playerToMove.accessory.scale.setTo(0.5, 0.5);
+                }
+
                 if (playerToMove.accessory) {
                     playerToMove.accessory.x = playerToMove.sprite.x - LobbyPlayer.ACCESSORY_X_OFFSET;
                     playerToMove.accessory.y = playerToMove.sprite.y - LobbyPlayer.ACCESSORY_Y_OFFSET;
@@ -374,8 +381,10 @@ export default class Lobby extends Phaser.State {
         this.spectateBtn.getText().fontSize = '16px';
 
         if (this.players[this.socket.id].readyImg) this.players[this.socket.id].readyImg.destroy();
-        if (this.players[this.socket.id].accessory) this.players[this.socket.id].accessory.destroy();
-
+        if (this.players[this.socket.id].accessory) {
+            this.players[this.socket.id].accessory.destroy();
+            this.players[this.socket.id].accessory = null;
+        }
         this.socket.emit('on_player_spectate');
     }
 
@@ -411,7 +420,9 @@ export default class Lobby extends Phaser.State {
 
     private greenPanelClick(tile: number): void {
         this.game.sound.play('click1');
-        this.socket.emit('add_accessory', tile);
+
+        // hacks are us, if they are a player emit
+        if (this.spectateBtn.getText().text === 'Spectate') this.socket.emit('add_accessory', tile);
     }
 
     /*
