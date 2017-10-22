@@ -676,7 +676,6 @@ export default class Game extends Phaser.State {
     }
 
     private loadBases(bases: any): void {
-        console.log(bases);
         for (let key in bases) {
             let {team, x, y} = bases[key];
             let img = this.game.add.graphics(x - 32 + 3, y - 32);
@@ -1076,6 +1075,7 @@ export default class Game extends Phaser.State {
             let mouseX: number = (pointer.x + camera.position.x) / camera.scale.x;
             let mouseY: number = (pointer.y + camera.position.y) / camera.scale.y;
 
+            console.log(pointer);
             if (pointer.leftButton.isDown && this.skills.hook.cooldown === 0) {
                 let angle = Math.atan2(mouseY - me.sprite.y, mouseX - me.sprite.x);
                 this.socket.emit('attack_hook', angle);

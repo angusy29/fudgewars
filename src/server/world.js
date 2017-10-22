@@ -218,9 +218,10 @@ module.exports = class World {
         if (y < 100) y += 100;
 
         let powerup;
-        if (Math.random() < 0.5) {
+        if (Math.random() < 0.8) {
             powerup = new HealthPot(this, itemId, x, y);
         } else {
+            // 20% chance to spawn cooldown pot
             powerup = new CooldownPot(this, itemId, x, y);
         }
 
@@ -388,7 +389,7 @@ module.exports = class World {
 
         // if there are less than 5 items on the map
         // spawn some
-        if (Object.keys(this.items).length < 5) {
+        if (Object.keys(this.items).length < 3) {
             this.addItem();
         }
 
