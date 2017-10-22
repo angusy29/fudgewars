@@ -7,12 +7,17 @@ import * as WebFontLoader from 'webfontloader';
 import Boot from './states/boot';
 import Preloader from './states/preloader';
 import MainMenu from './states/mainmenu';
+import LobbySelection from './states/lobbyselection';
+import LobbyCreation from './states/lobbycreation';
 import Lobby from './states/lobby';
 import LobbyPlayer from './states/lobbyplayer';
 import HowToPlay from './states/howtoplay';
 import Options from './states/options';
 import Game from './states/game';
 import ButtonUtil from './states/buttonutil';
+import Item from './states/item';
+import HealthPot from './states/healthpot';
+import CooldownPot from './states/cooldownpot';
 import * as Utils from './utils/utils';
 import * as Assets from './assets';
 
@@ -23,6 +28,8 @@ class App extends Phaser.Game {
         this.state.add('boot', Boot);
         this.state.add('preloader', Preloader);
         this.state.add('mainmenu', MainMenu);
+        this.state.add('lobbyselection', LobbySelection);
+        this.state.add('lobbycreation', LobbyCreation);
         this.state.add('lobby', Lobby);
         this.state.add('howtoplay', HowToPlay);
         this.state.add('options', Options);
@@ -33,8 +40,8 @@ class App extends Phaser.Game {
 }
 
 function startApp(): void {
-    let gameWidth: number = DEFAULT_GAME_WIDTH;
-    let gameHeight: number = DEFAULT_GAME_HEIGHT;
+    let gameWidth: number = window.innerWidth;
+    let gameHeight: number = window.innerHeight;
 
     if (SCALE_MODE === 'USER_SCALE') {
         let screenMetrics: Utils.ScreenMetrics = Utils.ScreenUtils.calculateScreenMetrics(gameWidth, gameHeight);
@@ -48,7 +55,7 @@ function startApp(): void {
         width: gameWidth,
         height: gameHeight,
         renderer: Phaser.AUTO,
-        parent: '',
+        parent: 'game',
         resolution: 1
     };
 

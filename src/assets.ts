@@ -11,25 +11,95 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/attack_sword.png'); }
     }
-    export class ImagesDeath {
-        static getName(): string { return 'death'; }
+    export class ImagesBackgroundTemplate {
+        static getName(): string { return 'background_template'; }
 
-        static getPNG(): string { return require('assets/images/death.png'); }
+        static getPNG(): string { return require('assets/images/background_template.png'); }
+    }
+    export class ImagesBaseBlue {
+        static getName(): string { return 'base_blue'; }
+
+        static getPNG(): string { return require('assets/images/base_blue.png'); }
+    }
+    export class ImagesBaseRed {
+        static getName(): string { return 'base_red'; }
+
+        static getPNG(): string { return require('assets/images/base_red.png'); }
     }
     export class ImagesDemo {
         static getName(): string { return 'demo'; }
 
         static getPNG(): string { return require('assets/images/demo.png'); }
     }
+    export class ImagesFlagBlue {
+        static getName(): string { return 'flag_blue'; }
+
+        static getPNG(): string { return require('assets/images/flag_blue.png'); }
+    }
+    export class ImagesFlagRed {
+        static getName(): string { return 'flag_red'; }
+
+        static getPNG(): string { return require('assets/images/flag_red.png'); }
+    }
+    export class ImagesGreenBoxCheckmark {
+        static getName(): string { return 'green_boxCheckmark'; }
+
+        static getPNG(): string { return require('assets/images/green_boxCheckmark.png'); }
+    }
+    export class ImagesGreyBox {
+        static getName(): string { return 'grey_box'; }
+
+        static getPNG(): string { return require('assets/images/grey_box.png'); }
+    }
     export class ImagesMouse {
         static getName(): string { return 'mouse'; }
 
         static getPNG(): string { return require('assets/images/mouse.png'); }
     }
+    export class ImagesParticleBlood {
+        static getName(): string { return 'particle_blood'; }
+
+        static getPNG(): string { return require('assets/images/particle_blood.png'); }
+    }
+    export class ImagesParticleWalkTrail {
+        static getName(): string { return 'particle_walk_trail'; }
+
+        static getPNG(): string { return require('assets/images/particle_walk_trail.png'); }
+    }
+    export class ImagesRoom {
+        static getName(): string { return 'room'; }
+
+        static getPNG(): string { return require('assets/images/room.png'); }
+    }
+    export class ImagesScoreOverlay {
+        static getName(): string { return 'score_overlay'; }
+
+        static getPNG(): string { return require('assets/images/score_overlay.png'); }
+    }
+    export class ImagesSelfBlue {
+        static getName(): string { return 'self_blue'; }
+
+        static getPNG(): string { return require('assets/images/self_blue.png'); }
+    }
+    export class ImagesSelfRed {
+        static getName(): string { return 'self_red'; }
+
+        static getPNG(): string { return require('assets/images/self_red.png'); }
+    }
     export class ImagesSkillCooldownOverlay {
         static getName(): string { return 'skill_cooldown_overlay'; }
 
         static getPNG(): string { return require('assets/images/skill_cooldown_overlay.png'); }
+    }
+    export class ImagesTeamBlue {
+        static getName(): string { return 'team_blue'; }
+
+        static getPNG(): string { return require('assets/images/team_blue.png'); }
+    }
+    export class ImagesTeamRed {
+        static getName(): string { return 'team_red'; }
+
+        static getPNG(): string { return require('assets/images/team_red.png'); }
     }
     export class ImagesTitlescreen {
         static getName(): string { return 'titlescreen'; }
@@ -45,6 +115,21 @@ export namespace Images {
         static getName(): string { return 'wasted'; }
 
         static getPNG(): string { return require('assets/images/wasted.png'); }
+    }
+    export class ItemsCooldownpot {
+        static getName(): string { return 'cooldownpot'; }
+
+        static getPNG(): string { return require('assets/items/cooldownpot.png'); }
+    }
+    export class ItemsHealthpot {
+        static getName(): string { return 'healthpot'; }
+
+        static getPNG(): string { return require('assets/items/healthpot.png'); }
+    }
+    export class ItemsSpeedboost {
+        static getName(): string { return 'speedboost'; }
+
+        static getPNG(): string { return require('assets/items/speedboost.png'); }
     }
 }
 
@@ -266,6 +351,122 @@ export namespace Atlases {
         static getXML(): string { return require('assets/buttons/redSheet.xml'); }
 
         static Frames = ButtonsRedSheetFrames;
+    }
+    enum ButtonsSheetWhite2xFrames {
+        ArrowDown = <any>'arrowDown.png',
+        ArrowLeft = <any>'arrowLeft.png',
+        ArrowRight = <any>'arrowRight.png',
+        ArrowUp = <any>'arrowUp.png',
+        AudioOff = <any>'audioOff.png',
+        AudioOn = <any>'audioOn.png',
+        BarsHorizontal = <any>'barsHorizontal.png',
+        BarsVertical = <any>'barsVertical.png',
+        Button1 = <any>'button1.png',
+        Button2 = <any>'button2.png',
+        Button3 = <any>'button3.png',
+        ButtonA = <any>'buttonA.png',
+        ButtonB = <any>'buttonB.png',
+        ButtonL = <any>'buttonL.png',
+        ButtonL1 = <any>'buttonL1.png',
+        ButtonL2 = <any>'buttonL2.png',
+        ButtonR = <any>'buttonR.png',
+        ButtonR1 = <any>'buttonR1.png',
+        ButtonR2 = <any>'buttonR2.png',
+        ButtonSelect = <any>'buttonSelect.png',
+        ButtonStart = <any>'buttonStart.png',
+        ButtonX = <any>'buttonX.png',
+        ButtonY = <any>'buttonY.png',
+        Checkmark = <any>'checkmark.png',
+        Contrast = <any>'contrast.png',
+        Cross = <any>'cross.png',
+        Down = <any>'down.png',
+        DownLeft = <any>'downLeft.png',
+        DownRight = <any>'downRight.png',
+        Exclamation = <any>'exclamation.png',
+        Exit = <any>'exit.png',
+        ExitLeft = <any>'exitLeft.png',
+        ExitRight = <any>'exitRight.png',
+        Export = <any>'export.png',
+        FastForward = <any>'fastForward.png',
+        Gamepad = <any>'gamepad.png',
+        Gamepad1 = <any>'gamepad1.png',
+        Gamepad2 = <any>'gamepad2.png',
+        Gamepad3 = <any>'gamepad3.png',
+        Gamepad4 = <any>'gamepad4.png',
+        Gear = <any>'gear.png',
+        Home = <any>'home.png',
+        Import = <any>'import.png',
+        Information = <any>'information.png',
+        Joystick = <any>'joystick.png',
+        JoystickLeft = <any>'joystickLeft.png',
+        JoystickRight = <any>'joystickRight.png',
+        JoystickUp = <any>'joystickUp.png',
+        Larger = <any>'larger.png',
+        LeaderboardsComplex = <any>'leaderboardsComplex.png',
+        LeaderboardsSimple = <any>'leaderboardsSimple.png',
+        Left = <any>'left.png',
+        Locked = <any>'locked.png',
+        MassiveMultiplayer = <any>'massiveMultiplayer.png',
+        Medal1 = <any>'medal1.png',
+        Medal2 = <any>'medal2.png',
+        MenuGrid = <any>'menuGrid.png',
+        MenuList = <any>'menuList.png',
+        Minus = <any>'minus.png',
+        Mouse = <any>'mouse.png',
+        Movie = <any>'movie.png',
+        Multiplayer = <any>'multiplayer.png',
+        MusicOff = <any>'musicOff.png',
+        MusicOn = <any>'musicOn.png',
+        Next = <any>'next.png',
+        Open = <any>'open.png',
+        Pause = <any>'pause.png',
+        Phone = <any>'phone.png',
+        Plus = <any>'plus.png',
+        Power = <any>'power.png',
+        Previous = <any>'previous.png',
+        Question = <any>'question.png',
+        Return = <any>'return.png',
+        Rewind = <any>'rewind.png',
+        Right = <any>'right.png',
+        Save = <any>'save.png',
+        ScrollHorizontal = <any>'scrollHorizontal.png',
+        ScrollVertical = <any>'scrollVertical.png',
+        Share1 = <any>'share1.png',
+        Share2 = <any>'share2.png',
+        ShoppingBasket = <any>'shoppingBasket.png',
+        ShoppingCart = <any>'shoppingCart.png',
+        Siganl1 = <any>'siganl1.png',
+        Signal2 = <any>'signal2.png',
+        Signal3 = <any>'signal3.png',
+        Singleplayer = <any>'singleplayer.png',
+        Smaller = <any>'smaller.png',
+        Star = <any>'star.png',
+        Stop = <any>'stop.png',
+        Tablet = <any>'tablet.png',
+        Target = <any>'target.png',
+        Trashcan = <any>'trashcan.png',
+        TrashcanOpen = <any>'trashcanOpen.png',
+        Trophy = <any>'trophy.png',
+        Unlocked = <any>'unlocked.png',
+        Up = <any>'up.png',
+        UpLeft = <any>'upLeft.png',
+        UpRight = <any>'upRight.png',
+        Video = <any>'video.png',
+        Warning = <any>'warning.png',
+        Wrench = <any>'wrench.png',
+        Zoom = <any>'zoom.png',
+        ZoomDefault = <any>'zoomDefault.png',
+        ZoomIn = <any>'zoomIn.png',
+        ZoomOut = <any>'zoomOut.png',
+    }
+    export class ButtonsSheetWhite2x {
+        static getName(): string { return 'sheet_white2x'; }
+
+        static getPNG(): string { return require('assets/buttons/sheet_white2x.png'); }
+
+        static getXML(): string { return require('assets/buttons/sheet_white2x.xml'); }
+
+        static Frames = ButtonsSheetWhite2xFrames;
     }
     enum ButtonsYellowSheetFrames {
         YellowBoxCheckmark = <any>'yellow_boxCheckmark.png',

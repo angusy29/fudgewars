@@ -90,9 +90,14 @@ module.exports = class Hook extends Collidable {
                             // Player hooked
                             if (this.world.collidesObject(this.getTopLeft(), this.getBottomRight(),
                                 other.getFullTopLeft(), other.getFullBottomRight())) {
-                                other.getHooked(this.player);
-                                this.hookedPlayer = other;
+
+                                // Only hook players from other team
+                                if (this.player.team !== other.team || this.world.friendlyFire) {
+                                    other.getHooked(this.player);
+                                    this.hookedPlayer = other;
+                                }
                                 this.returning = true;
+                                break;
                             }
                         }
                     }

@@ -1,12 +1,15 @@
 import * as Assets from '../assets';
 import CustomButton from './custombutton';
 import ButtonUtil from './buttonutil';
+import * as io from 'socket.io-client';
 
 /*
  *  Welcome screen when user arrives at Fudge Wars website
  */
 export default class MainMenu extends Phaser.State {
+    private socket: any;
     private background: Phaser.Image;
+    private client_player_name: string;
 
     // input field
     private nicknameInput: PhaserInput.InputField;
@@ -23,6 +26,11 @@ export default class MainMenu extends Phaser.State {
     public preload(): void {
         // Load any assets you need for your preloader state here.
         this.game.plugins.add(PhaserInput.Plugin);
+    }
+
+    public init(socket: any, playername: string): void {
+        this.socket = socket;
+        this.client_player_name = playername;
     }
 
     public create(): void {
@@ -48,6 +56,8 @@ export default class MainMenu extends Phaser.State {
             type: PhaserInput.InputType.text
         });
 
+        this.nicknameInput.setText(this.client_player_name);
+
         // must be called in this order
         // as subsequent buttons depend on previous button position
         this.initStartGameButton();
@@ -61,7 +71,7 @@ export default class MainMenu extends Phaser.State {
      */
     private initStartGameButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2, this, this.loadGame);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2, this, this.loadLobby);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Play online');
         this.startGame = new CustomButton(button, text);
         button.fixedToCamera = true;
@@ -100,9 +110,9 @@ export default class MainMenu extends Phaser.State {
     /*
      * Callback function for when startGame is pressed
      */
-    private loadGame(): void {
+    private loadLobby(): void {
         this.game.sound.play('click1');
-        this.game.state.start('lobby', true, false, this.nicknameInput.value);
+        this.game.state.start('lobbyselection', true, false, this.socket, this.nicknameInput.value);
     }
 
     /*
@@ -110,11 +120,11 @@ export default class MainMenu extends Phaser.State {
      */
     private loadHowToPlay(): void {
         this.game.sound.play('click1');
-        this.game.state.start('howtoplay');
+        this.game.state.start('howtoplay', true, false, this.socket, this.nicknameInput.value);
     }
 
     private loadOptions(): void {
         this.game.sound.play('click1');
-        this.game.state.start('options');
+        this.game.state.start('options', true, false, this.socket, this.nicknameInput.value);
     }
 }

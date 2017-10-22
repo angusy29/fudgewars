@@ -37,9 +37,10 @@ module.exports = class Sword extends Collidable {
             this.active = false;
             if (!this.player.alive) return;
 
-            for (let playerId in this.world.players) {
-                let player = this.world.players[playerId];
-                if (playerId === this.player.id) continue;
+            for (let id in this.world.players) {
+                let other = this.world.players[id];
+                if (this.player.id === other.id) continue;
+                if (this.player.team === other.team && !this.world.friendlyFire) continue;
 
                 // Collision using with point vs rectangle check
                 // Check collision near the 'end' of the sword
@@ -49,8 +50,11 @@ module.exports = class Sword extends Collidable {
                     let hitY = this.player.y + Math.sin(this.angle) * ATTACK_LENGTH / steps * i;
                     let hitBounds = { x: hitX, y: hitY };
 
-                    if (this.world.collidesObject(hitBounds, hitBounds, player.getFullTopLeft(), player.getFullBottomRight())) {
-                        this.damagePlayer(player);
+                    if (this.world.collidesObject(hitBounds, hitBounds, other.getFullTopLeft(), other.getFullBottomRight())) {
+                        this.damagePlayer(other);
+                        if (other.getHealth() <= 0) {
+                            this.player.kills += 1;
+                        }
                         break;
                     }
                 }

@@ -18,12 +18,24 @@ export default class Options extends Phaser.State {
     // class used to create buttons
     private buttonUtil: ButtonUtil;
 
+    private socket: any;
+    private client_player_name: string;
+
+    public init(socket: any, playername: string, ) {
+        this.socket = socket;
+        this.client_player_name = playername;
+    }
+
     public create(): void {
         this.background = this.game.add.image(0, 0, 'titlescreen');
         this.background.height = this.game.height;
         this.background.width = this.game.width;
 
         this.buttonUtil = new ButtonUtil(this.game);
+
+        let title: Phaser.Text = this.buttonUtil.createNormalText(this.game.canvas.width / 2, this.game.canvas.height / 2 * 0.25, 'Options', 48);
+        title.anchor.setTo(0.5, 0.5);
+
         this.soundGroup = this.game.add.group();
 
         this.soundGroup = this.buttonUtil.createSoundBar();
@@ -38,7 +50,7 @@ export default class Options extends Phaser.State {
      */
     private initBackButton(): void {
         // pick the first button in the array to use as the asset
-        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height / 2 + 192, this, this.loadBack);
+        let button: Phaser.Button = this.buttonUtil.createButton(this.game.canvas.width / 2, this.game.canvas.height * 0.9, this, this.loadBack);
         let text: Phaser.Text = this.buttonUtil.createText(button.x, button.y, 'Back');
         this.back = new CustomButton(button, text);
         button.onInputOver.add(this.buttonUtil.over.bind(this, this.back), this);
@@ -50,6 +62,6 @@ export default class Options extends Phaser.State {
      */
     private loadBack(): void {
         this.game.sound.play('click1');
-        this.game.state.start('mainmenu');
+        this.game.state.start('mainmenu', true, false, this.socket, this.client_player_name);
     }
 }

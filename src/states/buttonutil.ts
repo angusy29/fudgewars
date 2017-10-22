@@ -6,11 +6,17 @@ import CustomButton from './custombutton';
  */
 export default class ButtonUtil {
     private game: Phaser.Game;
+    private soundBarFg: Phaser.Sprite;      // foreground of sound bar
 
     static readonly SOUNDBAR_LENGTH = 200;
     static readonly SOUNDBAR_HEIGHT = 25;
-    static readonly SOUNDBAR_MIN = 298;     // hardcoded
-    static readonly SOUNDBAR_MAX = 470;     // hardcoded
+    private SOUNDBAR_MIN = 270;     // hardcoded
+    private SOUNDBAR_MAX = 470;     // hardcoded
+
+    static readonly SOUNDSLIDER_WIDTH = 28;
+
+    static readonly SOUNDBAR_FG_COLOUR = '#32CD32';
+    static readonly SOUNDBAR_BG_COLOUR = '#FF0000';
 
     constructor(game: Phaser.Game) {
         this.game = game;
@@ -31,15 +37,26 @@ export default class ButtonUtil {
         return button;
     }
 
+    public createNormalText(x, y, label, fontSize = 24): Phaser.Text {
+        let text = this.game.add.text(x, y, label, {
+            font: fontSize + 'px ' + 'Arial',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        text.addColor(CustomButton.TEXT_COLOR, 0);
+        return text;
+    }
+
     /*
      * x: x coordinate to draw text
      * y: y coordinate to draw text
      * label: string to label this Phaser.Text
      * return: A label positioned at x, y with string label
      */
-    public createText(x, y, label): Phaser.Text {
+    public createText(x, y, label, fontSize = 24): Phaser.Text {
         let text = this.game.add.text(x, y, label, {
-            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            font: fontSize + 'px ' + 'Arial',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3
@@ -60,38 +77,39 @@ export default class ButtonUtil {
 
     public createSoundBar(): Phaser.Group {
         let soundText: Phaser.Text = this.game.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2 - 56, 'Sound', {
-            font: '24px ' + Assets.GoogleWebFonts.Roboto,
+            font: '24px ' + 'Arial',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
         });
         soundText.anchor.setTo(0.5, 0.5);
 
-        // create health bar canvas
-        let soundBMP = this.game.add.bitmapData(ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
-        soundBMP.ctx.beginPath();
-        soundBMP.ctx.rect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
-        soundBMP.ctx.fillStyle = '#2554C7';
-        soundBMP.ctx.fillRect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
+        // create foreground canvas
+        let soundFgBMP = this.game.add.bitmapData(ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
+        soundFgBMP.ctx.beginPath();
+        soundFgBMP.ctx.rect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
+        soundFgBMP.ctx.fillStyle = ButtonUtil.SOUNDBAR_FG_COLOUR;
+        soundFgBMP.ctx.fillRect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
 
         let soundBgBMP = this.game.add.bitmapData(ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
         soundBgBMP.ctx.beginPath();
         soundBgBMP.ctx.rect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
-        soundBgBMP.ctx.fillStyle = '#2554C7';
+        soundBgBMP.ctx.fillStyle = ButtonUtil.SOUNDBAR_BG_COLOUR;
         soundBgBMP.ctx.fillRect(0, 0, ButtonUtil.SOUNDBAR_LENGTH, ButtonUtil.SOUNDBAR_HEIGHT);
 
-        // sound bar foreground
-        let soundBarFg = this.game.add.sprite(this.game.canvas.width / 2, this.game.canvas.height / 2 - 8, soundBMP);
-        soundBarFg.anchor.setTo(0.5, 0.5);
+        // sound bar foreground, centre in middle of screen without using anchor, because anchor causes problems
+        let x = (this.game.canvas.width / 2) - (ButtonUtil.SOUNDBAR_LENGTH / 2);
+        let y = this.game.canvas.height / 2 - 8;
+        this.soundBarFg = this.game.add.sprite(x, y, soundFgBMP);
 
         // sound bar background
-        let soundBarBg = this.game.add.sprite(this.game.canvas.width / 2, this.game.canvas.height / 2 - 8, soundBgBMP);
-        soundBarBg.anchor.setTo(0.5, 0.5);
+        let soundBarBg = this.game.add.sprite(x, y, soundBgBMP);
 
-        let soundSlider = this.game.add.sprite(0, soundBarFg.y - 6.5, Assets.Atlases.ButtonsBlueSheet.getName(), CustomButton.soundButtons[3]);
-        soundSlider.anchor.setTo(0.5, 0.5);
+        // the actual slider, 17 is the little pointy y offset of the slider
+        let soundSlider = this.game.add.sprite(soundBarBg.x, soundBarBg.y - 17, Assets.Atlases.ButtonsBlueSheet.getName(), CustomButton.soundButtons[3]);
         soundSlider.inputEnabled = true;
-        soundSlider.input.enableDrag(false, true, false, 255, null, soundBarBg);
+        soundSlider.input.enableDrag(true, true, false, 255, new Phaser.Rectangle(soundBarBg.x - (ButtonUtil.SOUNDSLIDER_WIDTH / 2), soundBarBg.y - 17,
+                                        ButtonUtil.SOUNDBAR_LENGTH + ButtonUtil.SOUNDSLIDER_WIDTH, ButtonUtil.SOUNDBAR_HEIGHT + 17));
         soundSlider.events.onDragUpdate.add(this.onDragUpdate, this);
         soundSlider.bringToTop();
 
@@ -99,14 +117,15 @@ export default class ButtonUtil {
         // child 2 is the slider
         let soundBar = new Phaser.Group(this.game);
         soundBar.addAt(soundText, 0);
-        soundBar.addAt(soundBarFg, 1);
-        soundBar.addAt(soundBarBg, 2);
+        soundBar.addAt(soundBarBg, 1);
+        soundBar.addAt(this.soundBarFg, 2);
         soundBar.addAt(soundSlider, 3);
 
         soundBar.fixedToCamera = true;
 
         // calculate sprite position by rearranging normalization formula
-        soundSlider.x = this.game.sound.volume * (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN) + ButtonUtil.SOUNDBAR_MIN;
+        soundSlider.x = this.soundBarFg.x + (ButtonUtil.SOUNDBAR_LENGTH * this.game.sound.volume);
+        this.updateSoundBarFG(soundSlider);     // set the sound bar foreground to initial position
 
         return soundBar;
     }
@@ -130,8 +149,12 @@ export default class ButtonUtil {
     }
 
     private onDragUpdate(sprite: Phaser.Sprite, pointer: Phaser.Pointer): void {
-        let normalizedVolume = (sprite.x - ButtonUtil.SOUNDBAR_MIN) / (ButtonUtil.SOUNDBAR_MAX - ButtonUtil.SOUNDBAR_MIN);
+        let normalizedVolume = (sprite.x - this.soundBarFg.x) / ButtonUtil.SOUNDBAR_LENGTH;
         this.game.sound.volume = normalizedVolume;
-        sprite.y = sprite.y - 15;
+        this.updateSoundBarFG(sprite);
+    }
+
+    private updateSoundBarFG(sprite: Phaser.Sprite): void {
+        this.soundBarFg.width = Math.abs((this.soundBarFg.x - ButtonUtil.SOUNDSLIDER_WIDTH / 2) - sprite.x);
     }
 }

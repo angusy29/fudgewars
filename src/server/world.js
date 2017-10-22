@@ -3,14 +3,25 @@ let maps = path.resolve(__dirname + '/../../assets/json');
 
 let Player = require('./player');
 let Flag = require('./flag');
+let Item = require('./item');
+let HealthPot = require('./healthpot');
+let CooldownPot = require('./cooldownpot');
 let utils = require('./utils');
 
 const TILE_SIZE = 64;
 
+const BLUE = 0;
+const RED = 1;
 
 module.exports = class World {
-    constructor(io, width, height, tilesize) {
+    constructor(io, lobby, room, gameLength, mapSize, friendlyFire, width, height, tilesize) {
+        this.started = false;
         this.io = io;
+        this.lobby = lobby;     // lobby object
+        this.room = room;   // room id
+        this.gameLength = gameLength ? gameLength * 60 : 300;
+        this.mapSize = mapSize;
+        this.friendlyFire = friendlyFire;
         this.width = width;
         this.height = height;
         this.tilesize = tilesize;
@@ -19,13 +30,14 @@ module.exports = class World {
         this.left = 0 + tilesize/2;
         this.right = width - tilesize/2;
         this.players = {};
+        this.spectators = {};
         this.playerCount = 0;
+        this.items = {};        // powerups currently on the map
         this.timeout = null;
-        this.basePos = {
-            y: 2 * TILE_SIZE + TILE_SIZE*0.32,
-            x: 8 * TILE_SIZE + TILE_SIZE*0.4
-        };
+        this.numCaptures = [0, 0];
+        this.gameTime = this.gameLength;
 
+        // TODO change map according to map size
         let data = require(maps + '/map.test.json');
 
         this.world = this.getWorld(data);
@@ -56,11 +68,20 @@ module.exports = class World {
         let flags = [];
         for (let i = 0; i < data.length; i++) {
             let f = data[i];
-            let flag = new Flag(this, f.x * tilesize, f.y * tilesize, i);
+            let startX = f.startX * tilesize;
+            let startY = f.startY * tilesize;
+            let endX = f.endX * tilesize;
+            let endY = f.endY * tilesize;
+            let flag = new Flag(this, startX, startY, endX, endY, i);
             flags.push(flag);
         }
 
         return flags;
+    }
+
+    score(team) {
+        this.numCaptures[team]++;
+        this.io.sockets.in(this.room).emit('score', team);
     }
 
     /**
@@ -135,8 +156,15 @@ module.exports = class World {
         }
 
         let flagReps = [];
+        let bases = [];
         for (let flag of this.flags) {
             flagReps.push(flag.getRep());
+            bases.push({team: flag.colorIdx, x:flag.startX, y:flag.startY});
+        }
+
+        let itemReps = [];
+        for (let id in this.items) {
+            itemReps.push(this.items[id].getRep());
         }
 
         socket.emit('loaded', {
@@ -144,21 +172,26 @@ module.exports = class World {
             terrain: this.terrain,
             players: playerReps,
             flags: flagReps,
+            bases: bases,
+            playerId: socket.id,
+            teamId: this.lobby.getPlayers()[socket.id] ? this.lobby.getPlayers()[socket.id].team : null,
+            items: itemReps,
+            scores: this.numCaptures,
+            gameTime: this.gameTime,
         });
     }
 
-    addPlayer(socket) {
+    addPlayer(socket, accessoryTile) {
         let id = socket.id;
+        let name = this.lobby.getPlayers()[id].name;
+        let team = this.lobby.getPlayers()[id].team;
 
-        let name = lobby.getPlayers()[id].name;
-        let team = lobby.getPlayers()[id].team;
-
-        let player = new Player(this, id, name, team, 0, 0);
+        let player = new Player(this, id, name, team, 0, 0, accessoryTile);
         this.players[id] = player;
         this.playerCount++;
         player.setSpawnPosition();
 
-        this.io.emit('player_join', player.getRep());
+        this.io.sockets.in(this.room).emit('player_join', player.getRep());
         this.registerSocketEvents(socket, player);
 
         // Start updates
@@ -167,56 +200,169 @@ module.exports = class World {
         }
     }
 
-    registerSocketEvents(socket, player) {
-        socket.on('keydown', function(direction) {
-            player.keydown(direction);
-        });
-
-        socket.on('pingcheck', function(nothing) {
-            socket.emit('pongcheck');
-        });
-
-        socket.on('keyup', function(direction) {
-            player.keyup(direction);
-        });
-
-        socket.on('attack_hook', function(angle) {
-            player.useHook(angle);
-        });
-
-        socket.on('attack_sword', function(angle) {
-            player.useSword(angle);
-        });
-
-        socket.on('disconnect', () => {
-            // release the flag that is being carry by the player
-            if (player.carryingFlag !== null) {
-                let flag = this.flags[player.carryingFlag];
-                flag.carryingBy = null;
-                flag.isCaptured = false;
-            }
-
-            console.log('=====world discon=====');
-            this.removePlayer(player.id)
-            this.io.emit('player_left', player.id);
-        });
+    addSpectator(socket) {
+        this.spectators[socket.id] = socket;
+        this.registerSocketEvents(socket, null);
+        this.io.sockets.in(this.room).emit('player_spectating', socket.id);
     }
 
-    removePlayer(id) {
+    // spawn a powerup on the map
+    addItem() {
+        let itemId = 0;
+        while (itemId === 0 || this.items[itemId]) {
+            itemId = Math.random() * 1000;
+        }
+
+        let x = Math.random() * this.width;
+        let y = Math.random() * this.height;
+        if (y < 100) y += 100;
+
+        let powerup;
+        if (Math.random() < 0.8) {
+            powerup = new HealthPot(this, itemId, x, y);
+        } else {
+            // 20% chance to spawn cooldown pot
+            powerup = new CooldownPot(this, itemId, x, y);
+        }
+
+        while (this.collidesTerrain(powerup.getTopLeft(), powerup.getBottomRight())) {
+            powerup.x = Math.random() * this.width;
+            powerup.y = Math.random() * this.height;
+
+            if (powerup.y < 100) powerup.y += 100;
+        }
+
+        this.items[itemId] = powerup;
+    }
+
+    registerSocketEvents(socket, player) {
+        socket.on('disconnect', () => {
+            this.disconnectPlayer(socket);
+        });
+
+        // in case the player clicks on quit game, instead of quitting game
+        socket.on('game_quit', () => {
+            this.disconnectPlayer(socket);
+        });
+
+        if (player !== null) {
+            socket.on('keydown', (direction) => {
+                player.keydown(direction);
+            });
+
+            socket.on('pingcheck', () => {
+                socket.emit('pongcheck');
+            });
+
+            socket.on('keyup', (direction) => {
+                player.keyup(direction);
+            });
+
+            socket.on('attack_hook', (angle) => {
+                player.useHook(angle);
+            });
+
+            socket.on('attack_sword', (angle) => {
+                player.useSword(angle);
+            });
+
+            // receive chatroom message from player
+            socket.on('chatroom_msg', (msg) => {
+                // relay message to other player in the team
+                for (let id in this.players) {
+                    let p = this.players[id]
+                    if (p.id != player.id && p.team == player.team) {
+                        // broadcast message to other player in the same team
+                        socket.broadcast.to(p.id).emit('chatroom_msg', {
+                            'sender': player.id,
+                            'msg' : msg
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    disconnectPlayer(socket) {
+        // console.log('=====world discon=====');
+
+        let player = this.players[socket.id];
+        if (player) {
+            // release the flag that is being carry by the player
+            if (player.carryingFlag !== null) {
+                player.carryingFlag.drop();
+            }
+            this.removePlayer(socket, player.id);
+            this.lobby.removePlayer(socket, player.id);
+        }
+
+        this.removeSpectator(socket, socket.id);
+        this.lobby.removeSpectator(socket, socket.id);
+
+        this.io.sockets.in(this.room).emit('player_left', socket.id);
+    }
+
+    removePlayer(socket, id) {
         if (!this.players[id]) return;
 
+        socket.removeAllListeners(['keydown']);
+        socket.removeAllListeners(['pingcheck']);
+        socket.removeAllListeners(['keyup']);
+        socket.removeAllListeners(['attack_hook']);
+        socket.removeAllListeners(['attack_sword']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['game_quit']);
         delete this.players[id];
         this.playerCount--;
 
         // Stop updates if no more players
         if (this.playerCount === 0) {
+            this.stopGame();
+        }
+    }
+
+    removeSpectator(socket, id) {
+        if (!this.spectators[id]) return;
+
+        socket.removeAllListeners(['keydown']);
+        socket.removeAllListeners(['pingcheck']);
+        socket.removeAllListeners(['keyup']);
+        socket.removeAllListeners(['attack_hook']);
+        socket.removeAllListeners(['attack_sword']);
+        socket.removeAllListeners(['disconnect']);
+        socket.removeAllListeners(['game_quit']);
+        delete this.spectators[id];
+    }
+
+    isEmpty() {
+        return this.playerCount === 0;
+    }
+
+    // All players left
+    stopGame() {
+        if (this.timeout) {
             clearInterval(this.timeout);
             this.timeout = null;
         }
     }
 
+    // End of game reached
+    finishGame() {
+        this.stopGame();
+        this.io.sockets.in(this.room).emit('game_end', {
+            scores: this.numCaptures,
+        });
+    }
+
     update() {
         let seconds = 30/1000;
+
+        this.gameTime -= seconds;
+        if (this.gameTime <= 0) {
+            // Game over
+            this.finishGame();
+            return;
+        }
 
         let playerReps = [];
         for (let id in this.players) {
@@ -231,10 +377,27 @@ module.exports = class World {
             flagReps.push(flag.getRep());
         }
 
-        this.io.emit('update', {
-            'players': playerReps,
-            'flags':   flagReps
+        let itemReps = [];
+        for (let id in this.items) {
+            this.items[id].update(seconds);
+            itemReps.push(this.items[id].getRep());
+
+            if (this.items[id].isPickedUp) {
+                delete this.items[id];
+            }
+        }
+
+        // if there are less than 5 items on the map
+        // spawn some
+        if (Object.keys(this.items).length < 3) {
+            this.addItem();
+        }
+
+        this.io.sockets.in(this.room).emit('update', {
+            time: this.gameTime,
+            players: playerReps,
+            flags: flagReps,
+            items: itemReps
         });
     }
-
 }
