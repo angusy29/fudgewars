@@ -96,25 +96,25 @@ export default class LobbyCreation extends Phaser.State {
         // game mode labels
 
         // map size labels
-        let mapSizeLabel: Phaser.Text = this.buttonUtil.createNormalText(gameLengthLabel.x, this.lobbyNameInput.y * 2, 'Map size: ');
-        for (let i = 0; i < this.mapSizes.length; i++) {
-            let label = this.buttonUtil.createNormalText((mapSizeLabel.x * 1.05) + (128 * i), mapSizeLabel.y * 1.15, this.mapSizes[i].title, 18);
+        // let mapSizeLabel: Phaser.Text = this.buttonUtil.createNormalText(gameLengthLabel.x, this.lobbyNameInput.y * 2, 'Map size: ');
+        // for (let i = 0; i < this.mapSizes.length; i++) {
+        //     let label = this.buttonUtil.createNormalText((mapSizeLabel.x * 1.05) + (128 * i), mapSizeLabel.y * 1.15, this.mapSizes[i].title, 18);
 
-            // default to medium
-            if (i === LobbyCreation.MEDIUM) {
-                this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'green_boxCheckmark',
-                                                this.changeMapSize.bind(this, i), this);
-                this.chosenMapSize = i;
-            } else {
-                this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'grey_box',
-                                                this.changeMapSize.bind(this, i), this);
-            }
-        }
+        //     // default to medium
+        //     if (i === LobbyCreation.MEDIUM) {
+        //         this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'green_boxCheckmark',
+        //                                         this.changeMapSize.bind(this, i), this);
+        //         this.chosenMapSize = i;
+        //     } else {
+        //         this.mapSizes[i].checkbox = this.game.add.button(label.x + label.width, label.y, 'grey_box',
+        //                                         this.changeMapSize.bind(this, i), this);
+        //     }
+        // }
 
         // friendly fire
         // NOT using atlases for friendlyFireButton because grey box isn't part of any atlas, so the green checkbox
         // is also just a png, like grey box
-        let friendlyFireLabel: Phaser.Text = this.buttonUtil.createNormalText(mapSizeLabel.x, this.lobbyNameInput.y * 2.65, 'Friendly fire: ');
+        let friendlyFireLabel: Phaser.Text = this.buttonUtil.createNormalText(gameLengthLabel.x, this.lobbyNameInput.y * 2, 'Friendly fire: ');
         this.friendlyFireButton = this.game.add.button(friendlyFireLabel.x + friendlyFireLabel.width,
                                         friendlyFireLabel.y, 'grey_box', this.setFriendlyFire, this);
 
