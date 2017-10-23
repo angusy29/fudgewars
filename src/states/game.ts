@@ -1189,6 +1189,7 @@ export default class Game extends Phaser.State {
         this.socket.off('captured_flag');
         this.socket.off('dropped_flag');
         this.socket.off('game_end');
+        this.socket.off('chatroom_msg');
     }
 
     public preload(): void {

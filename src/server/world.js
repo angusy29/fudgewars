@@ -312,6 +312,7 @@ module.exports = class World {
         socket.removeAllListeners(['attack_sword']);
         socket.removeAllListeners(['disconnect']);
         socket.removeAllListeners(['game_quit']);
+        socket.removeAllListeners(['chatroom_msg']);
         delete this.players[id];
         this.playerCount--;
 
