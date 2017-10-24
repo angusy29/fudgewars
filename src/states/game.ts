@@ -85,6 +85,8 @@ export default class Game extends Phaser.State {
     public client_id: string;
     private room: string;
 
+    private gameLoaded: boolean;
+
     /* Static variables */
     static readonly PLAYER_NAME_Y_OFFSET = 24;
 
@@ -100,6 +102,7 @@ export default class Game extends Phaser.State {
         this.game.input.mouse.capture = true;
         this.game.canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
+        this.gameLoaded = false;
         this.isSpectating = false;
         this.currentlySpectatingIndex = null;
         this.currentlySpectatingId = null;
@@ -221,6 +224,7 @@ export default class Game extends Phaser.State {
     private registerSocketEvents(socket: any): void {
         socket.on('loaded', (data: any) => {
             this.onLoaded(data);
+            this.gameLoaded = true;
         });
 
         socket.on('player_spectating', (id: number) => {
@@ -420,6 +424,7 @@ export default class Game extends Phaser.State {
     public update(): void {
         let data = this.data;
         if (!data) return;
+        if (!this.gameLoaded) return;
 
         this.gameTime = data.time;
 
@@ -490,6 +495,9 @@ export default class Game extends Phaser.State {
     }
 
     private onTick(data: any): void {
+        if (!this.gameLoaded) {
+            return;
+        }
         this.data = data;
         this.drawMiniMap(data);
         // Do this here instead of update because indicators get blurry from updating too quickly :(
