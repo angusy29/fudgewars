@@ -189,8 +189,8 @@ export default class Lobby extends Phaser.State {
         this.socket.on('lobby_player_left', (id: any) => {
             this.players[id].name.destroy();
             this.players[id].sprite.destroy();
-            if (this.players[id].readyImg !== null) this.players[id].readyImg.destroy();
-            if (this.players[id].accessory !== null) this.players[id].accessory.destroy();
+            if (this.players[id].readyImg) this.players[id].readyImg.destroy();
+            if (this.players[id].accessory) this.players[id].accessory.destroy();
 
             if (this.players[id].team === Lobby.BLUE) {
                 this.blueTiles[this.players[id].tile].player = null;

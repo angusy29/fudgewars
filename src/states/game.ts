@@ -389,7 +389,6 @@ export default class Game extends Phaser.State {
         let player = this.players[id];
         if (!player) return;
 
-        console.log('player left');
         this.playerGroup.remove(player.sprite);
         this.weaponGroup.remove(player.weaponGroup);
         player.destroy();
