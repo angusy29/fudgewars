@@ -4,6 +4,7 @@ npm install
 
 2. Open a terminal and run the dev server:
 Run:
+npm run build:dev
 npm run server:dev
 
 3. Open a new terminal and start listening for requests:
