@@ -24,7 +24,7 @@
     "postinstall": "webpack --config webpack.dev.config.js"
   },
   "devDependencies": {
-    "electron": "1.6.11",
+    "electron": "11.5.0",
     "electron-packager": "8.7.2"
   },
   "dependencies": {
